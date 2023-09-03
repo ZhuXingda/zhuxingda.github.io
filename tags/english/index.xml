@@ -1,20 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>English on Virtual or Reality - Zhu Xingda&#39;s Blog</title>
+    <title>English on Virtual or Reality</title>
     <link>https://zhuxingda.gitpage.com/tags/english/</link>
-    <description>Recent content in English on Virtual or Reality - Zhu Xingda&#39;s Blog</description>
+    <description>Recent content in English on Virtual or Reality</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 31 Aug 2017 15:43:48 +0800</lastBuildDate><atom:link href="https://zhuxingda.gitpage.com/tags/english/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 31 Aug 2023 15:43:48 +0800</lastBuildDate><atom:link href="https://zhuxingda.gitpage.com/tags/english/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>[English] Creating a New Theme</title>
-      <link>https://zhuxingda.gitpage.com/post/english-preview/</link>
-      <pubDate>Thu, 31 Aug 2017 15:43:48 +0800</pubDate>
+      <title>esp32-cam hello_world</title>
+      <link>https://zhuxingda.gitpage.com/post/esp32-cam_hello_world_note/</link>
+      <pubDate>Thu, 31 Aug 2023 15:43:48 +0800</pubDate>
       
-      <guid>https://zhuxingda.gitpage.com/post/english-preview/</guid>
-      <description>Introduction This tutorial will show you how to create a simple theme in Hugo. I assume that you are familiar with HTML, the bash command line, and that you are comfortable using Markdown to format content. I&amp;rsquo;ll explain how Hugo uses templates and how you can organize your templates to create a theme. I won&amp;rsquo;t cover using CSS to style your theme.
-We&amp;rsquo;ll start with creating a new site with a very basic template.</description>
+      <guid>https://zhuxingda.gitpage.com/post/esp32-cam_hello_world_note/</guid>
+      <description>ESP32-CAM HelloWorld入门 依赖安装 CH340G 驱动安装 驱动下载 根据解压后的安装步骤安装 安装完成后插入串口调试工具，命令行运行 1 2 ls /dev/tty* /dev/tty.wchusbserial14120 表明安装成功 MA</description>
     </item>
     
   </channel>
