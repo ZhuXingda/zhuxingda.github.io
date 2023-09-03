@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://zhuxingda.gitpage.com/sitemap.xml
