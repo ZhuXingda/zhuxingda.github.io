@@ -8,7 +8,7 @@
     <language>zh-cn</language>
     <lastBuildDate>Thu, 31 Aug 2023 15:43:48 +0800</lastBuildDate><atom:link href="https://zhuxingda.gitpage.com/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>关于</title>
+      <title>About</title>
       <link>https://zhuxingda.gitpage.com/about/</link>
       <pubDate>Sun, 20 Aug 2017 21:38:52 +0800</pubDate>
       
@@ -22,7 +22,7 @@
       <pubDate>Thu, 31 Aug 2023 15:43:48 +0800</pubDate>
       
       <guid>https://zhuxingda.gitpage.com/post/esp32-cam_hello_world_note/</guid>
-      <description>ESP32-CAM HelloWorld入门 依赖安装 CH340G 驱动安装 驱动下载 根据解压后的安装步骤安装 安装完成后插入串口调试工具，命令行运行 1 2 ls /dev/tty* /dev/tty.wchusbserial14120 表明安装成功 MA</description>
+      <description>依赖安装 CH340G 驱动安装 驱动下载 根据解压后的安装步骤安装 安装完成后插入串口调试工具，命令行运行 1 2 ls /dev/tty* /dev/tty.wchusbserial14120 表明安装成功 MAC安装基础依赖 1 brew install cmake ninja dfu-util</description>
     </item>
     
   </channel>
