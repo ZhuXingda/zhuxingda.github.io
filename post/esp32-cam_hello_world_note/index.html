@@ -35,7 +35,7 @@
 
 <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
-<link href="/sass/main.min.68eda2a6fdd92eb04dcccf2e28c6365e029c6f7c7163b391d62c8382ce4749c4.css" rel="stylesheet">
+<link href="/sass/main.min.9a35a9b8b260aea4273fcfaa898a86cdbe08e391a0b3904e4d31edb16b70fad8.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
@@ -138,12 +138,17 @@
       <ul>
         <li><a href="#依赖安装">依赖安装</a>
           <ul>
-            <li></li>
+            <li><a href="#ch340g-驱动安装">CH340G 驱动安装</a></li>
+            <li><a href="#mac安装基础依赖">MAC安装基础依赖</a></li>
+            <li><a href="#安装esp-idf">安装ESP-IDF</a></li>
           </ul>
         </li>
         <li><a href="#项目开发">项目开发</a>
           <ul>
-            <li></li>
+            <li><a href="#创建项目">创建项目</a></li>
+            <li><a href="#编译">编译</a></li>
+            <li><a href="#烧录">烧录</a></li>
+            <li><a href="#运行">运行</a></li>
           </ul>
         </li>
         <li><a href="#参考资料">参考资料</a></li>
@@ -155,7 +160,7 @@
 </div>
     <div class="post-content">
       <h2 id="依赖安装">依赖安装</h2>
-<h4 id="ch340g-驱动安装">CH340G 驱动安装</h4>
+<h3 id="ch340g-驱动安装">CH340G 驱动安装</h3>
 <p><a href="https://www.wch.cn/downloads/category/67.html?feature=USB%E8%BD%AC%E4%B8%B2%E5%8F%A3&amp;product_name=CH340">驱动下载</a>
 根据解压后的安装步骤安装
 安装完成后插入串口调试工具，命令行运行</p>
@@ -170,7 +175,7 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>表明安装成功</p>
-<h4 id="mac安装基础依赖">MAC安装基础依赖</h4>
+<h3 id="mac安装基础依赖">MAC安装基础依赖</h3>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
@@ -179,9 +184,9 @@
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">brew install cmake ninja dfu-util
 </span></span></code></pre></td></tr></table>
 </div>
-</div><h4 id="安装esp-idf">安装ESP-IDF</h4>
+</div><h3 id="安装esp-idf">安装ESP-IDF</h3>
 <h2 id="项目开发">项目开发</h2>
-<h4 id="创建项目">创建项目</h4>
+<h3 id="创建项目">创建项目</h3>
 <p>把ESP-IDF提供的example复制到目标项目目录下</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -192,7 +197,7 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>vscode打开复制后的目录，main/hello_world_main.c 就是待编译的源文件</p>
-<h4 id="编译">编译</h4>
+<h3 id="编译">编译</h3>
 <p>在项目根目录下运行</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -220,7 +225,7 @@
 </span></span><span class="line"><span class="cl"><span class="c1"># 编译完后build目录下有hello_world.bin就成功了</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><h4 id="烧录">烧录</h4>
+</div><h3 id="烧录">烧录</h3>
 <p>运行命令</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -294,7 +299,7 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p>原因是连接器和单片机上GND那条线连错了，连到了ESP32-CAM的GPIO1边上那个GND，换成连到5V边上的GND后reset，然后重新执行flush命令，烧录成功。</p>
-<h4 id="运行">运行</h4>
+<h3 id="运行">运行</h3>
 <p>烧录成功后取下GPIO0和GND之间的短接，按reset单片机开始运行，命令行出现信息。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
