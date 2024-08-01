@@ -6,22 +6,31 @@
     <description>Recent content in Tags on Virtual or Reality</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 31 Aug 2023 15:43:48 +0800</lastBuildDate><atom:link href="https://zhuxingda.gitpage.com/tags/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sun, 12 Nov 2023 17:24:18 +0800</lastBuildDate><atom:link href="https://zhuxingda.gitpage.com/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Flink</title>
+      <link>https://zhuxingda.gitpage.com/tags/flink/</link>
+      <pubDate>Sun, 12 Nov 2023 17:24:18 +0800</pubDate>
+      
+      <guid>https://zhuxingda.gitpage.com/tags/flink/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Paimon</title>
+      <link>https://zhuxingda.gitpage.com/tags/paimon/</link>
+      <pubDate>Sun, 12 Nov 2023 17:24:18 +0800</pubDate>
+      
+      <guid>https://zhuxingda.gitpage.com/tags/paimon/</guid>
+      <description></description>
+    </item>
+    
     <item>
       <title>esp32-cam</title>
       <link>https://zhuxingda.gitpage.com/tags/esp32-cam/</link>
       <pubDate>Thu, 31 Aug 2023 15:43:48 +0800</pubDate>
       
       <guid>https://zhuxingda.gitpage.com/tags/esp32-cam/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>单片机</title>
-      <link>https://zhuxingda.gitpage.com/tags/%E5%8D%95%E7%89%87%E6%9C%BA/</link>
-      <pubDate>Thu, 31 Aug 2023 15:43:48 +0800</pubDate>
-      
-      <guid>https://zhuxingda.gitpage.com/tags/%E5%8D%95%E7%89%87%E6%9C%BA/</guid>
       <description></description>
     </item>
     

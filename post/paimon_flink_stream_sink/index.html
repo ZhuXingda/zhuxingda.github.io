@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>用 Flink Stream API 写数据到 Paimon 表 - Virtual or Reality</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="Zhu Xingda" /><meta name="description" content="Flink Vesion: 1.18.0 Paimon Version: 0.5 Apache Paimon 官方文档里表示没有直接支持 Flink Stream API，建议有需求可以用 Table API 转 Stream API 来使用。对于线上已有大量基于 Flink Stream API 的计算任务想要接入 Paim" /><meta name="keywords" content="ZhuXingda, 朱兴达, blog, 博客" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.118.2 with theme even" />
+
+
+<link rel="canonical" href="https://zhuxingda.gitpage.com/post/paimon_flink_stream_sink/" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<link href="/sass/main.min.b0822d88120ad353839937f099422592645d10ae60d208bf891bf350df078e9d.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="用 Flink Stream API 写数据到 Paimon 表" />
+<meta property="og:description" content="Flink Vesion: 1.18.0 Paimon Version: 0.5 Apache Paimon 官方文档里表示没有直接支持 Flink Stream API，建议有需求可以用 Table API 转 Stream API 来使用。对于线上已有大量基于 Flink Stream API 的计算任务想要接入 Paim" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://zhuxingda.gitpage.com/post/paimon_flink_stream_sink/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2023-10-21T21:02:30+08:00" />
+<meta property="article:modified_time" content="2023-10-21T21:02:30+08:00" />
+<meta itemprop="name" content="用 Flink Stream API 写数据到 Paimon 表">
+<meta itemprop="description" content="Flink Vesion: 1.18.0 Paimon Version: 0.5 Apache Paimon 官方文档里表示没有直接支持 Flink Stream API，建议有需求可以用 Table API 转 Stream API 来使用。对于线上已有大量基于 Flink Stream API 的计算任务想要接入 Paim"><meta itemprop="datePublished" content="2023-10-21T21:02:30+08:00" />
+<meta itemprop="dateModified" content="2023-10-21T21:02:30+08:00" />
+<meta itemprop="wordCount" content="600">
+<meta itemprop="keywords" content="Paimon,Flink," /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="用 Flink Stream API 写数据到 Paimon 表"/>
+<meta name="twitter:description" content="Flink Vesion: 1.18.0 Paimon Version: 0.5 Apache Paimon 官方文档里表示没有直接支持 Flink Stream API，建议有需求可以用 Table API 转 Stream API 来使用。对于线上已有大量基于 Flink Stream API 的计算任务想要接入 Paim"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="/" class="logo">Virtual or Reality</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="/">
+        <li class="mobile-menu-item">首页</li>
+      </a><a href="/post/">
+        <li class="mobile-menu-item">时间线</li>
+      </a><a href="/tags/">
+        <li class="mobile-menu-item">标签</li>
+      </a><a href="/categories/">
+        <li class="mobile-menu-item">分类</li>
+      </a><a href="/about/">
+        <li class="mobile-menu-item">关于我</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="/" class="logo">Virtual or Reality</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="/">首页</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/post/">时间线</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/tags/">标签</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/categories/">分类</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="/about/">关于我</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">用 Flink Stream API 写数据到 Paimon 表</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2023-10-21 </span>
+        <div class="post-category">
+            <a href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/"> 大数据 </a>
+            </div>
+        <span id="busuanzi_container_page_pv" class="more-meta"> <span id="busuanzi_value_page_pv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> 次阅读 </span>
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">目录</h2>
+  <div class="post-toc-content">
+    <nav id="TableOfContents"></nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>Flink Vesion: 1.18.0
+Paimon Version: 0.5</p>
+<p>Apache Paimon 官方文档里表示没有直接支持 Flink Stream API，建议有需求可以用 Table API 转 Stream API 来使用。对于线上已有大量基于 Flink Stream API 的计算任务想要接入 Paimon，用转换的方式有些繁琐。</p>
+<p>实际上 Flink Table API 的底层还是依赖 Stream API，通过 DataStreamSinkProvider 和 DataStreamScanProvider 来实现转换。DataStreamSinkProvider 在 Paimon 里的实现类是 PaimonDataStreamSinkProvider，实际使用时由封装其中的 producer 实现数据流写入 Paimon 的过程。</p>
+<p>在 FlinkTableSinkBase 类里可以看到 PaimonDataStreamSinkProvider 里的 producer 由 FlinkSinkBuilder 实现，因此可以利用 FlinkSinkBuilder 来实现一个 Flink Stream Sink Factory。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="line"><span class="cl"><span class="kn">package</span> <span class="nn">org.apache.paimon.flink.sink</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.catalog.Catalog</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.catalog.Catalog.TableNotExistException</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.catalog.CatalogContext</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.catalog.FileSystemCatalog</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.catalog.Identifier</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.flink.FlinkConnectorOptions</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.fs.FileIO</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.fs.Path</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.options.CatalogOptions</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.options.Options</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.table.FileStoreTable</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.flink.streaming.api.datastream.DataStream</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.flink.table.data.RowData</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import static</span> <span class="nn">org.apache.paimon.utils.Preconditions.checkNotNull</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="cm">/** A wrapper of {@link FlinkSinkBuilder} to create Flink stream sink. */</span>
+</span></span><span class="line"><span class="cl"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FlinkStreamSinkBuilder</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Options</span> <span class="n">options</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kd">private</span> <span class="kd">final</span> <span class="n">FileStoreTable</span> <span class="n">fileStoreTable</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kd">public</span> <span class="nf">FlinkStreamSinkBuilder</span><span class="o">(</span><span class="n">String</span> <span class="n">table</span><span class="o">,</span> <span class="n">String</span> <span class="n">database</span><span class="o">,</span> <span class="n">Options</span> <span class="n">options</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">            <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">TableNotExistException</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">checkNotNull</span><span class="o">(</span><span class="n">table</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">checkNotNull</span><span class="o">(</span><span class="n">database</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Identifier</span> <span class="n">identifier</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Identifier</span><span class="o">(</span><span class="n">database</span><span class="o">,</span> <span class="n">table</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">this</span><span class="o">.</span><span class="na">options</span> <span class="o">=</span> <span class="n">options</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">String</span> <span class="n">warehouse</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">CatalogOptions</span><span class="o">.</span><span class="na">WAREHOUSE</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">checkNotNull</span><span class="o">(</span><span class="n">warehouse</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Path</span> <span class="n">path</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">warehouse</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">FileIO</span> <span class="n">fileIO</span> <span class="o">=</span> <span class="n">FileIO</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">path</span><span class="o">,</span> <span class="n">CatalogContext</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="n">options</span><span class="o">));</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Catalog</span> <span class="n">catalog</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileSystemCatalog</span><span class="o">(</span><span class="n">fileIO</span><span class="o">,</span> <span class="n">path</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">this</span><span class="o">.</span><span class="na">fileStoreTable</span> <span class="o">=</span> <span class="o">(</span><span class="n">FileStoreTable</span><span class="o">)</span> <span class="n">catalog</span><span class="o">.</span><span class="na">getTable</span><span class="o">(</span><span class="n">identifier</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">sink</span><span class="o">(</span><span class="n">DataStream</span><span class="o">&lt;</span><span class="n">RowData</span><span class="o">&gt;</span> <span class="n">dataStream</span><span class="o">)</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">int</span> <span class="n">parallelism</span> <span class="o">=</span> <span class="n">dataStream</span><span class="o">.</span><span class="na">getParallelism</span><span class="o">();</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="o">(</span><span class="n">options</span><span class="o">.</span><span class="na">contains</span><span class="o">(</span><span class="n">FlinkConnectorOptions</span><span class="o">.</span><span class="na">SINK_PARALLELISM</span><span class="o">))</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">parallelism</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">FlinkConnectorOptions</span><span class="o">.</span><span class="na">SINK_PARALLELISM</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">FlinkSinkBuilder</span> <span class="n">builder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FlinkSinkBuilder</span><span class="o">(</span><span class="n">fileStoreTable</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">builder</span><span class="o">.</span><span class="na">withInput</span><span class="o">(</span><span class="n">dataStream</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                <span class="o">.</span><span class="na">withLogSinkFunction</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                <span class="o">.</span><span class="na">withOverwritePartition</span><span class="o">(</span><span class="kc">null</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                <span class="o">.</span><span class="na">withParallelism</span><span class="o">(</span><span class="n">parallelism</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>使用前用 Flink 自带的 sql-client 或者其他支持 SQL API 的平台创建好对应的 Paimon 表，然后就可以用 Stream API 的任务直接写入。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="line"><span class="cl"><span class="kn">package</span> <span class="nn">org.apache.paimon.example</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">com.baidu.lss.data.ClientLog</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">com.baidu.lss.operator.FLinkRowDataParser</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">lombok.extern.slf4j.Slf4j</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.flink.streaming.api.datastream.DataStream</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.flink.table.data.RowData</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.hadoop.conf.Configuration</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.example.ConfigurationUtil</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.example.KafkaSourceFactory</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.example.PaimonSinkFactory</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">org.apache.paimon.example.StreamExecutionEnvironment</span><span class="o">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@Slf4j</span>
+</span></span><span class="line"><span class="cl"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 解析配置文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">Configuration</span> <span class="n">config</span> <span class="o">=</span> <span class="n">ConfigurationUtil</span><span class="o">.</span><span class="na">loadConfig</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 设置 Flink 执行环境
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="kd">final</span> <span class="n">StreamExecutionEnvironment</span> <span class="n">env</span> <span class="o">=</span> <span class="n">StreamExecutionEnvironment</span><span class="o">.</span><span class="na">getExecutionEnvironment</span><span class="o">();</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 从 Kafka 读取数据流并转换成 RowData 格式
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">DataStream</span><span class="o">&lt;</span><span class="n">RowData</span><span class="o">&gt;</span> <span class="n">kafkaRecordStream</span> <span class="o">=</span> <span class="n">KafkaSourceFactory</span><span class="o">.</span><span class="na">createKafkaRecordStream</span><span class="o">(</span><span class="n">env</span><span class="o">,</span> <span class="n">config</span><span class="o">)</span>
+</span></span><span class="line"><span class="cl">                <span class="o">.</span><span class="na">process</span><span class="o">(</span><span class="k">new</span> <span class="n">FLinkRowDataParser</span><span class="o">&lt;&gt;(</span><span class="n">ClientLog</span><span class="o">.</span><span class="na">class</span><span class="o">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">new</span> <span class="n">PaimonSinkFactory</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getPaimonConfig</span><span class="o">()).</span><span class="na">sink</span><span class="o">(</span><span class="n">kafkaRecordStream</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">try</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">env</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getJobName</span><span class="o">());</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Throwable</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="n">log</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&#34;Job {} throw Exception: &#34;</span><span class="o">,</span> <span class="n">config</span><span class="o">.</span><span class="na">getJobName</span><span class="o">(),</span> <span class="n">e</span><span class="o">);</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div>
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">Zhu Xingda</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2023-10-21
+        
+    </span>
+  </p>
+  
+  <p class="copyright-item">
+    <span class="item-title">许可协议</span>
+    <span class="item-content"><a href="https://github.com/gohugoio/hugoBasicExample" rel="noopener" target="_blank">See origin</a></span>
+  </p>
+</div>
+<footer class="post-footer">
+      <div class="post-tags">
+          <a href="/tags/paimon/">Paimon</a>
+          <a href="/tags/flink/">Flink</a>
+          </div>
+      <nav class="post-nav">
+        <a class="prev" href="/post/paimon_online_query_partial_subtask_assign_no_data/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">实时读取 Apache Paimon 数据表部分 subTask 无数据</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
+        <a class="next" href="/post/esp32-cam_hello_world_note/">
+            <span class="next-text nav-default">ESP32-Cam Hello World 入门</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        <div id="gitalk-container"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitalk = new Gitalk({
+        id: '2023-10-21 21:02:30 \u002b0800 CST',
+        title: '用 Flink Stream API 写数据到 Paimon 表',
+        clientID: '5e216fcfdd8cdb462b85',
+        clientSecret: 'c506347b1bcde5bebfdb50bb9956fba47e2303c7',
+        repo: 'zhuxingda.github.io',
+        owner: 'ZhuXingda',
+        admin: ['ZhuXingda'],
+        body: decodeURI(location.href)
+      });
+      gitalk.render('gitalk-container');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/gitalk/gitalk">comments powered by gitalk.</a></noscript>
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:zhuxingda211@outlook.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/ZhuXingda" class="iconfont icon-github" title="github"></a>
+      <a href="http://localhost:1313" class="iconfont icon-weibo" title="weibo"></a>
+      <a href="https://space.bilibili.com/44425167" class="iconfont icon-bilibili" title="bilibili"></a>
+  <a href="https://zhuxingda.gitpage.com/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv"> 本站总访问量 <span id="busuanzi_value_site_pv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> 次 </span>
+      <span class="division">|</span>
+    <span id="busuanzi_container_site_uv"> 本站总访客数 <span id="busuanzi_value_site_uv"><img src="/img/spinner.svg" alt="spinner.svg"/></span> 人 </span>
+  </div>
+
+  <span class="copyright-year">
+    &copy; 
+    2022 - 
+    2024<span class="heart"><i class="iconfont icon-heart"></i></span><span>Zhu Xingda</span>
+  </span>
+</div>
+
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="/js/main.min.4ae89da218555efa0e7093a20b92017d2e1202b66fff9fc2edf4cb8d44b44c6e.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
