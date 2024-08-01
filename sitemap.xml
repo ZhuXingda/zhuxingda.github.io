@@ -10,7 +10,63 @@
   
   <url>
     <loc>https://zhuxingda.gitpage.com/categories/</loc>
-    <lastmod>2023-08-31T15:43:48+08:00</lastmod>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/tags/flink/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/tags/paimon/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/post/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/tags/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/post/paimon_online_query_partial_subtask_assign_no_data/</loc>
+    <lastmod>2023-11-12T17:24:18+08:00</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  
+  <url>
+    <loc>https://zhuxingda.gitpage.com/post/paimon_flink_stream_sink/</loc>
+    <lastmod>2023-10-21T21:02:30+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -30,35 +86,7 @@
   </url>
   
   <url>
-    <loc>https://zhuxingda.gitpage.com/post/</loc>
-    <lastmod>2023-08-31T15:43:48+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://zhuxingda.gitpage.com/tags/</loc>
-    <lastmod>2023-08-31T15:43:48+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://zhuxingda.gitpage.com/</loc>
-    <lastmod>2023-08-31T15:43:48+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://zhuxingda.gitpage.com/tags/%E5%8D%95%E7%89%87%E6%9C%BA/</loc>
-    <lastmod>2023-08-31T15:43:48+08:00</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  
-  <url>
-    <loc>https://zhuxingda.gitpage.com/categories/%E6%8A%80%E6%9C%AF%E6%96%87%E7%AB%A0/</loc>
+    <loc>https://zhuxingda.gitpage.com/categories/%E5%8D%95%E7%89%87%E6%9C%BA/</loc>
     <lastmod>2023-08-31T15:43:48+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
