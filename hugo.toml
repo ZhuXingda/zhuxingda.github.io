@@ -1,0 +1,80 @@
+baseURL = 'https://blog.xingda.space/'
+# languageCode = 'zh-cn'
+title = "Zhu Xingda"
+theme = "mainroad"
+
+defaultContentLanguage = 'zh-cn'
+defaultContentLanguageInSubdir = true
+[languages]
+  [languages.zh-cn]
+    languageCode = 'zh-cn'
+    languageName = '中文'
+    weight = 1
+
+[menus]
+  [[menus.main]]
+    name = '主页-Index'
+    pageRef = '/'
+    weight = 10
+  [[menus.main]]
+    name = '技术-Tech'
+    pageRef = '/tech'
+    weight = 20
+  [[menus.main]]
+    name = 'DIY'
+    pageRef = '/diy'
+    weight = 30
+  [[menus.main]]
+    name = '生活-Life'
+    pageRef = '/Sport'
+    weight = 40
+
+[Params]
+  copyright = "Zhu Xingda"
+  post_meta = ["author", "date", "categories"]
+  readmore = true
+  toc = true
+  pager = true
+  dateformat = "2006-01-02"
+#   mainSections = ["post", "blog", "news"]
+
+[Params.logo]
+#   image = "favicon.ico"
+  title = "欢迎来到朱兴达的个人博客"
+  subtitle = "Welcome to Zhu Xingda's Personal Blog"
+  backgroundImage = "/img/background.JPG"
+
+[Params.style.vars]
+  highlightColor = "#0a55a7"
+
+[Params.sidebar]
+  home = "right"
+  list = "right"
+  single = true
+  widgets = ["search", "recent", "categories", "taglist", "social"]
+
+[Params.widgets.social]
+  cached = false # activate cache if true
+  # Enable parts of social widget
+#   facebook = "username"
+#   twitter = "username"
+#   instagram = "username"
+#   linkedin = "username"
+#   telegram = "username"
+  github = "ZhuXingda"
+  email = "zhuxingda211@outlook.com"
+
+[[Params.widgets.social.custom]]
+  title = "Youtube"
+  url = "https://youtube.com/user/username"
+  icon = "svg/youtube.svg" # Optional. Path relative to "layouts/partials"
+  rel = "noopener noreferrer" # Set to false to remove the rel attribute
+
+[[Params.widgets.social.custom]]
+  title = "Bilibili"
+  url = "https://space.bilibili.com/44425167"
+  icon = "svg/bilibili.svg" # Optional. Path relative to "layouts/partials"
+  rel = "noopener noreferrer" # Set to false to remove the rel attribute
+
+[Author]
+  name = "Zhu Xingda"
