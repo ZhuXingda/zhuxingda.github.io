@@ -4,7 +4,7 @@ title = "Zhu Xingda"
 theme = "mainroad"
 
 defaultContentLanguage = 'zh-cn'
-defaultContentLanguageInSubdir = true
+defaultContentLanguageInSubdir = false
 [languages]
   [languages.zh-cn]
     languageCode = 'zh-cn'
@@ -21,13 +21,9 @@ defaultContentLanguageInSubdir = true
     pageRef = '/tech'
     weight = 20
   [[menus.main]]
-    name = 'DIY'
-    pageRef = '/diy'
-    weight = 30
-  [[menus.main]]
     name = '生活-Life'
     pageRef = '/Sport'
-    weight = 40
+    weight = 30
 
 [Params]
   copyright = "Zhu Xingda"
@@ -78,3 +74,11 @@ defaultContentLanguageInSubdir = true
 
 [Author]
   name = "Zhu Xingda"
+
+# [markup]
+#   defaultMarkdownHandler = "rst"
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderHooks]
+      [markup.goldmark.renderHooks.image]
+        enableDefault = true
