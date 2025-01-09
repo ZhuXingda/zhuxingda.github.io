@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Flink on Zhu Xingda</title>
+    <link>https://blog.xingda.space/tags/flink/</link>
+    <description>Recent content in Flink on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 03 Jan 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/tags/flink/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Flink 内存管理</title>
+      <link>https://blog.xingda.space/tech/flink_memory_management/</link>
+      <pubDate>Fri, 03 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/tech/flink_memory_management/</guid>
+      <description>&lt;h3 id=&#34;flink-taskmanager-内存模型&#34;&gt;Flink Taskmanager 内存模型&lt;/h3&gt;&#xA;&lt;p&gt;整个内存模型物理上分为 JVM Heap 和 Off-Heap 两部分。&lt;br&gt;&#xA;逻辑上可以分为 Total Process Memory 和 Total Flink Memory 两部分  &lt;br&gt;&#xA;Total Process Memory 为整个 Flink JVM 进程使用的全部内存&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

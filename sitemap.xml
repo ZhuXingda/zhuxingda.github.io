@@ -1,11 +1,40 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  
-  <sitemap>
-    <loc>https://blog.xingda.space/zh-cn/sitemap.xml</loc>
-    
-      <lastmod>2024-10-12T00:00:00+00:00</lastmod>
-    
-  </sitemap>
-  
-</sitemapindex>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://blog.xingda.space/categories/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/development/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/flink/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/flink_memory_management/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/</loc>
+    <lastmod>2025-01-03T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/algorithem/</loc>
+    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/software/</loc>
+    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/algorithem_case_notebook/</loc>
+    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/</loc>
+    <lastmod>2022-01-25T14:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/k8s-cluster-build/</loc>
+  </url>
+</urlset>
