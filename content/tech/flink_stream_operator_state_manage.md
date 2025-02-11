@@ -4,7 +4,7 @@ date: 2024-11-28
 tags:
     - Flink 
 categories:
-    - "Development"
+    - "Software Development"
 draft: true
 ---
 

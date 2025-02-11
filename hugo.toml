@@ -33,6 +33,10 @@ defaultContentLanguageInSubdir = false
   pager = true
   dateformat = "2006-01-02"
 #   mainSections = ["post", "blog", "news"]
+  mathjax = true
+
+[Params.author.name]
+  name = "Zhu Xingda"
 
 [Params.logo]
 #   image = "favicon.ico"
@@ -46,7 +50,7 @@ defaultContentLanguageInSubdir = false
 [Params.sidebar]
   home = "right"
   list = "right"
-  single = true
+  single = false
   widgets = ["search", "recent", "categories", "taglist", "social"]
 
 [Params.widgets.social]
@@ -72,13 +76,12 @@ defaultContentLanguageInSubdir = false
   icon = "svg/bilibili.svg" # Optional. Path relative to "layouts/partials"
   rel = "noopener noreferrer" # Set to false to remove the rel attribute
 
-[Author]
-  name = "Zhu Xingda"
-
-# [markup]
-#   defaultMarkdownHandler = "rst"
 [markup]
   [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
     [markup.goldmark.renderHooks]
       [markup.goldmark.renderHooks.image]
         enableDefault = true
+    [markup.goldmark.extensions.passthrough]
+      enable = true
