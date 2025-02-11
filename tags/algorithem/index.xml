@@ -9,11 +9,11 @@
     <lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/algorithem/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>常规算法笔记</title>
+      <title>一些常见传统算法的 golang 实现</title>
       <link>https://blog.xingda.space/tech/algorithem_case_notebook/</link>
       <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/algorithem_case_notebook/</guid>
-      <description>数组排序 快排 二叉树 大顶堆/小顶堆 </description>
+      <description>数组 快排 树 大顶堆/小顶堆 红黑树 </description>
     </item>
   </channel>
 </rss>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Flink 基础】Flink Kubernetes Application Mode 启动分析 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Flink 基础】Flink Kubernetes Application Mode 启动分析</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-05-21T00:00:00Z">2024-05-21</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software-development/" rel="category">Software Development</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>分析 Flink 在 Kubernetes Application Mode 下启动任务的过程</p>
+<h2 id="flink-k8s-application-mode-启动代码调用栈">Flink K8s Application Mode 启动代码调用栈</h2>
+<h4 id="console-client-启动流程">Console Client 启动流程</h4>
+<table>
+<thead>
+<tr>
+<th>sec</th>
+<th>代码</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>org.apache.flink.client.cli.CliFrontend#runApplication</td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>org.apache.flink.client.deployment.application.cli.ApplicationClusterDeployer#run</td>
+<td></td>
+</tr>
+<tr>
+<td>2.1</td>
+<td>org.apache.flink.client.deployment.DefaultClusterClientServiceLoader#getClusterClientFactory</td>
+<td></td>
+</tr>
+<tr>
+<td>2.2</td>
+<td>org.apache.flink.client.deployment.AbstractContainerizedClusterClientFactory#getClusterSpecification</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>org.apache.flink.client.deployment.ClusterDescriptor#deployApplicationCluster</td>
+<td></td>
+</tr>
+<tr>
+<td>3.1</td>
+<td>org.apache.flink.kubernetes.KubernetesClusterDescriptor#deployApplicationCluster</td>
+<td>启动 Kubernetes deployment</td>
+</tr>
+<tr>
+<td>3.1.1</td>
+<td>org.apache.flink.kubernetes.KubernetesClusterDescriptor#deployClusterInternal</td>
+<td>构建 Jobmanager 的 Container 、Pod Template 和 Deployment，然后下发给 Kubernetes 集群执行</td>
+</tr>
+<tr>
+<td>3.1.1.1</td>
+<td>org.apache.flink.kubernetes.kubeclient.factory.KubernetesJobManagerFactory#buildKubernetesJobManagerSpecification</td>
+<td></td>
+</tr>
+<tr>
+<td>3.1.1.1.1</td>
+<td>org.apache.flink.kubernetes.kubeclient.decorators.CmdJobManagerDecorator#decorateFlinkPod</td>
+<td>设置 Pod 的启动命令 kubernetes-jobmanager.sh kubernetes-application [&hellip;kubernetes.jobmanager.entrypoint.args]。在启动 JobManager 的过程中有在配置里设置 kubernetes.internal.jobmanager.entrypoint.class 参数为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，但在装饰 JobManager 的 Pod 时并没有用到这项配置。</td>
+</tr>
+</tbody>
+</table>
+<h4 id="flink-docker-image-启动流程">Flink Docker Image 启动流程</h4>
+<ol>
+<li>kubernetes-jobmanager.sh 脚本在 flink-dist/src/main/flink-bin/kubernetes-bin/ 目录下，按照前文 Pod Template 的构建，Flink Docker Image 启动 Container 时执行该脚本。</li>
+<li>kubernetes-jobmanager.sh 进一步调用 ${FLINK_BIN_DIR}/flink-console.sh kubernetes-application [&hellip;args]，在该脚本中，CLASS_TO_RUN 变量被设置为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，然后以该类为入口正式启动 JobManager。这里解释了为什么前面设置了 kubernetes.internal.jobmanager.entrypoint.class 参数却没有用到。</li>
+</ol>
+<h4 id="kubernetesapplicationclusterentrypoint-启动流程">KubernetesApplicationClusterEntrypoint 启动流程</h4>
+<table>
+<thead>
+<tr>
+<th>sec</th>
+<th>代码</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint</td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>org.apache.flink.runtime.entrypoint.ClusterEntrypoint#runClusterEntrypoint</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>org.apache.flink.runtime.entrypoint.ClusterEntrypoint#startCluster</td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td>org.apache.flink.runtime.entrypoint.ClusterEntrypoint#runCluster</td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td>org.apache.flink.runtime.entrypoint.component.DefaultDispatcherResourceManagerComponentFactory#create</td>
+<td></td>
+</tr>
+<tr>
+<td>6</td>
+<td>org.apache.flink.runtime.dispatcher.runner.DefaultDispatcherRunnerFactory#createDispatcherRunner</td>
+<td></td>
+</tr>
+<tr>
+<td>7</td>
+<td>org.apache.flink.client.deployment.application.ApplicationDispatcherLeaderProcessFactoryFactory#createFactory</td>
+<td></td>
+</tr>
+<tr>
+<td>8</td>
+<td>org.apache.flink.client.deployment.application.ApplicationDispatcherGatewayServiceFactory#ApplicationDispatcherGatewayServiceFactory</td>
+<td></td>
+</tr>
+<tr>
+<td>9</td>
+<td>org.apache.flink.client.deployment.application.ApplicationDispatcherGatewayServiceFactory#create</td>
+<td></td>
+</tr>
+<tr>
+<td>10</td>
+<td>org.apache.flink.client.deployment.application.ApplicationDispatcherBootstrap#ApplicationDispatcherBootstrap</td>
+<td></td>
+</tr>
+<tr>
+<td>11</td>
+<td>org.apache.flink.client.deployment.application.ApplicationDispatcherBootstrap#runApplicationEntryPoint</td>
+<td></td>
+</tr>
+<tr>
+<td>12</td>
+<td>org.apache.flink.client.ClientUtils#executeProgram</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/flink/" rel="tag">Flink</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/kubernetes/" rel="tag">Kubernetes</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/flink_fault_tolerance/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Flink 基础】Fault Tolerance 实现原理</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/flink_source_api/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Flink 基础】Data Source API 结构及实现</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

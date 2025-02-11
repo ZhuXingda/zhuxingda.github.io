@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Flink 内存管理 - Zhu Xingda</title>
+	<title>【Flink 基础】Taskmanager 内存管理 - Zhu Xingda</title>
 	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
 	<meta name="description" content="">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,42 +76,36 @@
 <main class="main" role="main">
 	<article class="post">
 		<header class="post__header">
-			<h1 class="post__title">Flink 内存管理</h1>
-			<div class="post__meta meta"><div class="meta__item-author meta__item">
-	<svg class="meta__icon icon icon-author" width="16" height="16" viewBox="0 0 16 16"><path d="M8 1c2 0 3.5 2 3.5 4.5S10 9 10 9c3 1 4 2 4 6H2c0-4 1-5 4-6 0 0-1.5-1-1.5-3.5S6 1 8 1"/></svg><span class="meta__text">Zhu Xingda</span>
-</div>
+			<h1 class="post__title">【Flink 基础】Taskmanager 内存管理</h1>
+			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-01-03T00:00:00Z">2025-01-03</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/development/" rel="category">Development</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2023-01-03T00:00:00Z">2023-01-03</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software-development/" rel="category">Software Development</a>
 	</span>
 </div></div>
 		</header>
 		
-	<figure class="post__thumbnail thumbnail">
-		
-		<img class="thumbnail__image" src="https://nightlies.apache.org/flink/flink-docs-release-1.20/fig/detailed-mem-model.svg" alt="Flink 内存管理">
-		
-	</figure>
 		
 		<div class="content post__content clearfix">
-			<h3 id="flink-taskmanager-内存模型">Flink Taskmanager 内存模型</h3>
-<p>整个内存模型物理上分为 JVM Heap 和 Off-Heap 两部分。<br>
-逻辑上可以分为 Total Process Memory 和 Total Flink Memory 两部分  <br>
-Total Process Memory 为整个 Flink JVM 进程使用的全部内存</p>
+			<p>Flink Taskmanager 的内存划分和调整策略。</p>
+<h3 id="flink-taskmanager-内存模型">Flink Taskmanager 内存模型</h3>
+<img src="https://nightlies.apache.org/flink/flink-docs-release-1.20/fig/detailed-mem-model.svg" alt="Flink Taskmanager 内存模型" width="50%">
+<p>整个内存模型物理上分为 <strong>JVM Heap</strong> 和 <strong>Off-Heap</strong> 两部分，逻辑上可以分为 <strong>Total Process Memory</strong> 和 <strong>Total Flink Memory</strong> 两部分。  <br>
+<strong>Total Process Memory</strong> 为整个 Flink JVM 进程使用的全部内存</p>
 <blockquote>
-<p>Total Process Memory = Total Flink Memory + JVM Metaspace + JVM Overhead</p>
+<p><strong>Total Process Memory</strong> = Total Flink Memory + JVM Metaspace + JVM Overhead</p>
 </blockquote>
-<p>配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-flink-size">taskmanager.memory.flink.size</a> 和 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-process-size">	taskmanager.memory.process.size</a>，两个选项配置任意一个即可。对于 Kubernetes session mode 部署，在启动 session 时使用 taskmanager.memory.process.size 配置。</p>
+<p>配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-flink-size">taskmanager.memory.flink.size</a> 和 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-process-size">	taskmanager.memory.process.size</a>，两个选项配置任意一个即可。对于 Kubernetes session mode 部署，在启动 session 时使用 <strong>taskmanager.memory.process.size</strong> 配置。</p>
 <h5 id="jvm-heap-堆内存">JVM Heap (堆内存)</h5>
 <ol>
-<li>Framework Heap Memory <br>
+<li><strong>Framework Heap Memory</strong> <br>
 Flink 框架运行所需要使用的内存，配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-framework-heap-size">taskmanager.memory.framework.heap.size</a>，默认值为 128 MB，一般不建议修改。</li>
-<li>Task Heap Memory<br>
-Flink 任务算子和用户代码运行使用的内存，配置项为<a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-task-heap-size">taskmanager.memory.task.heap.size</a>，默认值为 Total Flink Memory 减去 Framework Heap Memory, Framework Off-Heap Memory, Task Off-Heap Memory, Managed Memory 和 Network Memory</li>
+<li><strong>Task Heap Memory</strong><br>
+Flink 任务算子和用户代码运行使用的内存，配置项为<a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-task-heap-size">taskmanager.memory.task.heap.size</a>，默认值为 <strong>Total Flink Memory</strong> 减去 <strong>Framework Heap Memory</strong>, <strong>Framework Off-Heap Memory</strong>, <strong>Task Off-Heap Memory</strong>, <strong>Managed Memory</strong> 和 <strong>Network Memory</strong></li>
 </ol>
 <h5 id="off-heap非堆内存">Off-Heap（非堆内存）</h5>
 <ol>
 <li>
-<p>Managed memory<br>
+<p><strong>Managed memory</strong><br>
 由 Flink 内存管理器管理的非堆内存，主要用于：</p>
 <ul>
 <li>内置算法：排序、哈希表、缓存中间结果</li>
@@ -122,21 +116,21 @@ Flink 任务算子和用户代码运行使用的内存，配置项为<a href="ht
 <p>对于不使用三种功能的场景，可以把 taskmanager.memory.managed.fraction 设置为 0，来增大用户代码能使用的内存。</p>
 </li>
 <li>
-<p>Framework Off-Heap Memory<br>
+<p><strong>Framework Off-Heap Memory</strong><br>
 Flink 框架运行所需要使用的非堆内存，配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-framework-off-heap-size">taskmanager.memory.framework.off-heap.size</a>，默认值为 128 MB，不建议修改。</p>
 </li>
 <li>
-<p>Task Off-Heap Memory<br>
+<p><strong>Task Off-Heap Memory</strong><br>
 Flink 任务算子和用户代码运行使用的非堆内存，配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-task-off-heap-size">taskmanager.memory.task.off-heap.size</a>，默认值为 0，如果用户代码里有用到非堆内存的情况，需要手动设置。</p>
 </li>
 <li>
-<p>Network Memory<br>
+<p><strong>Network Memory</strong><br>
 TaskManager 之间传输数据用到的直接内存，比如网络缓存，配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-network-min">taskmanager.memory.network.min</a> <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-network-max">taskmanager.memory.network.max</a> <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-network-fraction">taskmanager.memory.network.fraction</a>，网络缓存调优<a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/memory/network_mem_tuning/">相关指南</a>。默认值为 Total Flink Memory 的 10%，最大不默认没有上限，最小默认 64MB。</p>
 </li>
 <li>
-<p>JVM Metaspace 和 JVM Overhead<br>
+<p><strong>JVM Metaspace</strong> 和 <strong>JVM Overhead</strong><br>
 JVM Metaspace 和 JVM Overhead 的内存，配置项为 <a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/config/#taskmanager-memory-jvm-metaspace-size">taskmanager.memory.jvm-metaspace.size
-</a> <a href="/">taskmanager.memory.jvm-overhead.fraction</a> 等。其中 Overhead 默认为 Total Process Memory 的 10%，最大默认不超过 1024MB，最小默认大于 192MB；Metaspace 默认为 256MB。</p>
+</a> <a href="/">taskmanager.memory.jvm-overhead.fraction</a> 等。其中 Overhead 默认为 <strong>Total Process Memory</strong> 的 10%，最大默认不超过 1024MB，最小默认大于 192MB；Metaspace 默认为 256MB。</p>
 </li>
 </ol>
 <h3 id="on-kubernetes-cluster-具体配置">On Kubernetes Cluster 具体配置</h3>
@@ -147,14 +141,14 @@ JVM Metaspace 和 JVM Overhead 的内存，配置项为 <a href="https://nightli
 </span></span><span style="display:flex;"><span><span style="color:#f92672">taskmanager.memory.managed.fraction</span>: <span style="color:#ae81ff">0</span>
 </span></span></code></pre></div><p>最后分配结果就是：</p>
 <ul>
-<li>Framework Heap Memory 128MB</li>
-<li>Managed Memory 0MB</li>
-<li>Framework Off-Heap Memory 128MB</li>
-<li>Task Off-Heap Memory 0MB</li>
-<li>Network Memory (8192MB - 256MB - 819MB) * 0.1 = 712 MB</li>
-<li>JVM Metaspace 256MB</li>
-<li>JVM Overhead 8192MB * 0.1 = 819MB</li>
-<li>Task Heap Memory 8192MB - 128MB - 128MB - 0MB - 819MB - 256MB - 712MB = 6149MB</li>
+<li><strong>Framework Heap Memory</strong> 128MB</li>
+<li><strong>Managed Memory</strong> 0MB</li>
+<li><strong>Framework Off-Heap Memory</strong> 128MB</li>
+<li><strong>Task Off-Heap Memory</strong> 0MB</li>
+<li><strong>Network Memory</strong> (8192MB - 256MB - 819MB) * 0.1 = 712 MB</li>
+<li><strong>JVM Metaspace</strong> 256MB</li>
+<li><strong>JVM Overhead</strong> 8192MB * 0.1 = 819MB</li>
+<li><strong>Task Heap Memory</strong> 8192MB - 128MB - 128MB - 0MB - 819MB - 256MB - 712MB = 6149MB</li>
 </ul>
 <h3 id="参考">参考</h3>
 <p><a href="https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/memory/mem_setup_tm/">https://nightlies.apache.org/flink/flink-docs-release-1.20/docs/deployment/memory/mem_setup_tm/</a></p>
@@ -175,35 +169,17 @@ JVM Metaspace 和 JVM Overhead 的内存，配置项为 <a href="https://nightli
 
 
 <nav class="pager flex">
-	<div class="pager__item pager__item--prev">
-		<a class="pager__link" href="/tech/algorithem_case_notebook/" rel="prev">
-			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title">常规算法笔记</p>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/flink_fault_tolerance/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Flink 基础】Fault Tolerance 实现原理</p>
 		</a>
 	</div>
 </nav>
 
 
 			</div>
-			<aside class="sidebar">
-<div class="widget-toc toc">
-	<div class="toc__title">目录</div>
-	<div class="toc__menu">
-		<nav id="TableOfContents">
-  <ul>
-    <li>
-      <ul>
-        <li><a href="#flink-taskmanager-内存模型">Flink Taskmanager 内存模型</a></li>
-        <li><a href="#on-kubernetes-cluster-具体配置">On Kubernetes Cluster 具体配置</a></li>
-        <li><a href="#参考">参考</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-	</div>
-</div>
-
-</aside>
+			
 		</div>
 		<footer class="footer">
 	<div class="container footer__container flex">
@@ -216,5 +192,7 @@ JVM Metaspace 和 JVM Overhead 的内存，配置项为 <a href="https://nightli
 </footer>
 	</div>
 <script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
 </body>
 </html>

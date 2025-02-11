@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>常规算法笔记 - Zhu Xingda</title>
+	<title>一些常见传统算法的 golang 实现 - Zhu Xingda</title>
 	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
 	<meta name="description" content="">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -76,22 +76,21 @@
 <main class="main" role="main">
 	<article class="post">
 		<header class="post__header">
-			<h1 class="post__title">常规算法笔记</h1>
-			<div class="post__meta meta"><div class="meta__item-author meta__item">
-	<svg class="meta__icon icon icon-author" width="16" height="16" viewBox="0 0 16 16"><path d="M8 1c2 0 3.5 2 3.5 4.5S10 9 10 9c3 1 4 2 4 6H2c0-4 1-5 4-6 0 0-1.5-1-1.5-3.5S6 1 8 1"/></svg><span class="meta__text">Zhu Xingda</span>
-</div>
+			<h1 class="post__title">一些常见传统算法的 golang 实现</h1>
+			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-10-12T00:00:00Z">2024-10-12</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software/" rel="category">Software</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-10-12T00:00:00Z">2024-10-12</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software-development/" rel="category">Software Development</a>
 	</span>
 </div></div>
 		</header>
 		
 		
 		<div class="content post__content clearfix">
-			<h2 id="数组排序">数组排序</h2>
+			<h2 id="数组">数组</h2>
 <h4 id="快排">快排</h4>
-<h2 id="二叉树">二叉树</h2>
+<h2 id="树">树</h2>
 <h4 id="大顶堆小顶堆">大顶堆/小顶堆</h4>
+<h4 id="红黑树">红黑树</h4>
 
 		</div>
 		<footer class="post__footer">
@@ -111,43 +110,16 @@
 
 <nav class="pager flex">
 	<div class="pager__item pager__item--prev">
-		<a class="pager__link" href="/tech/k8s-cluster-build/" rel="prev">
+		<a class="pager__link" href="/tech/flink_source_api/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title"></p>
-		</a>
-	</div>
-	<div class="pager__item pager__item--next">
-		<a class="pager__link" href="/tech/flink_memory_management/" rel="next">
-			<span class="pager__subtitle">下一篇&thinsp;»</span>
-			<p class="pager__title">Flink 内存管理</p>
+			<p class="pager__title">【Flink 基础】Data Source API 结构及实现</p>
 		</a>
 	</div>
 </nav>
 
 
 			</div>
-			<aside class="sidebar">
-<div class="widget-toc toc">
-	<div class="toc__title">目录</div>
-	<div class="toc__menu">
-		<nav id="TableOfContents">
-  <ul>
-    <li><a href="#数组排序">数组排序</a>
-      <ul>
-        <li></li>
-      </ul>
-    </li>
-    <li><a href="#二叉树">二叉树</a>
-      <ul>
-        <li></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-	</div>
-</div>
-
-</aside>
+			
 		</div>
 		<footer class="footer">
 	<div class="container footer__container flex">
@@ -160,5 +132,7 @@
 </footer>
 	</div>
 <script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
 </body>
 </html>

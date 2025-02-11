@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Flink 基础】Fault Tolerance 实现原理 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Flink 基础】Fault Tolerance 实现原理</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2023-10-12T00:00:00Z">2023-10-12</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software-development/" rel="category">Software Development</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。</p>
+<h3 id="flink-容错机制的实现原理">Flink 容错机制的实现原理</h3>
+<ol>
+<li>Flink 程序的状态（<strong>state</strong>）保存在 state backend 中；</li>
+<li>Flink 定时执行检查点（<strong>checkpoint</strong>）时，会对所有算子的状态做快照（<strong>snapshot</strong>），并把这些快照持久化保存到一个稳定的地方（比如分布式文件系统）；</li>
+<li>当任务出现故障，Flink 会重启任务并从最新的快照处重新执行任务，从而实现容错。</li>
+</ol>
+<h3 id="状态快照的执行过程">状态快照的执行过程</h3>
+<ol>
+<li>Taskmananger 从 Jobmanager 接收到执行 <strong>checkpoint</strong> 的指令后，会让所有 source 算子记录当前的 <strong>offsets</strong>，并在数据流中插入一个编号的 <strong>checkpoint barrier</strong>;</li>
+<li><strong>checkpoint barrier</strong> 会沿着数据流传递到所有的算子，各算子在接收到之后执行 <strong>state snapshot</strong>，执行完之后继续将 barrier 向下游传递。</li>
+<li>有两个输入流的算子（如CoprocessFunction）会执行屏障对齐 (<strong>barrier aligment</strong>)，使快照包含两个输入流在 <strong>checkpoint barrier</strong> 之前的所有 events 产生的 state；</li>
+</ol>
+<h3 id="状态快照的恢复过程">状态快照的恢复过程</h3>
+<ol>
+<li>Flink 重新启动部署整个分布式任务，从最新的 <strong>checkpoint</strong> 恢复每个算子的状态；</li>
+<li>数据源从最新的 <strong>checkpoint</strong> 恢复 <strong>offset</strong>，继续消费数据流；</li>
+<li>如果状态快照是增量式的，算子会先恢复到最新的全量快照，再逐个按增量快照更新。</li>
+</ol>
+<h3 id="精确一次exactly-once">精确一次（exactly once）</h3>
+<p>任务发生故障时，根据不同的容错机制可能会出现一下结果：</p>
+<ul>
+<li>最多一次（<strong>at most once</strong>）：Flink 不对故障做恢复，数据可能会丢失；</li>
+<li>至少一次（<strong>at least once</strong>）：Flink 从故障恢复，但可能产生重复结果；</li>
+<li>精确一次（<strong>exactly once</strong>）：Flink 从故障恢复，没有结果丢失和重复。</li>
+</ul>
+<p>实现 <strong>at least once</strong> 需要数据源 <strong>source</strong> 支持回朔到快照发生的进度，比如 Kafka 回到某个 offset。<br>
+实现 <strong>exactly once</strong> 在 <strong>at least once</strong> 的基础上还需要数据输出 <strong>sink</strong> 支持事务写入或者幂等写入。</p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/flink/" rel="tag">Flink</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/flink_memory_management/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Flink 基础】Taskmanager 内存管理</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/flink_kubernetes_application_mode/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Flink 基础】Flink Kubernetes Application Mode 启动分析</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

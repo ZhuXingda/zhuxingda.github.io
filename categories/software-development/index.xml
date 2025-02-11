@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Zhu Xingda</title>
-    <link>https://blog.xingda.space/</link>
-    <description>Recent content on Zhu Xingda</description>
+    <title>Software Development on Zhu Xingda</title>
+    <link>https://blog.xingda.space/categories/software-development/</link>
+    <description>Recent content in Software Development on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://blog.xingda.space/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blog.xingda.space/categories/software-development/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>一些常见传统算法的 golang 实现</title>
       <link>https://blog.xingda.space/tech/algorithem_case_notebook/</link>
@@ -42,13 +42,6 @@
       <pubDate>Tue, 03 Jan 2023 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_memory_management/</guid>
       <description>&lt;p&gt;Flink Taskmanager 的内存划分和调整策略。&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>关于我-About Me</title>
-      <link>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/</link>
-      <pubDate>Tue, 25 Jan 2022 14:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/</guid>
-      <description>性别男&#xA;出生于1996年&#xA;家在重庆市黔江区&#xA;现在上海做软件开发工作&#xA;最大的优点是对各种事物都充满兴趣</description>
     </item>
   </channel>
 </rss>

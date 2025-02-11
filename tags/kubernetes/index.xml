@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kubernetes on Zhu Xingda</title>
+    <link>https://blog.xingda.space/tags/kubernetes/</link>
+    <description>Recent content in Kubernetes on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 21 May 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【Flink 基础】Flink Kubernetes Application Mode 启动分析</title>
+      <link>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</link>
+      <pubDate>Tue, 21 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</guid>
+      <description>&lt;p&gt;分析 Flink 在 Kubernetes Application Mode 下启动任务的过程&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

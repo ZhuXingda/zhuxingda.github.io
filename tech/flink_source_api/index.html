@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Flink 基础】Data Source API 结构及实现 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Flink 基础】Data Source API 结构及实现</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-07-13T00:00:00Z">2024-07-13</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software-development/" rel="category">Software Development</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>Flink 1.11 引入新的 <strong>Data Source API</strong> 以取代 <strong>SourceFunction</strong> 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。</p>
+<h3 id="data-source-api-结构">Data Source API 结构</h3>
+<p><img alt="Data Source 模型" src="https://nightlies.apache.org/flink/flink-docs-master/fig/source_components.svg"></p>
+<ul>
+<li><strong>Split</strong>： 描述数据源中部分数据的元数据，不是数据本身，<strong>SourceReader</strong> 拿着这个元数据去数据源读取对应的数据。</li>
+<li><strong>SplitEnumerator</strong>： 位于 <strong>JobManager</strong>，负责把数据源的数据从逻辑上拆分成多个 <strong>Splits</strong>，并把每个 <strong>Split</strong> 分发给 <strong>SourceReader</strong>。</li>
+<li><strong>SourceReader</strong>： 位于 <strong>TaskManager</strong>，负责向 <strong>SplitEnumerator</strong> 请求新的 <strong>Split</strong>，然后根据 <strong>Split</strong> 读取数据，并把数据传递给下游的算子。</li>
+</ul>
+<h3 id="接口定义">接口定义</h3>
+<p>在 flink-core 包下 org.apache.flink.api.connector.source 目录里定义了这些接口：</p>
+<ol>
+<li><strong>Source</strong><br>
+数据源的最外层接口
+<ul>
+<li>getBoundedness：是否为有界数据源</li>
+<li>createEnumerator：创建新的 <strong>SplitEnumerator</strong></li>
+<li>restoreEnumerator：从 checkpoint 恢复 <strong>SplitEnumerator</strong></li>
+<li>getSplitSerializer： 获取 <strong>Split</strong> 的序列化工具，Split 在从 <strong>SplitEunmerator</strong> 传输到 <strong>SourceReader</strong> 时需要序列化，<strong>SourceReader</strong> 执行 checkpoint 快照时也需要对 <strong>Split</strong> 序列化</li>
+<li>getEnumeratorCheckpointSerializer: 获取 <strong>SplitEnumerator</strong> 的 checkpoint 序列化工具，<strong>SplitEnumerator</strong> 执行 checkpoint 快照时需要将其状态序列化，在 restoreEnumerator 时恢复</li>
+</ul>
+</li>
+<li><strong>SplitEnumerator</strong><br>
+Split 分配器
+<ul>
+<li>start：启动分配器</li>
+<li>handleSplitRequest：处理 <strong>SourceReader</strong> 发来的请求，为其分配新的 <strong>Split</strong>，这里是一个经典的生产者消费者模型</li>
+<li>addSplitsBack：<strong>SourceReader</strong> 执行失败时会把分配的 <strong>Split</strong> 还给 <strong>SplitEnumerator</strong></li>
+<li>addReader：通知新添加了一个 <strong>SourceReader</strong> 及其对应的 subTask ID</li>
+<li>snapshotState：执行 checkpoint 快照，返回分配器的状态序列化结果</li>
+<li>handleSourceEvent：处理从某个 subTask 的 <strong>SourceReader</strong> 发来的事件</li>
+<li>close：关闭分配器</li>
+</ul>
+</li>
+<li><strong>SourceReader</strong><br>
+读取和传输数据
+<ul>
+<li>start：启动 <strong>SourceReader</strong></li>
+<li>pollNext：输出数据记录到下游，该方法不能阻塞，推荐一次只输出一条记录。返回包含三种 <strong>InputStatus</strong> 状态：
+<ul>
+<li>MORE_AVAILABLE：还有数据可以立即输出到下游</li>
+<li>NOTHING_AVAILABLE：暂时没有数据，但后续还有数据可以输出</li>
+<li>END_OF_INPUT：已经没有数据可以输出</li>
+</ul>
+</li>
+<li>snapshotState：执行 checkpoint 快照，将正在读取和还未读取的 <strong>Split</strong> 序列化，作为 <strong>SourceReader</strong> 的状态</li>
+<li>isAvailable：返回一个 CompletableFuture 来标识当前 <strong>SourceReader</strong> 是否有数据可以输出。如果该 Future 走到 complete 状态，则 Flink 的 runtime 会持续调用 pollNext 方法来输出数据。如果 pollNext 返回除 MOER_AVAILABLE 外的状态，则 runtime 会再次调用 isAvailable 方法并不断重复。</li>
+<li>addSplits：将 <strong>SplitEnumerator</strong> 分配的新 <strong>Split</strong> 发送到该 <strong>SourceReader</strong></li>
+<li>notiFyNoMoreSplits：当 <strong>SplitEnumerator</strong> 没有更多 Split 可以分配给该 <strong>SourceReader</strong> 时（<strong>SplitEnumeratorContext</strong> 的 SplitEnumeratorContext 方法调用时），会调用该方法</li>
+<li>handleSourceEvents：处理从 <strong>SplitEnumerator</strong> 发来的事件</li>
+<li>pauseOrResumeSplits：暂停或恢复从指定的 <strong>Splits</strong> 读取数据，<strong>SourceOperator</strong> 在对齐 <strong>Splits</strong> 的 watermark 时会调用该方法</li>
+</ul>
+</li>
+<li><strong>SourceSplit</strong><br>
+Split 接口<br>
+Flink 并未对 Split 的格式做限制，完全取决于接口的实现</li>
+<li><strong>SourceReaderContext</strong><br>
+负责将一些 runtime 信息暴露给 <strong>SourceReader</strong>
+<ul>
+<li>metricGroup：当前 <strong>Source</strong> 的 metric group，用于上报 metric</li>
+<li>getConfiguration：获取 Flink 任务的配置，实现自定义 Source 时自定义的一些配置从这里传到 <strong>SourceReader</strong></li>
+<li>sendSplitRequest：<strong>SourceReader</strong> 向 <strong>SplitEnumerator</strong> 请求新的 Split</li>
+<li>getIndexOfSubtask：当前 <strong>SourceReader</strong> 对应的 subTask ID</li>
+<li>currentParallelism：当前 <strong>Source</strong> 的并行度</li>
+</ul>
+</li>
+</ol>
+<h3 id="flink-的基础实现">Flink 的基础实现</h3>
+<p>flink-core 包下的接口定义只是对 Data Source 里各成员的功能做了基本描述，不同数据源在实现时其实有很多内部功能是相同的，因此 Flink 在 flink-connectors/flink-connector-base 包下提供了一些接口的基础实现来简化连接器的开发。</p>
+<ol>
+<li><strong>SourceReaderBase</strong><br>
+实现了 <strong>SourceReader</strong> 接口，其内部用 <strong>SplitFetcherManager</strong> 管理负责读取数据的 <strong>SplitFetcher</strong>，读取的数据被写到阻塞队列经 <strong>RecordEmitter</strong> 消费后推送到下游</li>
+<li><strong>SplitFetcher</strong><br>
+继承 <strong>Runnable</strong> 接口，在 run 方法中不断地顺序执行 taskQueue 里的任务，直到被 shutdown
+主要的 fields 有：
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>类型</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>taskQueue</td>
+<td>Deque<SplitFetcherTask></td>
+<td>SplitFetcher 的任务队列，包含待完成的任务（SplitFetcherTask）</td>
+</tr>
+<tr>
+<td>assignedSplits</td>
+<td>Map&lt;String, SplitT&gt;</td>
+<td>分配到该 SplitFetcher 的 Splits，key 为 Split 的 ID，Split 读取完成后从 assignedSplits 里移除</td>
+</tr>
+<tr>
+<td>splitReader</td>
+<td>SplitReader</td>
+<td>实际执行从 splits 读取数据，并把数据推到 elementsQueue</td>
+</tr>
+<tr>
+<td>elementsQueue</td>
+<td>FutureCompletingBlockingQueue&lt;RecordsWithSplitIds<E>&gt;</td>
+<td>存放从 splits 读出的数据记录，RecordEmitter 从这个队列里消费并推送到下游</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><strong>SplitFetcherTask</strong><br>
+<strong>SplitFetcher</strong>里面循环执行的任务，包括：
+<ul>
+<li><strong>FetchTask</strong>： 用 <strong>SplitReader</strong> 读取数据并推送到 elementsQueue；</li>
+<li><strong>AddSplitsTask</strong>： 往 assignedSplits 里添加 splits；</li>
+<li><strong>RemoveSplitsTask</strong>： 从 assignedSplits 和 splitReader 里移除读完的 splits，并调用 splitFinishedCallback；</li>
+<li><strong>PauseOrResumeSplitsTask</strong> 调用 splitReader 停止或恢复读取指定的 splits；</li>
+</ul>
+</li>
+<li><strong>SplitFetcherManager</strong><br>
+抽象类，负责创建和调用 <strong>SplitFetcher</strong> 不断地推数据到 elementsQueue；如果 <strong>SplitFetcher</strong> 长时间没有 splits 读取或者 taskQueue 为空，则将其关掉</li>
+<li><strong>SplitReader</strong><br>
+定义实际从 splits 读取数据的接口
+<ul>
+<li>fetch： 从 splits 读取数据返回 <strong>RecordsWithSplitIds</strong> 。该方法可以是阻塞的，但当 wakeUp 被调用时应跳出阻塞，可以抛出 interupted 异常或者仅只是返回结果，无论如何响应下一次调用时都应该从上次 fetch 响应的位置继续读取。实现该方法时可以一次性返回所有数据，也可以返回一批数据。</li>
+<li>handleSplitsChanges： 响应 SplitsAddition 和 SplitsRemoval 的变更</li>
+<li>wakeUp： fetch 方法阻塞时调用 wakeUp 跳出阻塞</li>
+<li>pauseOrResumeSplits： 暂停或恢复读取指定的 splits</li>
+</ul>
+</li>
+<li><strong>RecordsWithSplitIds</strong><br>
+用来包装数据记录的接口，splitsIterator 包含了每个 split 的 ID 和其对应的数据</li>
+<li><strong>RecordEmitter</strong><br>
+向下游推送数据的接口，推送的同时需要更新 splitState，这样当 Source 从 state 恢复时能够从最后一次成功推送的数据的下一个位置开始读取。</li>
+<li><strong>SingleThreadMultiplexSourceReaderBase</strong><br>
+SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBlockingQueue）和 SplitFetcherManager 的实现 <strong>SingleThreadFetcherManager</strong>，其内部只保持最多一个 <strong>SplitFetcher</strong> 拉取数据</li>
+</ol>
+<p>综上所述，在 Flink 提供的基础实现上，自定义的 SourceReader 继承 <strong>SingleThreadMultiplexSourceReaderBase</strong> 后只用实现 <strong>SplitEnumerator</strong> 、 <strong>SplitReader</strong> 和 <strong>RecordEmitter</strong> 接口即可。</p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/flink/" rel="tag">Flink</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/flink_kubernetes_application_mode/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Flink 基础】Flink Kubernetes Application Mode 启动分析</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/algorithem_case_notebook/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">一些常见传统算法的 golang 实现</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>
