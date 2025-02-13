@@ -1,4 +1,4 @@
-*,
+@import url(https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkaibright/dist/LXGWBright-SemiLight/result.css);*,
 *::before,
 *::after {
 	box-sizing: border-box;
@@ -43,9 +43,10 @@ html {
 
 body {
 	margin: 0;
-	font-family: "Open Sans", Helvetica, Arial, sans-serif;
-	font-size: 14px;
-	font-size: .875rem;
+	font-family: 'LXGW Bright SemiLight';
+	font-size: 16px;
+    fonnt-weight: 400;
+	/* font-size: .875rem; */
 	line-height: 1.6;
 	word-wrap: break-word;
 	background: #f7f7f7;
@@ -60,12 +61,12 @@ body {
 }
 
 .container--outer {
-	margin: 25px auto;
+	margin: 0px auto;
 	box-shadow: 0 0 10px rgba(50, 50, 50, .17);
 }
 
 .wrapper {
-	padding: 25px;
+	padding: 25px 40px;
 	background: #fff;
 }
 
@@ -382,7 +383,7 @@ select {
 }
 
 .logo {
-	padding: 25px;
+	padding: 50px;
     background-size: cover;
     background-position: center;
     background-image: url(/img/background.JPG);

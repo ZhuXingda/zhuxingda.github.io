@@ -6,13 +6,27 @@
     <description>Recent content in Categories on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 12 Feb 2025 14:26:20 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/categories/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Software Development</title>
-      <link>https://blog.xingda.space/categories/software-development/</link>
+      <title>收藏</title>
+      <link>https://blog.xingda.space/categories/%E6%94%B6%E8%97%8F/</link>
+      <pubDate>Wed, 12 Feb 2025 14:26:20 +0800</pubDate>
+      <guid>https://blog.xingda.space/categories/%E6%94%B6%E8%97%8F/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Algorithem</title>
+      <link>https://blog.xingda.space/categories/algorithem/</link>
       <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/categories/software-development/</guid>
+      <guid>https://blog.xingda.space/categories/algorithem/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>大数据</title>
+      <link>https://blog.xingda.space/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/</link>
+      <pubDate>Sat, 13 Jul 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/</guid>
       <description></description>
     </item>
   </channel>

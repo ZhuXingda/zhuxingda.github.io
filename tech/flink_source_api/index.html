@@ -79,7 +79,7 @@
 			<h1 class="post__title">【Flink 基础】Data Source API 结构及实现</h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-07-13T00:00:00Z">2024-07-13</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/software-development/" rel="category">Software Development</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-07-13T00:00:00Z">2024-07-13</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/" rel="category">大数据</a>
 	</span>
 </div></div>
 		</header>
@@ -152,8 +152,8 @@ Flink 并未对 Split 的格式做限制，完全取决于接口的实现</li>
 </ul>
 </li>
 </ol>
-<h3 id="flink-的基础实现">Flink 的基础实现</h3>
-<p>flink-core 包下的接口定义只是对 Data Source 里各成员的功能做了基本描述，不同数据源在实现时其实有很多内部功能是相同的，因此 Flink 在 flink-connectors/flink-connector-base 包下提供了一些接口的基础实现来简化连接器的开发。</p>
+<h3 id="高级接口定义">高级接口定义</h3>
+<p>flink-core 包下的接口定义对 Data Source 里各成员的功能做了基本描述，其中 <strong>SourceReader</strong> 是完全异步的（ pollNext 不能阻塞）。但很多外部数据源在读数据时是同步的操作（比如 Kafka Client 的 poll），所以需要把这些同步读数据和 <strong>SourceReader</strong> 的异步 pollNext 分到不同的线程执行，中间用一个队列来传递数据。Flink 提供了一个高级接口 <strong>SplitReader</strong> 来实现这个功能。</p>
 <ol>
 <li><strong>SourceReaderBase</strong><br>
 实现了 <strong>SourceReader</strong> 接口，其内部用 <strong>SplitFetcherManager</strong> 管理负责读取数据的 <strong>SplitFetcher</strong>，读取的数据被写到阻塞队列经 <strong>RecordEmitter</strong> 消费后推送到下游</li>
@@ -202,11 +202,12 @@ Flink 并未对 Split 的格式做限制，完全取决于接口的实现</li>
 </ul>
 </li>
 <li><strong>SplitFetcherManager</strong><br>
-抽象类，负责创建和调用 <strong>SplitFetcher</strong> 不断地推数据到 elementsQueue；如果 <strong>SplitFetcher</strong> 长时间没有 splits 读取或者 taskQueue 为空，则将其关掉</li>
+<img src="https://nightlies.apache.org/flink/flink-docs-master/fig/source_reader.svg">
+抽象类，负责维护一个 <strong>SplitFetcher</strong> 池，并把 splits 分配给 SplitFetchers ，每个 SplitFetcher 用一个 <strong>SplitReader</strong> 从 split 读取数据并转发到 elementQueue ；如果一个 <strong>SplitFetcher</strong> 长时间没有 splits 读取或者 taskQueue 为空，则将其关掉</li>
 <li><strong>SplitReader</strong><br>
 定义实际从 splits 读取数据的接口
 <ul>
-<li>fetch： 从 splits 读取数据返回 <strong>RecordsWithSplitIds</strong> 。该方法可以是阻塞的，但当 wakeUp 被调用时应跳出阻塞，可以抛出 interupted 异常或者仅只是返回结果，无论如何响应下一次调用时都应该从上次 fetch 响应的位置继续读取。实现该方法时可以一次性返回所有数据，也可以返回一批数据。</li>
+<li>fetch： 从 splits 读取数据返回 <strong>RecordsWithSplitIds</strong> 。该方法可以是<strong>阻塞</strong>的，但当 wakeUp 被调用时应跳出阻塞，可以抛出 interupted 异常或者仅只是返回结果，无论如何响应下一次调用时都应该从上次 fetch 响应的位置继续读取。实现该方法时可以一次性返回所有数据，也可以返回一批数据。</li>
 <li>handleSplitsChanges： 响应 SplitsAddition 和 SplitsRemoval 的变更</li>
 <li>wakeUp： fetch 方法阻塞时调用 wakeUp 跳出阻塞</li>
 <li>pauseOrResumeSplits： 暂停或恢复读取指定的 splits</li>
@@ -217,9 +218,20 @@ Flink 并未对 Split 的格式做限制，完全取决于接口的实现</li>
 <li><strong>RecordEmitter</strong><br>
 向下游推送数据的接口，推送的同时需要更新 splitState，这样当 Source 从 state 恢复时能够从最后一次成功推送的数据的下一个位置开始读取。</li>
 <li><strong>SingleThreadMultiplexSourceReaderBase</strong><br>
-SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBlockingQueue）和 SplitFetcherManager 的实现 <strong>SingleThreadFetcherManager</strong>，其内部只保持最多一个 <strong>SplitFetcher</strong> 拉取数据</li>
+SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBlockingQueue）和 SplitFetcherManager 的单线程模型实现 <strong>SingleThreadFetcherManager</strong>，其内部只保持最多一个 <strong>SplitFetcher</strong> 拉取数据</li>
 </ol>
-<p>综上所述，在 Flink 提供的基础实现上，自定义的 SourceReader 继承 <strong>SingleThreadMultiplexSourceReaderBase</strong> 后只用实现 <strong>SplitEnumerator</strong> 、 <strong>SplitReader</strong> 和 <strong>RecordEmitter</strong> 接口即可。</p>
+<h3 id="event-time-和-watermarks">Event Time 和 Watermarks</h3>
+<p><strong>WatermarkStrategy</strong> 在构建 Source 时定义，包含 <strong>TimeStampAssigner</strong> 和 <strong>WatermarkGenerator</strong>，两个构造器在 Source 输出数据后调用</p>
+<h5 id="event-timestamps">Event Timestamps</h5>
+<p>Event Timestamp 可以由 <strong>TimeStampAssigner</strong> 在数据输出后绑定，也可以由 <strong>SourceReader</strong> 在往 <strong>ReaderOutput</strong> 输出数据时通过调用 collect(record, timestamp) 给数据记录附上时间戳</p>
+<h5 id="watermarks-generation">Watermarks Generation</h5>
+<ul>
+<li>Watermark Generation 只在 streaming 模式下生效，支持对每个 split 生成独立的 watermark，以更好的观察 Event Time 倾斜以及防止暂停的 partitions 拖累整个任务的 Event Tiem 进度</li>
+<li>继承高级接口的 <strong>SplitReader</strong> 可以自动实现分 split 生成 watermark</li>
+<li>继承初级接口的 <strong>SourceReader</strong> 需要借用 <strong>ReaderOutput</strong> 的 createOutputForSplit(splitId) releaseOutputForSplit(splitId) 创建和释放 split 对应的输出</li>
+</ul>
+<h3 id="参考">参考</h3>
+<p><a href="https://nightlies.apache.org/flink/flink-docs-master/docs/dev/datastream/sources/#the-split-reader-api">https://nightlies.apache.org/flink/flink-docs-master/docs/dev/datastream/sources/#the-split-reader-api</a></p>
 		</div>
 		<footer class="post__footer">
 			
@@ -235,6 +247,27 @@ SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBl
 	</article>
 </main>
 
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
 
 <nav class="pager flex">
 	<div class="pager__item pager__item--prev">
@@ -246,7 +279,7 @@ SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBl
 	<div class="pager__item pager__item--next">
 		<a class="pager__link" href="/tech/algorithem_case_notebook/" rel="next">
 			<span class="pager__subtitle">下一篇&thinsp;»</span>
-			<p class="pager__title">一些常见传统算法的 golang 实现</p>
+			<p class="pager__title">【leetcode】一些常见传统算法的 Golang 实现</p>
 		</a>
 	</div>
 </nav>

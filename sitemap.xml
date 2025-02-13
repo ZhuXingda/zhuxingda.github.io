@@ -2,31 +2,43 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://blog.xingda.space/tech/interestinga_posts/</loc>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/</loc>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+  </url><url>
     <loc>https://blog.xingda.space/tech/</loc>
-    <lastmod>2024-11-28T00:00:00+00:00</lastmod>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/</loc>
-    <lastmod>2024-11-28T00:00:00+00:00</lastmod>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/%E6%94%B6%E8%97%8F/</loc>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/algorithem_case_notebook/</loc>
+    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tags/algorithem/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/categories/</loc>
+    <loc>https://blog.xingda.space/categories/algorithem/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/categories/software-development/</loc>
+    <loc>https://blog.xingda.space/tags/leetcode/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tags/</loc>
-    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blog.xingda.space/tech/algorithem_case_notebook/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tech/flink_source_api/</loc>
     <lastmod>2024-07-13T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tags/flink/</loc>
+    <lastmod>2024-07-13T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/</loc>
     <lastmod>2024-07-13T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</loc>

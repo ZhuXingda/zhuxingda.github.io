@@ -6,10 +6,17 @@
     <description>Recent content in Teches on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 12 Feb 2025 14:26:20 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tech/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>一些常见传统算法的 golang 实现</title>
+      <title>【收藏夹】技术类文章</title>
+      <link>https://blog.xingda.space/tech/interestinga_posts/</link>
+      <pubDate>Wed, 12 Feb 2025 14:26:20 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/interestinga_posts/</guid>
+      <description>AI Vision Language Model (VLM) OpenVLA&#xA;Github主页 论文&#xA;Embodied AI Embodied AI Guide&#xA;具身智能相关指南&#xA;Github主页&#xA;无人机 飞控 INAV&#xA;开源的飞控和自动导航系统&#xA;Github主页 文档 RubyFPV 主页 ExpressLRS ELRS 开源无线控制链 Github主页 主页</description>
+    </item>
+    <item>
+      <title>【leetcode】一些常见传统算法的 Golang 实现</title>
       <link>https://blog.xingda.space/tech/algorithem_case_notebook/</link>
       <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/algorithem_case_notebook/</guid>
