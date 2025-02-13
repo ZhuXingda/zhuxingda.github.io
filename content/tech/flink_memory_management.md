@@ -4,7 +4,7 @@ date: 2023-01-03
 tags:
     - Flink 
 categories:
-    - "Software Development"
+    - "大数据"
 # thumbnail: https://nightlies.apache.org/flink/flink-docs-release-1.20/fig/detailed-mem-model.svg
 ---
 Flink Taskmanager 的内存划分和调整策略。

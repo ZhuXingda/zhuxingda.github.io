@@ -28,7 +28,7 @@ defaultContentLanguageInSubdir = false
 [Params]
   copyright = "Zhu Xingda"
   post_meta = ["author", "date", "categories"]
-  readmore = true
+  readmore = false
   toc = true
   pager = true
   dateformat = "2006-01-02"
@@ -46,12 +46,13 @@ defaultContentLanguageInSubdir = false
 
 [Params.style.vars]
   highlightColor = "#0a55a7"
+  fontFamilyPrimary = "'LXGW Bright SemiLight'"
 
 [Params.sidebar]
   home = "right"
   list = "right"
   single = false
-  widgets = ["search", "recent", "categories", "taglist", "social"]
+  widgets = ["categories", "taglist", "recent", "social"]
 
 [Params.widgets.social]
   cached = false # activate cache if true
@@ -75,6 +76,12 @@ defaultContentLanguageInSubdir = false
   url = "https://space.bilibili.com/44425167"
   icon = "svg/bilibili.svg" # Optional. Path relative to "layouts/partials"
   rel = "noopener noreferrer" # Set to false to remove the rel attribute
+
+[Params.Gitalk]
+  clientID = "5e216fcfdd8cdb462b85"
+  clientSecret = "10659215d325c41513a047c07f576e345e697b3b"
+  repo = "zhuxingda.github.io"
+  owner = "ZhuXingda"
 
 [markup]
   [markup.goldmark]

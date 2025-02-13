@@ -1,10 +1,11 @@
 ---
-title: 一些常见传统算法的 golang 实现
+title: 【leetcode】一些常见传统算法的 Golang 实现
 date: 2024-10-12
 tags:
   - "algorithem"
+  - "leetcode"
 categories:
-  - "Software Development"
+  - "Algorithem"
 ---
 
 ## 数组

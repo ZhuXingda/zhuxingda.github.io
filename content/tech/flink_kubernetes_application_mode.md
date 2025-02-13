@@ -5,7 +5,7 @@ tags:
     - Flink
     - Kubernetes
 categories:
-    - "Software Development"
+    - "大数据"
 ---
 分析 Flink 在 Kubernetes Application Mode 下启动任务的过程 
 <!--more-->

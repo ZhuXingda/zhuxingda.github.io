@@ -4,7 +4,7 @@ date: 2024-07-13
 tags:
     - Flink 
 categories:
-    - "Software Development"
+    - "大数据"
 ---
 Flink 1.11 引入新的 **Data Source API** 以取代 **SourceFunction** 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。
 <!--more-->
@@ -56,8 +56,8 @@ Split 接口
     - getIndexOfSubtask：当前 **SourceReader** 对应的 subTask ID
     - currentParallelism：当前 **Source** 的并行度
 
-### Flink 的基础实现
-flink-core 包下的接口定义只是对 Data Source 里各成员的功能做了基本描述，不同数据源在实现时其实有很多内部功能是相同的，因此 Flink 在 flink-connectors/flink-connector-base 包下提供了一些接口的基础实现来简化连接器的开发。
+### 高级接口定义
+flink-core 包下的接口定义对 Data Source 里各成员的功能做了基本描述，其中 **SourceReader** 是完全异步的（ pollNext 不能阻塞）。但很多外部数据源在读数据时是同步的操作（比如 Kafka Client 的 poll），所以需要把这些同步读数据和 **SourceReader** 的异步 pollNext 分到不同的线程执行，中间用一个队列来传递数据。Flink 提供了一个高级接口 **SplitReader** 来实现这个功能。
 1. **SourceReaderBase**   
 实现了 **SourceReader** 接口，其内部用 **SplitFetcherManager** 管理负责读取数据的 **SplitFetcher**，读取的数据被写到阻塞队列经 **RecordEmitter** 消费后推送到下游
 2. **SplitFetcher**   
@@ -76,10 +76,11 @@ flink-core 包下的接口定义只是对 Data Source 里各成员的功能做�
     - **RemoveSplitsTask**： 从 assignedSplits 和 splitReader 里移除读完的 splits，并调用 splitFinishedCallback；
     - **PauseOrResumeSplitsTask** 调用 splitReader 停止或恢复读取指定的 splits；
 4. **SplitFetcherManager**   
-抽象类，负责创建和调用 **SplitFetcher** 不断地推数据到 elementsQueue；如果 **SplitFetcher** 长时间没有 splits 读取或者 taskQueue 为空，则将其关掉
+![](https://nightlies.apache.org/flink/flink-docs-master/fig/source_reader.svg)
+抽象类，负责维护一个 **SplitFetcher** 池，并把 splits 分配给 SplitFetchers ，每个 SplitFetcher 用一个 **SplitReader** 从 split 读取数据并转发到 elementQueue ；如果一个 **SplitFetcher** 长时间没有 splits 读取或者 taskQueue 为空，则将其关掉
 5. **SplitReader**   
 定义实际从 splits 读取数据的接口
-    - fetch： 从 splits 读取数据返回 **RecordsWithSplitIds** 。该方法可以是阻塞的，但当 wakeUp 被调用时应跳出阻塞，可以抛出 interupted 异常或者仅只是返回结果，无论如何响应下一次调用时都应该从上次 fetch 响应的位置继续读取。实现该方法时可以一次性返回所有数据，也可以返回一批数据。
+    - fetch： 从 splits 读取数据返回 **RecordsWithSplitIds** 。该方法可以是**阻塞**的，但当 wakeUp 被调用时应跳出阻塞，可以抛出 interupted 异常或者仅只是返回结果，无论如何响应下一次调用时都应该从上次 fetch 响应的位置继续读取。实现该方法时可以一次性返回所有数据，也可以返回一批数据。
     - handleSplitsChanges： 响应 SplitsAddition 和 SplitsRemoval 的变更
     - wakeUp： fetch 方法阻塞时调用 wakeUp 跳出阻塞
     - pauseOrResumeSplits： 暂停或恢复读取指定的 splits
@@ -88,6 +89,16 @@ flink-core 包下的接口定义只是对 Data Source 里各成员的功能做�
 7. **RecordEmitter**   
 向下游推送数据的接口，推送的同时需要更新 splitState，这样当 Source 从 state 恢复时能够从最后一次成功推送的数据的下一个位置开始读取。
 8. **SingleThreadMultiplexSourceReaderBase**   
-SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBlockingQueue）和 SplitFetcherManager 的实现 **SingleThreadFetcherManager**，其内部只保持最多一个 **SplitFetcher** 拉取数据
+SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBlockingQueue）和 SplitFetcherManager 的单线程模型实现 **SingleThreadFetcherManager**，其内部只保持最多一个 **SplitFetcher** 拉取数据
 
-综上所述，在 Flink 提供的基础实现上，自定义的 SourceReader 继承 **SingleThreadMultiplexSourceReaderBase** 后只用实现 **SplitEnumerator** 、 **SplitReader** 和 **RecordEmitter** 接口即可。
+### Event Time 和 Watermarks
+**WatermarkStrategy** 在构建 Source 时定义，包含 **TimeStampAssigner** 和 **WatermarkGenerator**，两个构造器在 Source 输出数据后调用   
+##### Event Timestamps
+Event Timestamp 可以由 **TimeStampAssigner** 在数据输出后绑定，也可以由 **SourceReader** 在往 **ReaderOutput** 输出数据时通过调用 collect(record, timestamp) 给数据记录附上时间戳
+##### Watermarks Generation
+- Watermark Generation 只在 streaming 模式下生效，支持对每个 split 生成独立的 watermark，以更好的观察 Event Time 倾斜以及防止暂停的 partitions 拖累整个任务的 Event Tiem 进度
+- 继承高级接口的 **SplitReader** 可以自动实现分 split 生成 watermark
+- 继承初级接口的 **SourceReader** 需要借用 **ReaderOutput** 的 createOutputForSplit(splitId) releaseOutputForSplit(splitId) 创建和释放 split 对应的输出
+
+### 参考
+https://nightlies.apache.org/flink/flink-docs-master/docs/dev/datastream/sources/#the-split-reader-api

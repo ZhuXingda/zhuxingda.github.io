@@ -29,4 +29,5 @@ jobs:
         with:
           github_token: ${{ secrets.GIT_PAGE_ACTION_TOKEN }}
           publish_dir: ./public
+          cname: blog.xingda.space
           commit_message: ${{ github.event.head_commit.message }}

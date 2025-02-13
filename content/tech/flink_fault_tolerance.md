@@ -4,7 +4,7 @@ date: 2023-10-12
 tags:
     - Flink 
 categories:
-    - "Software Development"
+    - "大数据"
 ---
 Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。
 <!--more-->
