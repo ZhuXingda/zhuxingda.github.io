@@ -21,6 +21,10 @@ defaultContentLanguageInSubdir = false
     pageRef = '/tech'
     weight = 20
   [[menus.main]]
+    name = '笔记本-NoteBook'
+    pageRef = '/note'
+    weight = 20
+  [[menus.main]]
     name = '生活-Life'
     pageRef = '/Sport'
     weight = 30
@@ -85,6 +89,10 @@ defaultContentLanguageInSubdir = false
 
 [markup]
   [markup.goldmark]
+    [markup.goldmark.parser]
+      wrapStandAloneImageWithinParagraph = false
+      [markup.goldmark.parser.attribute]
+        block = true
     [markup.goldmark.renderer]
       unsafe = true
     [markup.goldmark.renderHooks]

@@ -1,9 +1,9 @@
 ---
-title: Flink Stateful Sink 和 两段提交 Sink
+title: 【Flink】Flink Sink API
 date: 2024-11-28
 tags:
     - Flink 
 categories:
-    - "大数据"
+    - "开源框架"
 draft: true
 ---

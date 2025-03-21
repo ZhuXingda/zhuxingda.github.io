@@ -1,10 +1,10 @@
 ---
-title: 【Flink 基础】Data Source API 结构及实现
+title: 【Flink】Data Source API 结构及实现
 date: 2024-07-13
 tags:
     - Flink 
 categories:
-    - "大数据"
+    - "开源框架"
 ---
 Flink 1.11 引入新的 **Data Source API** 以取代 **SourceFunction** 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。
 <!--more-->
@@ -42,12 +42,11 @@ Split 分配器
     - snapshotState：执行 checkpoint 快照，将正在读取和还未读取的 **Split** 序列化，作为 **SourceReader** 的状态
     - isAvailable：返回一个 CompletableFuture 来标识当前 **SourceReader** 是否有数据可以输出。如果该 Future 走到 complete 状态，则 Flink 的 runtime 会持续调用 pollNext 方法来输出数据。如果 pollNext 返回除 MOER_AVAILABLE 外的状态，则 runtime 会再次调用 isAvailable 方法并不断重复。
     - addSplits：将 **SplitEnumerator** 分配的新 **Split** 发送到该 **SourceReader**
-    - notiFyNoMoreSplits：当 **SplitEnumerator** 没有更多 Split 可以分配给该 **SourceReader** 时（**SplitEnumeratorContext** 的 SplitEnumeratorContext 方法调用时），会调用该方法
+    - notifyNoMoreSplits：当 **SplitEnumerator** 没有更多 Split 可以分配给该 **SourceReader** 时（**SplitEnumeratorContext** 的 SplitEnumeratorContext 方法调用时），会调用该方法
     - handleSourceEvents：处理从 **SplitEnumerator** 发来的事件
     - pauseOrResumeSplits：暂停或恢复从指定的 **Splits** 读取数据，**SourceOperator** 在对齐 **Splits** 的 watermark 时会调用该方法
 4. **SourceSplit**   
-Split 接口   
-    Flink 并未对 Split 的格式做限制，完全取决于接口的实现
+Split 接口，由开发者实现
 5. **SourceReaderContext**   
 负责将一些 runtime 信息暴露给 **SourceReader**
     - metricGroup：当前 **Source** 的 metric group，用于上报 metric
@@ -57,7 +56,7 @@ Split 接口
     - currentParallelism：当前 **Source** 的并行度
 
 ### 高级接口定义
-flink-core 包下的接口定义对 Data Source 里各成员的功能做了基本描述，其中 **SourceReader** 是完全异步的（ pollNext 不能阻塞）。但很多外部数据源在读数据时是同步的操作（比如 Kafka Client 的 poll），所以需要把这些同步读数据和 **SourceReader** 的异步 pollNext 分到不同的线程执行，中间用一个队列来传递数据。Flink 提供了一个高级接口 **SplitReader** 来实现这个功能。
+flink-core 包下的接口定义对 Data Source 里各成员的功能做了基本描述，其中 **SourceReader** 是完全异步的（ pollNext 不能阻塞）。但很多外部数据源在读数据时是阻塞的（比如 Kafka Client 的 poll），所以需要把阻塞的读数据操作和 **SourceReader** 非阻塞的 pollNext 分到不同的线程执行，中间用一个队列来做缓冲。Flink 提供了一个高级接口 **SplitReader** 来实现这个功能。
 1. **SourceReaderBase**   
 实现了 **SourceReader** 接口，其内部用 **SplitFetcherManager** 管理负责读取数据的 **SplitFetcher**，读取的数据被写到阻塞队列经 **RecordEmitter** 消费后推送到下游
 2. **SplitFetcher**   
@@ -94,7 +93,7 @@ SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBl
 ### Event Time 和 Watermarks
 **WatermarkStrategy** 在构建 Source 时定义，包含 **TimeStampAssigner** 和 **WatermarkGenerator**，两个构造器在 Source 输出数据后调用   
 ##### Event Timestamps
-Event Timestamp 可以由 **TimeStampAssigner** 在数据输出后绑定，也可以由 **SourceReader** 在往 **ReaderOutput** 输出数据时通过调用 collect(record, timestamp) 给数据记录附上时间戳
+Event Timestamp 可以由 **TimeStampAssigner** 在数据输出后绑定，也可以由 **SourceReader** 在往 **ReaderOutput** 输出数据时通过调用 collect(record, timestamp) 给数据记录附上时间戳，这类时间戳一般来自外部数据源，比如 Kafka 消息里附带的时间
 ##### Watermarks Generation
 - Watermark Generation 只在 streaming 模式下生效，支持对每个 split 生成独立的 watermark，以更好的观察 Event Time 倾斜以及防止暂停的 partitions 拖累整个任务的 Event Tiem 进度
 - 继承高级接口的 **SplitReader** 可以自动实现分 split 生成 watermark

@@ -1,10 +1,10 @@
 ---
-title: 【Flink 基础】Fault Tolerance 实现原理
+title: 【Flink】Fault Tolerance 实现原理
 date: 2023-10-12
 tags:
     - Flink 
 categories:
-    - "大数据"
+    - "开源框架"
 ---
 Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。
 <!--more-->
@@ -21,7 +21,7 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
 2. 数据源从最新的 **checkpoint** 恢复 **offset**，继续消费数据流；
 3. 如果状态快照是增量式的，算子会先恢复到最新的全量快照，再逐个按增量快照更新。
 ### 精确一次（exactly once）
-任务发生故障时，根据不同的容错机制可能会出现一下结果：
+任务发生故障时，根据不同的容错机制可能会出现以下结果：
   - 最多一次（**at most once**）：Flink 不对故障做恢复，数据可能会丢失；
   - 至少一次（**at least once**）：Flink 从故障恢复，但可能产生重复结果；
   - 精确一次（**exactly once**）：Flink 从故障恢复，没有结果丢失和重复。   
