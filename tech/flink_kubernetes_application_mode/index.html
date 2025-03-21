@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>【Flink 基础】Flink Kubernetes Application Mode 启动分析 - Zhu Xingda</title>
+	<title>【Flink】Flink Kubernetes Application Mode 启动分析 - Zhu Xingda</title>
 	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
 	<meta name="description" content="">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,6 +52,13 @@
 			</a>
 		</li>
 		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
 			<a class="menu__link" href="">
 				
 				<span class="menu__text">生活-Life</span>
@@ -76,10 +83,10 @@
 <main class="main" role="main">
 	<article class="post">
 		<header class="post__header">
-			<h1 class="post__title">【Flink 基础】Flink Kubernetes Application Mode 启动分析</h1>
+			<h1 class="post__title">【Flink】Flink Kubernetes Application Mode 启动分析</h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-05-21T00:00:00Z">2024-05-21</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/" rel="category">大数据</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-05-21T00:00:00Z">2024-05-21</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/" rel="category">开源框架</a>
 	</span>
 </div></div>
 		</header>
@@ -141,10 +148,15 @@
 <tr>
 <td>3.1.1.1.1</td>
 <td>org.apache.flink.kubernetes.kubeclient.decorators.CmdJobManagerDecorator#decorateFlinkPod</td>
-<td>设置 Pod 的启动命令 kubernetes-jobmanager.sh kubernetes-application [&hellip;kubernetes.jobmanager.entrypoint.args]。在启动 JobManager 的过程中有在配置里设置 kubernetes.internal.jobmanager.entrypoint.class 参数为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，但在装饰 JobManager 的 Pod 时并没有用到这项配置。</td>
+<td>设置 Pod 的启动命令 kubernetes-jobmanager.sh kubernetes-application [&hellip;kubernetes.jobmanager.entrypoint.args]。</td>
 </tr>
 </tbody>
 </table>
+<p>一些发现：</p>
+<ol>
+<li>在启动 JobManager 的过程中有在配置里设置 kubernetes.internal.jobmanager.entrypoint.class 配置项为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，但在装饰 JobManager 的 Pod 时并没有用到这项配置。</li>
+<li>在装饰 JobManager 和 TaskManager 时 FlinkConfMountDecorator 会将在提交任务的客户端查找 <code>$internal.deployment.config-dir</code> 或 <code>kubernetes.flink.conf.dir</code> 两个配置指定的目录，并把目录下的 <strong>logback-console.xml</strong> 和 <strong>log4j-console.properties</strong> 配置文件挂载到 Pod 的 /opt/flink/conf 目录下，作为程序运行时日志输出的配置。所以提前在镜像构建时调整日志配置文件是无效的。</li>
+</ol>
 <h4 id="flink-docker-image-启动流程">Flink Docker Image 启动流程</h4>
 <ol>
 <li>kubernetes-jobmanager.sh 脚本在 flink-dist/src/main/flink-bin/kubernetes-bin/ 目录下，按照前文 Pod Template 的构建，Flink Docker Image 启动 Container 时执行该脚本。</li>
@@ -266,13 +278,13 @@
 	<div class="pager__item pager__item--prev">
 		<a class="pager__link" href="/tech/flink_fault_tolerance/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title">【Flink 基础】Fault Tolerance 实现原理</p>
+			<p class="pager__title">【Flink】Fault Tolerance 实现原理</p>
 		</a>
 	</div>
 	<div class="pager__item pager__item--next">
 		<a class="pager__link" href="/tech/flink_source_api/" rel="next">
 			<span class="pager__subtitle">下一篇&thinsp;»</span>
-			<p class="pager__title">【Flink 基础】Data Source API 结构及实现</p>
+			<p class="pager__title">【Flink】Data Source API 结构及实现</p>
 		</a>
 	</div>
 </nav>

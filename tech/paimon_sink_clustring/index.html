@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Paimon】Paimon 表排序 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Paimon】Paimon 表排序</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-02-19T11:14:58&#43;08:00">2025-02-19</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/" rel="category">开源框架</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>Paimon （1.0）对 Bucket Unaware 的 Append Only Table 支持写入时排序以提升查询效率，同时对分 Bucket 的 Append Only Table和 Dynamic Bucket 的 Primary Key Table ，提供了异步的 Sort Compact 支持。</p>
+<p>排序之后的表在同一 Partition（或者同一 Bucket，取决于表类型） 下的数据会更有序地分布在各数据文件中，查询时利用有序性排除掉不需要读取的文件以减少 IO 开销，从而提升查询效率。这和在数据文件的 Metadata 里存储每一列的统计信息（Min/Max等）来实现 Data Skipping 是同样的原理。</p>
+<h2 id="1-data-clustering">1. Data Clustering</h2>
+<p>假设有一张表包含 A - C 3 个列，现将这张表水平拆为 125 张子表。</p>
+<h4 id="11-linear-sorting">1.1 Linear Sorting</h4>
+<p>Linear Sorting 即是按 A B C 三列对表里的数据逐次排序，然后把数据按顺序拆分到各个子表中。<br>
+拆分完之后如果想查找 A = ai, B = bi, C = ci 的数据，则可以按顺序先找到 A = ai 所包含的子表，再在这些子表中找到 B = bi 所包含的子表 &hellip; 以此类推不断缩小查找范围。但如果查询条件是 B = bi, C = ci 则这样的划分就不再有用，因为失去 A 的有序性，包含 B = bi 和 C = ci 的子表大大增加，即关系数据库中常见的最左匹配原则。</p>
+<h4 id="12-多维度-order-clustering">1.2 多维度 Order Clustering</h4>
+<p>如果把 A B C 列按顺序划分为 5 个范围区间（a1&hellip;a5, b1&hellip;b5, c1&hellip;c5），每个区间任意组合得到 5 * 5 * 5 = 125 个区间，每个区间对应一张子表。这样在查询 B = bi, C = ci 的数据时，假设 bi 处于 b2 区间，ci 处于 c3 区间，则可以只用查找 [a1 b2 c3] [a2 b2 c3] &hellip; [a5 b2 c3] 这个五个区间对应的子表，相比 Linear Sorting 划分减少了查询范围。<br>
+这样的划分的本质是把每个维度里 value 较相近的数据放到同一个子表，降低单个维度的分散。换一种说法是把多个维度映射到一维，然后在这一维度里做划分。<br>
+<img alt="不同的范围划分方式" src="https://www.databricks.com/wp-content/uploads/2018/07/Screen-Shot-2018-07-30-at-2.03.55-PM.png"><br>
+如 Databricks 文章里提供的这张图片所示，虽然两个维度都划分了一共 16 个区间，但划分方式的不同也会导致查询效率的差异。</p>
+<ul>
+<li><strong>Z-Order Curve</strong><br>
+<img alt="二维Z-Order Clustering**" src="https://upload.wikimedia.org/wikipedia/commons/2/29/Z-curve45.svg"><br>
+Z-Order Curve 在多个有序维度里从小到大依次按 左上 右上 左下 右下 的顺序将多个维度串联成线，由小的 Z 组合成更大的 Z 并不断迭代直到占满整个多维空间。每个 Z 构成一个子空间，在这个子空间里最大空间距离（标识各维度范围的平均情况）更小。</li>
+<li><strong>Hilbert Curve</strong><br>
+<img alt="Hilbert Curve 的形成" src="https://images2017.cnblogs.com/blog/1004194/201801/1004194-20180115092244849-1247212491.jpg"><br>
+Hilbert Curve 如上图所示，每一阶都由 4 个前一阶组成，其中左下和右下分别向右和向左旋转 90 度，再用直线按 左下 左上 右上 右下 的顺序连起来。<br>
+<img src="https://miro.medium.com/v2/resize:fit:1400/format:webp/1*sH2bJ-NS9Bv-F0btuXFs_Q.png"><br>
+与 Z-Order Curve 相比 Hilbert Curve 中相邻数据点之间的距离始终保持相同，这是否能说明 Hilbert Curve 比 Z-Order 在各维度上的分散更小？需要进一步确认。</li>
+</ul>
+<h2 id="2-paimon-的代码实现">2. Paimon 的代码实现</h2>
+<p>如前所述， 对Bucket Unaware 的 Append Only Table排序写入在 org.apache.paimon.flink.sink.FlinkSinkBuilder 实现；对分 Bucket 的 Append Only Table和 Dynamic Bucket 的 Primary Key Table 做异步的 Sort Compact 在 org.apache.paimon.flink.action.SortCompactAction 实现。两处都是通过对数据流做排序，根据配置由不同的 org.apache.paimon.flink.sorter.TableSorter 实现具体的排序逻辑，包括：</p>
+<ul>
+<li>OrderSorter：按字符顺序对指定列做排序</li>
+<li>ZorderSorter：按 Z-Order 排序</li>
+<li>HilbertSorter：按 Hilbert Order 排序</li>
+</ul>
+<p>在这些 Sorter 中定义不同 sort key 的实现逻辑，最终排序的执行交由 SortUtils 实现。</p>
+<h4 id="21-sort-key-的生成">2.1 sort key 的生成</h4>
+<h4 id="21-排序的实现">2.1 排序的实现</h4>
+<p><strong>SortUtils</strong> （org.apache.paimon.flink.sorter.SortUtils#sortStreamByKey）</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#f92672">&lt;</span>KEY<span style="color:#f92672">&gt;</span> DataStream<span style="color:#f92672">&lt;</span>RowData<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">sortStreamByKey</span>(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> DataStream<span style="color:#f92672">&lt;</span>RowData<span style="color:#f92672">&gt;</span> inputStream, <span style="color:#75715e">// 输入数据流</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> FileStoreTable table, <span style="color:#75715e">// 数据表的信息</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> RowType sortKeyType, <span style="color:#75715e">//  sort key 的 RowType，这里可能是多个列组成</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> TypeInformation<span style="color:#f92672">&lt;</span>KEY<span style="color:#f92672">&gt;</span> keyTypeInformation, <span style="color:#75715e">//  sort key 的 TypeInformation</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> SerializableSupplier<span style="color:#f92672">&lt;</span>Comparator<span style="color:#f92672">&lt;</span>KEY<span style="color:#f92672">&gt;&gt;</span> shuffleKeyComparator, <span style="color:#75715e">// 提供 sort key 对比方法的 supplier</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> KeyAbstract<span style="color:#f92672">&lt;</span>KEY<span style="color:#f92672">&gt;</span> shuffleKeyAbstract, <span style="color:#75715e">// 从输入数据中提取 sort key</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> ShuffleKeyConvertor<span style="color:#f92672">&lt;</span>KEY<span style="color:#f92672">&gt;</span> convertor, <span style="color:#75715e">// 将 sort key 转换为 InternalRow 的方法</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> TableSortInfo tableSortInfo) <span style="color:#75715e">// 排序配置</span>
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> RowType valueRowType <span style="color:#f92672">=</span> table.<span style="color:#a6e22e">rowType</span>();
+</span></span><span style="display:flex;"><span>        CoreOptions options <span style="color:#f92672">=</span> table.<span style="color:#a6e22e">coreOptions</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> sinkParallelism <span style="color:#f92672">=</span> tableSortInfo.<span style="color:#a6e22e">getSinkParallelism</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> localSampleSize <span style="color:#f92672">=</span> tableSortInfo.<span style="color:#a6e22e">getLocalSampleSize</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> globalSampleSize <span style="color:#f92672">=</span> tableSortInfo.<span style="color:#a6e22e">getGlobalSampleSize</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> rangeNum <span style="color:#f92672">=</span> tableSortInfo.<span style="color:#a6e22e">getRangeNumber</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> keyFieldCount <span style="color:#f92672">=</span> sortKeyType.<span style="color:#a6e22e">getFieldCount</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> valueFieldCount <span style="color:#f92672">=</span> valueRowType.<span style="color:#a6e22e">getFieldCount</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span><span style="color:#f92672">[]</span> valueProjectionMap <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> <span style="color:#66d9ef">int</span><span style="color:#f92672">[</span>valueFieldCount<span style="color:#f92672">]</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0; i <span style="color:#f92672">&lt;</span> valueFieldCount; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>            valueProjectionMap<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> i <span style="color:#f92672">+</span> keyFieldCount;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 把作为 sort key 的列和数据表原本的列拼接成新的 RowType</span>
+</span></span><span style="display:flex;"><span>        List<span style="color:#f92672">&lt;</span>DataField<span style="color:#f92672">&gt;</span> keyFields <span style="color:#f92672">=</span> sortKeyType.<span style="color:#a6e22e">getFields</span>();
+</span></span><span style="display:flex;"><span>        List<span style="color:#f92672">&lt;</span>DataField<span style="color:#f92672">&gt;</span> dataFields <span style="color:#f92672">=</span> valueRowType.<span style="color:#a6e22e">getFields</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        List<span style="color:#f92672">&lt;</span>DataField<span style="color:#f92672">&gt;</span> fields <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ArrayList<span style="color:#f92672">&lt;&gt;</span>();
+</span></span><span style="display:flex;"><span>        fields.<span style="color:#a6e22e">addAll</span>(keyFields);
+</span></span><span style="display:flex;"><span>        fields.<span style="color:#a6e22e">addAll</span>(dataFields);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> RowType longRowType <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> RowType(fields);
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">final</span> InternalTypeInfo<span style="color:#f92672">&lt;</span>InternalRow<span style="color:#f92672">&gt;</span> internalRowType <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                InternalTypeInfo.<span style="color:#a6e22e">fromRowType</span>(longRowType);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 把输入的 RowData 转换成 sort key 和 RowData 组成的 Tuple</span>
+</span></span><span style="display:flex;"><span>        DataStream<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>KEY, RowData<span style="color:#f92672">&gt;&gt;</span> inputWithKey <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                inputStream
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">map</span>(
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> RichMapFunction<span style="color:#f92672">&lt;</span>RowData, Tuple2<span style="color:#f92672">&lt;</span>KEY, RowData<span style="color:#f92672">&gt;&gt;</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">open</span>(OpenContext openContext) <span style="color:#66d9ef">throws</span> Exception {
+</span></span><span style="display:flex;"><span>                                        open(<span style="color:#66d9ef">new</span> Configuration());
+</span></span><span style="display:flex;"><span>                                    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">open</span>(Configuration parameters) <span style="color:#66d9ef">throws</span> Exception {
+</span></span><span style="display:flex;"><span>                                        shuffleKeyAbstract.<span style="color:#a6e22e">open</span>();
+</span></span><span style="display:flex;"><span>                                    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                    <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">public</span> Tuple2<span style="color:#f92672">&lt;</span>KEY, RowData<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">map</span>(RowData value) {
+</span></span><span style="display:flex;"><span>                                        <span style="color:#75715e">// 提取 sort key 并组合成 Tuple</span>
+</span></span><span style="display:flex;"><span>                                        <span style="color:#66d9ef">return</span> Tuple2.<span style="color:#a6e22e">of</span>(shuffleKeyAbstract.<span style="color:#a6e22e">apply</span>(value), value);
+</span></span><span style="display:flex;"><span>                                    }
+</span></span><span style="display:flex;"><span>                                },
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> TupleTypeInfo<span style="color:#f92672">&lt;&gt;</span>(keyTypeInformation, inputStream.<span style="color:#a6e22e">getType</span>()))
+</span></span><span style="display:flex;"><span>                        .<span style="color:#a6e22e">setParallelism</span>(inputStream.<span style="color:#a6e22e">getParallelism</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 根据 sort key 做 Range Shuffle，将属于同一 cluster 的数据分发到对应的 sink task，</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 后面写到同一个数据文件中</span>
+</span></span><span style="display:flex;"><span>        DataStream<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>KEY, RowData<span style="color:#f92672">&gt;&gt;</span> rangeShuffleResult <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                RangeShuffle.<span style="color:#a6e22e">rangeShuffleByKey</span>(
+</span></span><span style="display:flex;"><span>                        inputWithKey,
+</span></span><span style="display:flex;"><span>                        shuffleKeyComparator,
+</span></span><span style="display:flex;"><span>                        keyTypeInformation,
+</span></span><span style="display:flex;"><span>                        localSampleSize,
+</span></span><span style="display:flex;"><span>                        globalSampleSize,
+</span></span><span style="display:flex;"><span>                        rangeNum,
+</span></span><span style="display:flex;"><span>                        sinkParallelism,
+</span></span><span style="display:flex;"><span>                        valueRowType,
+</span></span><span style="display:flex;"><span>                        options.<span style="color:#a6e22e">sortBySize</span>());
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 如果 sort-in-cluster 配置为 true，则进一步在各 cluster 里做排序</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (tableSortInfo.<span style="color:#a6e22e">isSortInCluster</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> rangeShuffleResult
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">map</span>(
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// 将 sort key 和 输入的 RowData 转换成 JoinedRow</span>
+</span></span><span style="display:flex;"><span>                            a <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">new</span> JoinedRow(convertor.<span style="color:#a6e22e">apply</span>(a.<span style="color:#a6e22e">f0</span>), <span style="color:#66d9ef">new</span> FlinkRowWrapper(a.<span style="color:#a6e22e">f1</span>)),
+</span></span><span style="display:flex;"><span>                            internalRowType)
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">setParallelism</span>(sinkParallelism)
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 用 SortOperator 做进一步排序</span>
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">transform</span>(
+</span></span><span style="display:flex;"><span>                            <span style="color:#e6db74">&#34;LOCAL SORT&#34;</span>,
+</span></span><span style="display:flex;"><span>                            internalRowType,
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">new</span> SortOperator(
+</span></span><span style="display:flex;"><span>                                    sortKeyType,
+</span></span><span style="display:flex;"><span>                                    longRowType,
+</span></span><span style="display:flex;"><span>                                    options.<span style="color:#a6e22e">writeBufferSize</span>(),
+</span></span><span style="display:flex;"><span>                                    options.<span style="color:#a6e22e">pageSize</span>(),
+</span></span><span style="display:flex;"><span>                                    options.<span style="color:#a6e22e">localSortMaxNumFileHandles</span>(),
+</span></span><span style="display:flex;"><span>                                    options.<span style="color:#a6e22e">spillCompressOptions</span>(),
+</span></span><span style="display:flex;"><span>                                    sinkParallelism,
+</span></span><span style="display:flex;"><span>                                    options.<span style="color:#a6e22e">writeBufferSpillDiskSize</span>(),
+</span></span><span style="display:flex;"><span>                                    options.<span style="color:#a6e22e">sequenceFieldSortOrderIsAscending</span>()))
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">setParallelism</span>(sinkParallelism)
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 去掉 sort key，只保留数据表的列</span>
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">map</span>(
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">new</span> RichMapFunction<span style="color:#f92672">&lt;</span>InternalRow, InternalRow<span style="color:#f92672">&gt;</span>() {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">transient</span> KeyProjectedRow keyProjectedRow;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">open</span>(OpenContext openContext) {
+</span></span><span style="display:flex;"><span>                                    open(<span style="color:#66d9ef">new</span> Configuration());
+</span></span><span style="display:flex;"><span>                                }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">open</span>(Configuration parameters) {
+</span></span><span style="display:flex;"><span>                                    keyProjectedRow <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> KeyProjectedRow(valueProjectionMap);
+</span></span><span style="display:flex;"><span>                                }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">public</span> InternalRow <span style="color:#a6e22e">map</span>(InternalRow value) {
+</span></span><span style="display:flex;"><span>                                    <span style="color:#66d9ef">return</span> keyProjectedRow.<span style="color:#a6e22e">replaceRow</span>(value);
+</span></span><span style="display:flex;"><span>                                }
+</span></span><span style="display:flex;"><span>                            },
+</span></span><span style="display:flex;"><span>                            InternalTypeInfo.<span style="color:#a6e22e">fromRowType</span>(valueRowType))
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">setParallelism</span>(sinkParallelism)
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 从 InternalRow 转换回 FlinkRowData</span>
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">map</span>(FlinkRowData::<span style="color:#66d9ef">new</span>, inputStream.<span style="color:#a6e22e">getType</span>())
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">setParallelism</span>(sinkParallelism);
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果不做 sort-in-cluster，则直接去掉 sort key</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> rangeShuffleResult
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">transform</span>(<span style="color:#e6db74">&#34;REMOVE KEY&#34;</span>, inputStream.<span style="color:#a6e22e">getType</span>(), <span style="color:#66d9ef">new</span> RemoveKeyOperator<span style="color:#f92672">&lt;&gt;</span>())
+</span></span><span style="display:flex;"><span>                    .<span style="color:#a6e22e">setParallelism</span>(sinkParallelism);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><p><strong>RangeShuffle</strong>
+按照 sort key 把数据划分到对应的子文件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> DataStream<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>T, RowData<span style="color:#f92672">&gt;&gt;</span> <span style="color:#a6e22e">rangeShuffleByKey</span>(
+</span></span><span style="display:flex;"><span>            DataStream<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>T, RowData<span style="color:#f92672">&gt;&gt;</span> inputDataStream,
+</span></span><span style="display:flex;"><span>            SerializableSupplier<span style="color:#f92672">&lt;</span>Comparator<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;&gt;</span> keyComparator,
+</span></span><span style="display:flex;"><span>            TypeInformation<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> keyTypeInformation,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> localSampleSize,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> globalSampleSize,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> rangeNum,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> outParallelism,
+</span></span><span style="display:flex;"><span>            RowType valueRowType,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">boolean</span> isSortBySize) {
+</span></span><span style="display:flex;"><span>        Transformation<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>T, RowData<span style="color:#f92672">&gt;&gt;</span> input <span style="color:#f92672">=</span> inputDataStream.<span style="color:#a6e22e">getTransformation</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 把 sort key 和 RowData 组成的输入流转换成 sort key 和 RowData size 组成的数据流</span>
+</span></span><span style="display:flex;"><span>        OneInputTransformation<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>T, RowData<span style="color:#f92672">&gt;</span>, Tuple2<span style="color:#f92672">&lt;</span>T, Integer<span style="color:#f92672">&gt;&gt;</span> keyInput <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> OneInputTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                        input,
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;ABSTRACT KEY AND SIZE&#34;</span>,
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> StreamMap<span style="color:#f92672">&lt;&gt;</span>(<span style="color:#66d9ef">new</span> KeyAndSizeExtractor<span style="color:#f92672">&lt;&gt;</span>(valueRowType, isSortBySize)),
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> TupleTypeInfo<span style="color:#f92672">&lt;&gt;</span>(keyTypeInformation, BasicTypeInfo.<span style="color:#a6e22e">INT_TYPE_INFO</span>),
+</span></span><span style="display:flex;"><span>                        input.<span style="color:#a6e22e">getParallelism</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 1. 上一步输出的数据流由 Sampler 对其进行分区采样，分区的数量是数据流的并行度，</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 采样逻辑是随机取 K 个 record 输出， K 由 localSampleSize 确定</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// PS. 不明白这里为什么要把 LocalSampleOperator 的输出从 Tuple2&lt;Double, Tuple2&lt;T, Integer&gt;&gt; </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 改到 Tuple3&lt;Double, T, Integer&gt;，然后在下一步 GlobalSampleOperator 里又转回 Tuple2&lt;Double, Tuple2&lt;T, Integer&gt;&gt;</span>
+</span></span><span style="display:flex;"><span>        OneInputTransformation<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>T, Integer<span style="color:#f92672">&gt;</span>, Tuple3<span style="color:#f92672">&lt;</span>Double, T, Integer<span style="color:#f92672">&gt;&gt;</span> localSample <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> OneInputTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                        keyInput,
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;LOCAL SAMPLE&#34;</span>,
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> LocalSampleOperator<span style="color:#f92672">&lt;&gt;</span>(localSampleSize),
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> TupleTypeInfo<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                BasicTypeInfo.<span style="color:#a6e22e">DOUBLE_TYPE_INFO</span>,
+</span></span><span style="display:flex;"><span>                                keyTypeInformation,
+</span></span><span style="display:flex;"><span>                                BasicTypeInfo.<span style="color:#a6e22e">INT_TYPE_INFO</span>),
+</span></span><span style="display:flex;"><span>                        keyInput.<span style="color:#a6e22e">getParallelism</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 2. 上一步输出的数据流做全局抽样，取 K 个 record，K 由 globalSampleSize 确定，用 keyComparator</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 抽样后的 records 排序，在 allocateRangeBaseSize 方法中根据这些 records 划分每个 range 在 key </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 的一维空间中的边界</span>
+</span></span><span style="display:flex;"><span>        OneInputTransformation<span style="color:#f92672">&lt;</span>Tuple3<span style="color:#f92672">&lt;</span>Double, T, Integer<span style="color:#f92672">&gt;</span>, List<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;&gt;</span> sampleAndHistogram <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> OneInputTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                        localSample,
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;GLOBAL SAMPLE&#34;</span>,
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> GlobalSampleOperator<span style="color:#f92672">&lt;&gt;</span>(globalSampleSize, keyComparator, rangeNum),
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> ListTypeInfo<span style="color:#f92672">&lt;&gt;</span>(keyTypeInformation),
+</span></span><span style="display:flex;"><span>                        1);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 3. range 的边界信息作为广播流和数据流合并，在 AssignRangeIndexOperator 中用二分查找确定每个 record </span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 所属的 range，将 range 的 index 作为 record 的 partition id 一起输出</span>
+</span></span><span style="display:flex;"><span>        TwoInputTransformation<span style="color:#f92672">&lt;</span>List<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>, Tuple2<span style="color:#f92672">&lt;</span>T, RowData<span style="color:#f92672">&gt;</span>, Tuple2<span style="color:#f92672">&lt;</span>Integer, Tuple2<span style="color:#f92672">&lt;</span>T, RowData<span style="color:#f92672">&gt;&gt;&gt;</span>
+</span></span><span style="display:flex;"><span>                preparePartition <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> TwoInputTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> PartitionTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                        sampleAndHistogram,
+</span></span><span style="display:flex;"><span>                                        <span style="color:#66d9ef">new</span> BroadcastPartitioner<span style="color:#f92672">&lt;&gt;</span>(),
+</span></span><span style="display:flex;"><span>                                        StreamExchangeMode.<span style="color:#a6e22e">BATCH</span>),
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> PartitionTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                        input,
+</span></span><span style="display:flex;"><span>                                        <span style="color:#66d9ef">new</span> ForwardPartitioner<span style="color:#f92672">&lt;&gt;</span>(),
+</span></span><span style="display:flex;"><span>                                        StreamExchangeMode.<span style="color:#a6e22e">BATCH</span>),
+</span></span><span style="display:flex;"><span>                                <span style="color:#e6db74">&#34;ASSIGN RANGE INDEX&#34;</span>,
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> AssignRangeIndexOperator<span style="color:#f92672">&lt;&gt;</span>(keyComparator),
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> TupleTypeInfo<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                        BasicTypeInfo.<span style="color:#a6e22e">INT_TYPE_INFO</span>, input.<span style="color:#a6e22e">getOutputType</span>()),
+</span></span><span style="display:flex;"><span>                                input.<span style="color:#a6e22e">getParallelism</span>());
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 4. 根据 partition id 将 record shuffle 到对应的 output sink，并去掉 partition id</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> DataStream<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                inputDataStream.<span style="color:#a6e22e">getExecutionEnvironment</span>(),
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">new</span> OneInputTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> PartitionTransformation<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                preparePartition,
+</span></span><span style="display:flex;"><span>                                <span style="color:#66d9ef">new</span> CustomPartitionerWrapper<span style="color:#f92672">&lt;&gt;</span>(
+</span></span><span style="display:flex;"><span>                                        <span style="color:#66d9ef">new</span> AssignRangeIndexOperator.<span style="color:#a6e22e">RangePartitioner</span>(rangeNum),
+</span></span><span style="display:flex;"><span>                                        <span style="color:#66d9ef">new</span> AssignRangeIndexOperator.<span style="color:#a6e22e">Tuple2KeySelector</span><span style="color:#f92672">&lt;&gt;</span>()),
+</span></span><span style="display:flex;"><span>                                StreamExchangeMode.<span style="color:#a6e22e">BATCH</span>),
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;REMOVE RANGE INDEX&#34;</span>,
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">new</span> RemoveRangeIndexOperator<span style="color:#f92672">&lt;&gt;</span>(),
+</span></span><span style="display:flex;"><span>                        input.<span style="color:#a6e22e">getOutputType</span>(),
+</span></span><span style="display:flex;"><span>                        outParallelism));
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 根据抽样数据计算每个 range 的范围计算逻辑</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> T<span style="color:#f92672">[]</span> <span style="color:#a6e22e">allocateRangeBaseSize</span>(List<span style="color:#f92672">&lt;</span>Tuple2<span style="color:#f92672">&lt;</span>T, Integer<span style="color:#f92672">&gt;&gt;</span> sampledData, <span style="color:#66d9ef">int</span> rangesNum) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> sampeNum <span style="color:#f92672">=</span> sampledData.<span style="color:#a6e22e">size</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">int</span> boundarySize <span style="color:#f92672">=</span> rangesNum <span style="color:#f92672">-</span> 1;
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">@SuppressWarnings</span>(<span style="color:#e6db74">&#34;unchecked&#34;</span>)
+</span></span><span style="display:flex;"><span>        T<span style="color:#f92672">[]</span> boundaries <span style="color:#f92672">=</span> (T<span style="color:#f92672">[]</span>) <span style="color:#66d9ef">new</span> Object<span style="color:#f92672">[</span>boundarySize<span style="color:#f92672">]</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>sampledData.<span style="color:#a6e22e">isEmpty</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 所有抽样数据 RowData size 总和</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">long</span> restSize <span style="color:#f92672">=</span> sampledData.<span style="color:#a6e22e">stream</span>().<span style="color:#a6e22e">mapToLong</span>(t <span style="color:#f92672">-&gt;</span> (<span style="color:#66d9ef">long</span>) t.<span style="color:#a6e22e">f1</span>).<span style="color:#a6e22e">sum</span>();
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 总 size / 总 range 数，当前 range 的平均 size 大小</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">double</span> stepRange <span style="color:#f92672">=</span> restSize <span style="color:#f92672">/</span> (<span style="color:#66d9ef">double</span>) rangesNum;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// currentWeight 记录当前 range 的 size</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> currentWeight <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">int</span> index <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0; i <span style="color:#f92672">&lt;</span> boundarySize; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">while</span> (currentWeight <span style="color:#f92672">&lt;</span> stepRange <span style="color:#f92672">&amp;&amp;</span> index <span style="color:#f92672">&lt;</span> sampeNum) {
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 将 range 的 boundary 更新为最新一个抽样数据的 sort key</span>
+</span></span><span style="display:flex;"><span>                    boundaries<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> sampledData.<span style="color:#a6e22e">get</span>(Math.<span style="color:#a6e22e">min</span>(index, sampeNum <span style="color:#f92672">-</span> 1)).<span style="color:#a6e22e">f0</span>;
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">int</span> sampleWeight <span style="color:#f92672">=</span> sampledData.<span style="color:#a6e22e">get</span>(index<span style="color:#f92672">++</span>).<span style="color:#a6e22e">f1</span>;
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 累加当前 range 的 size</span>
+</span></span><span style="display:flex;"><span>                    currentWeight <span style="color:#f92672">+=</span> sampleWeight;
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// 更新剩余的 size 总量</span>
+</span></span><span style="display:flex;"><span>                    restSize <span style="color:#f92672">-=</span> sampleWeight;
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>                currentWeight <span style="color:#f92672">=</span> 0;
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 更新下一个 range 的平均 size 大小</span>
+</span></span><span style="display:flex;"><span>                stepRange <span style="color:#f92672">=</span> restSize <span style="color:#f92672">/</span> (<span style="color:#66d9ef">double</span>) (rangesNum <span style="color:#f92672">-</span> i <span style="color:#f92672">-</span> 1);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 如果前面有 range 的 boundary 没有更新，则设置为最后一个抽样数据的 sort key</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (<span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0; i <span style="color:#f92672">&lt;</span> boundarySize; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (boundaries<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>                boundaries<span style="color:#f92672">[</span>i<span style="color:#f92672">]</span> <span style="color:#f92672">=</span> sampledData.<span style="color:#a6e22e">get</span>(sampeNum <span style="color:#f92672">-</span> 1).<span style="color:#a6e22e">f0</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> boundaries;
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><h2 id="3-测试">3. 测试</h2>
+<h2 id="4-相关文档">4. 相关文档</h2>
+<p>Data Clustering 介绍：<br>
+<a href="https://en.wikipedia.org/wiki/Z-order_curve">https://en.wikipedia.org/wiki/Z-order_curve</a><br>
+<a href="https://www.databricks.com/blog/2018/07/31/processing-petabytes-of-data-in-seconds-with-databricks-delta.html">https://www.databricks.com/blog/2018/07/31/processing-petabytes-of-data-in-seconds-with-databricks-delta.html</a><br>
+<a href="https://zhuanlan.zhihu.com/p/696053812">https://zhuanlan.zhihu.com/p/696053812</a></p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/paimon/" rel="tag">Paimon</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/flink/" rel="tag">Flink</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/ray_framework_init/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Ray】分布式计算框架 Ray 入门</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/kubernetes_deploy_nodebook/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

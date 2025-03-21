@@ -6,31 +6,38 @@
     <description>Recent content in Flink on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sat, 13 Jul 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 19 Feb 2025 11:14:58 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/flink/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>【Flink 基础】Data Source API 结构及实现</title>
+      <title>【Paimon】Paimon 表排序</title>
+      <link>https://blog.xingda.space/tech/paimon_sink_clustring/</link>
+      <pubDate>Wed, 19 Feb 2025 11:14:58 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/paimon_sink_clustring/</guid>
+      <description>&lt;p&gt;Paimon （1.0）对 Bucket Unaware 的 Append Only Table 支持写入时排序以提升查询效率，同时对分 Bucket 的 Append Only Table和 Dynamic Bucket 的 Primary Key Table ，提供了异步的 Sort Compact 支持。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>【Flink】Data Source API 结构及实现</title>
       <link>https://blog.xingda.space/tech/flink_source_api/</link>
       <pubDate>Sat, 13 Jul 2024 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_source_api/</guid>
       <description>&lt;p&gt;Flink 1.11 引入新的 &lt;strong&gt;Data Source API&lt;/strong&gt; 以取代 &lt;strong&gt;SourceFunction&lt;/strong&gt; 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。&lt;/p&gt;</description>
     </item>
     <item>
-      <title>【Flink 基础】Flink Kubernetes Application Mode 启动分析</title>
+      <title>【Flink】Flink Kubernetes Application Mode 启动分析</title>
       <link>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</link>
       <pubDate>Tue, 21 May 2024 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</guid>
       <description>&lt;p&gt;分析 Flink 在 Kubernetes Application Mode 下启动任务的过程&lt;/p&gt;</description>
     </item>
     <item>
-      <title>【Flink 基础】Fault Tolerance 实现原理</title>
+      <title>【Flink】Fault Tolerance 实现原理</title>
       <link>https://blog.xingda.space/tech/flink_fault_tolerance/</link>
       <pubDate>Thu, 12 Oct 2023 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_fault_tolerance/</guid>
       <description>&lt;p&gt;Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。&lt;/p&gt;</description>
     </item>
     <item>
-      <title>【Flink 基础】Taskmanager 内存管理</title>
+      <title>【Flink】Taskmanager 内存管理</title>
       <link>https://blog.xingda.space/tech/flink_memory_management/</link>
       <pubDate>Tue, 03 Jan 2023 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_memory_management/</guid>

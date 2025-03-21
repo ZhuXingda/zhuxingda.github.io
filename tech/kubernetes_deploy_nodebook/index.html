@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-02-25T16:57:16&#43;08:00">2025-02-25</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/" rel="category">开源框架</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<h2 id="网络">网络</h2>
+<h5 id="service-的-type">Service 的 type</h5>
+<ol>
+<li>ClusterIP
+将 Service 暴露在集群内部的子网，可以通过 Ingress 和 网关暴露到外部。</li>
+<li>NodePort
+将 Service 以静态端口暴露在集群每个节点的 IP 上，访问任意节点外网 IP + static port 就能访问到 Service，在集群内部同 ClusterIP 一样为服务绑定了子网 IP 和端口。</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>NAME                        TYPE       CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>         AGE   SELECTOR
+</span></span><span style="display:flex;"><span>flink-job-rest   NodePort   10.200.88.165   &lt;none&gt;        8081:8153/TCP   53d   app<span style="color:#f92672">=</span>flink-job,component<span style="color:#f92672">=</span>jobmanager,type<span style="color:#f92672">=</span>flink-native-kubernetes
+</span></span></code></pre></div><ol start="3">
+<li>LoadBalancer
+通过一个第三方 Load Balancer 暴露 Service 到集群外部</li>
+<li>ExternalName</li>
+</ol>
+<h2 id="存储">存储</h2>
+<h3 id="迁移节点的文件系统目录到别的磁盘">迁移节点的文件系统目录到别的磁盘</h3>
+<ul>
+<li><strong>nodefs</strong>：包含非内存的 emptyDir volumes，log storage，ephemeral storage 和更多，默认的根目录为 <code>/var/lib/kubelet</code>。如果路径所在磁盘空间不足节点会进入 <strong>NodeHasDiskPressure</strong> 的状态，然后被驱逐。</li>
+<li><strong>imagefs</strong>：CR 用来保存 container images 和 container writable layers，containerd 的默认路径是 <code>/var/lib/containerd</code>。如果路径所在磁盘空间不足节点会报 <strong>FreeDiskSpaceFailed</strong> 的错误，错误信息是 <code>Failed to garbage collect required amount of images. Attempted to free xxx bytes, but only found 0 bytes eligible to free.</code></li>
+</ul>
+<h4 id="迁移-nodefs">迁移 nodefs</h4>
+<p>节点停止调度</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl cordon worker-node-04
+</span></span></code></pre></div><p>复制 kubelet 目录到新磁盘位置，并更新证书软链接指向新的文件。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cp -rf /var/lib/kubelet /home/disk3/var/kubelet
+</span></span><span style="display:flex;"><span>$ ll /home/disk3/var/kubelet/pki/kubelet-client-current.pem
+</span></span><span style="display:flex;"><span>lrwxrwxrwx <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">59</span> Feb <span style="color:#ae81ff">26</span> 16:58 /home/disk3/var/kubelet/pki/kubelet-client-current.pem -&gt; /var/lib/kubelet/pki/kubelet-client-2024-09-03-11-40-15.pem
+</span></span><span style="display:flex;"><span>$ rm /home/disk3/var/kubelet/pki/kubelet-client-current.pem
+</span></span><span style="display:flex;"><span>$ ln -s /home/disk3/var/kubelet/pki/kubelet-client-2024-09-03-11-40-15.pem /home/disk3/var/kubelet/pki/kubelet-client-current.pem
+</span></span><span style="display:flex;"><span>$ ll /home/disk3/var/kubelet/pki/kubelet-client-current.pem
+</span></span><span style="display:flex;"><span>lrwxrwxrwx <span style="color:#ae81ff">1</span> root root <span style="color:#ae81ff">59</span> Feb <span style="color:#ae81ff">26</span> 16:58 /home/disk3/var/kubelet/pki/kubelet-client-current.pem -&gt; /home/disk3/var/kubelet/pki/kubelet-client-2024-09-03-11-40-15.pem
+</span></span></code></pre></div><p>根据 <a href="https://stackoverflow.com/questions/70931881/what-does-kubelet-use-to-determine-the-ephemeral-storage-capacity-of-the-node">这个问答</a> 在配置文件中加上新的 root dir 路径</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>cat <span style="color:#e6db74">&lt;&lt; EOF &gt; /etc/sysconfig/kubelet
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">KUBELET_EXTRA_ARGS=--root-dir=/home/disk3/var/kubelet 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span></code></pre></div><p>然后重启 kubelet</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ source /etc/sysconfig/kubelet
+</span></span><span style="display:flex;"><span>$ systemctl restart kubelet
+</span></span></code></pre></div><p>检查 kubelet 状态的时候发现有报错</p>
+<blockquote>
+<p>kubelet[66904]: E0226 17:44:46.723343   66904 file_linux.go:61] &ldquo;Unable to read config path&rdquo; err=&ldquo;path does not exist, ignoring&rdquo; path=&quot;/etc/kubernetes/manifests&quot;
+根据 <a href="https://github.com/kubernetes/kubeadm/issues/1345">这个 ISSUE</a> 创建对应目录解决</p>
+</blockquote>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ mkdir -p /etc/kubernetes/manifests
+</span></span></code></pre></div><p>最后恢复节点调度，查看节点信息可以看到 ephemeral-storage 明显增大</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl uncordon worker-node-04
+</span></span><span style="display:flex;"><span>$ kubectl describe node worker-node-04
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>Capacity:
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>  ephemeral-storage:  7752283564Ki
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>Allocatable:
+</span></span><span style="display:flex;"><span>  ...
+</span></span><span style="display:flex;"><span>  ephemeral-storage:  <span style="color:#ae81ff">7144504520754</span>
+</span></span><span style="display:flex;"><span>...
+</span></span></code></pre></div><h4 id="迁移-imagefs">迁移 imagefs</h4>
+<p>迁移 imagefs 需要重启 containerd，必须把节点上运行的 pod 都先驱逐掉，可能会造成服务的中断，<code>对线上环境存在风险！</code></p>
+<p>节点停止调度并驱逐</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl cordon worker-node-04
+</span></span><span style="display:flex;"><span>$ kubectl drain worker-node-04 --ignore-daemonsets --delete-emptydir-data
+</span></span></code></pre></div><p>创建新的 imagefs 目录并修改 containerd 配置文件</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ mkdir -p /home/disk3/var/lib/
+</span></span><span style="display:flex;"><span>$ cp -R /var/lib/containerd /home/disk3/var/lib/
+</span></span><span style="display:flex;"><span>$ sed -i <span style="color:#e6db74">&#39;s/\/var\/lib\/containerd/\/home\/disk3\/var\/lib\/containerd/g&#39;</span> /etc/containerd/config.toml
+</span></span><span style="display:flex;"><span>$ systemctl stop kubelet
+</span></span><span style="display:flex;"><span>$ systemctl restart containerd
+</span></span><span style="display:flex;"><span>$ systemctl start kubelet
+</span></span></code></pre></div><p>检查 containerd 和 kubelet 状态</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ systemctl status containerd
+</span></span><span style="display:flex;"><span>$ systemctl status kubelet
+</span></span></code></pre></div><p>用 <code>kubectl describe node</code> 命令没办法查看 imagefs 的磁盘使用情况，需要用下面的命令</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl get --raw <span style="color:#e6db74">&#34;/api/v1/nodes/worker-node-04/proxy/stats/summary&#34;</span>
+</span></span></code></pre></div><p>输出信息中有这样一段分别是 nodefs 和 imagefs 的磁盘使用情况，可见 imagefs 调整成功</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&#34;fs&#34;</span>: {
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;time&#34;</span>: <span style="color:#e6db74">&#34;2025-02-22T06:56:09Z&#34;</span>,
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;availableBytes&#34;</span>: <span style="color:#ae81ff">7929085259776</span>,
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;capacityBytes&#34;</span>: <span style="color:#ae81ff">7938338369536</span>,
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;usedBytes&#34;</span>: <span style="color:#ae81ff">9236332544</span>,
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;inodesFree&#34;</span>: <span style="color:#ae81ff">244175428</span>,
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;inodes&#34;</span>: <span style="color:#ae81ff">244191232</span>,
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;inodesUsed&#34;</span>: <span style="color:#ae81ff">15804</span>
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;runtime&#34;</span>: {
+</span></span><span style="display:flex;"><span>   <span style="color:#f92672">&#34;imageFs&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;time&#34;</span>: <span style="color:#e6db74">&#34;2025-02-22T06:56:09Z&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;availableBytes&#34;</span>: <span style="color:#ae81ff">7929085259776</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;capacityBytes&#34;</span>: <span style="color:#ae81ff">7938338369536</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;usedBytes&#34;</span>: <span style="color:#ae81ff">5989388288</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;inodesFree&#34;</span>: <span style="color:#ae81ff">244175428</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;inodes&#34;</span>: <span style="color:#ae81ff">244191232</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;inodesUsed&#34;</span>: <span style="color:#ae81ff">12920</span>
+</span></span><span style="display:flex;"><span>   }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>恢复节点调度</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl uncordon worker-node-04
+</span></span></code></pre></div><h4 id="踩坑">踩坑</h4>
+<p>注意上面两个目录特别是 nodefs 在迁移时需要注意新的目录所属的权限，如果不是属于 root:root 有可能在任务运行时出现容器内目录没有权限的问题，比如我在更改目录时把 nodefs 配置到 work 用户的目录下，导致 Flink 任务运行时没有容器内 /tmp 目录的写权限，产生如下报错</p>
+<blockquote>
+<p>Shutting KubernetesSessionClusterEntrypoint down with application status FAILED. Diagnostics java.lang.RuntimeException: unable to generate a JAAS configuration file
+at org.apache.flink.runtime.security.modules.JaasModule.generateDefaultConfigFile(JaasModule.java:183)
+at org.apache.flink.runtime.security.modules.JaasModule.install(JaasModule.java:92)
+at org.apache.flink.runtime.security.SecurityUtils.installModules(SecurityUtils.java:76)
+at org.apache.flink.runtime.security.SecurityUtils.install(SecurityUtils.java:57)
+at org.apache.flink.runtime.entrypoint.ClusterEntrypoint.installSecurityContext(ClusterEntrypoint.java:279)
+at org.apache.flink.runtime.entrypoint.ClusterEntrypoint.startCluster(ClusterEntrypoint.java:231)
+at org.apache.flink.runtime.entrypoint.ClusterEntrypoint.runClusterEntrypoint(ClusterEntrypoint.java:739)
+at org.apache.flink.kubernetes.entrypoint.KubernetesSessionClusterEntrypoint.main(KubernetesSessionClusterEntrypoint.java:61)
+Caused by: java.nio.file.AccessDeniedException: /tmp/jaas-4451190208096254189.conf
+at sun.nio.fs.UnixException.translateToIOException(UnixException.java:84)
+at sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:102)
+at sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:107)
+at sun.nio.fs.UnixFileSystemProvider.newByteChannel(UnixFileSystemProvider.java:214)
+at java.nio.file.Files.newByteChannel(Files.java:361)
+at java.nio.file.Files.createFile(Files.java:632)
+at java.nio.file.TempFileHelper.create(TempFileHelper.java:138)
+at java.nio.file.TempFileHelper.createTempFile(TempFileHelper.java:161)
+at java.nio.file.Files.createTempFile(Files.java:852)
+at org.apache.flink.runtime.security.modules.JaasModule.generateDefaultConfigFile(JaasModule.java:173)
+&hellip; 7 more</p>
+</blockquote>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/kubernetes/" rel="tag">Kubernetes</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/paimon_sink_clustring/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Paimon】Paimon 表排序</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

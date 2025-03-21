@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Algorithm on Zhu Xingda</title>
+    <link>https://blog.xingda.space/tags/algorithm/</link>
+    <description>Recent content in Algorithm on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/tags/algorithm/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【leetcode】一些常见传统算法的 Golang 实现</title>
+      <link>https://blog.xingda.space/note/algorithem_case_notebook/</link>
+      <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/note/algorithem_case_notebook/</guid>
+      <description>&lt;p&gt;记录一些 leetcode 上常见算法的 Golang 实现。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

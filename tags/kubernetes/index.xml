@@ -6,10 +6,24 @@
     <description>Recent content in Kubernetes on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 21 May 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 25 Feb 2025 16:57:16 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>【Flink 基础】Flink Kubernetes Application Mode 启动分析</title>
+      <title>【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</title>
+      <link>https://blog.xingda.space/tech/kubernetes_deploy_nodebook/</link>
+      <pubDate>Tue, 25 Feb 2025 16:57:16 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/kubernetes_deploy_nodebook/</guid>
+      <description>网络 Service 的 type ClusterIP 将 Service 暴露在集群内部的子网，可以通过 Ingress 和 网关暴露到外部。 NodePort 将 Service 以静态端口暴露在集群每个节点的 IP 上，访问任意节点外网 IP + static port 就能访问到 Service，在集群内部同 ClusterIP 一样为服务绑定了子网 IP 和端口。 NAME TYPE CLUSTER-IP EXTERNAL-IP PORT(S) AGE SELECTOR flink-job-rest NodePort 10.200.88.165 &amp;lt;none&amp;gt; 8081:8153/TCP 53d app=flink-job,component=jobmanager,type=flink-native-kubernetes LoadBalancer 通过一个第三方 Load Balancer 暴露 Service 到集群外部 ExternalName 存储 迁移节点的文件系统目录到别的磁盘 nodefs：包含非内存的 emptyDir volumes，log storage，ephemeral storage 和更多，默认的根目录为 /var/lib/kubelet。如果路径所在磁盘空间不足节点会进入 NodeHasDiskPressure 的状态，然后被驱逐。 imagefs：CR 用来保存 container images 和 container writable layers，containerd 的默认路径是 /var/lib/containerd。如果路径所在磁盘空间不足节点会报 FreeDiskSpaceFailed 的错误，错误信息是 Failed to garbage collect required amount of images.</description>
+    </item>
+    <item>
+      <title>【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm）</title>
+      <link>https://blog.xingda.space/tech/high_availability_k8s_cluster_build/</link>
+      <pubDate>Thu, 05 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/tech/high_availability_k8s_cluster_build/</guid>
+      <description>&lt;p&gt;利用 kubeadm 搭建高可用 Kubernetes 集群的流程记录&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>【Flink】Flink Kubernetes Application Mode 启动分析</title>
       <link>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</link>
       <pubDate>Tue, 21 May 2024 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</guid>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm） - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm）</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-09-05T00:00:00Z">2024-09-05</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/" rel="category">开源框架</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>利用 kubeadm 搭建高可用 Kubernetes 集群的流程记录</p>
+<h2 id="0-集群概况">0. 集群概况</h2>
+<table>
+<thead>
+<tr>
+<th>节点</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sever-01</td>
+<td>Master01</td>
+</tr>
+<tr>
+<td>sever-02</td>
+<td>Master02</td>
+</tr>
+<tr>
+<td>sever-03</td>
+<td>Master04</td>
+</tr>
+<tr>
+<td>sever-04</td>
+<td>Worker01</td>
+</tr>
+<tr>
+<td>sever-05</td>
+<td>Worker02</td>
+</tr>
+<tr>
+<td>&hellip;</td>
+<td>&hellip;</td>
+</tr>
+<tr>
+<td>sever-18</td>
+<td>Worker15</td>
+</tr>
+<tr>
+<td>sever-19</td>
+<td>Worker16</td>
+</tr>
+<tr>
+<td>sever-20</td>
+<td>Worker17</td>
+</tr>
+</tbody>
+</table>
+<p>操作系统：CentOS 7.6</p>
+<h2 id="1-基础网络配置所有节点">1. 基础网络配置（所有节点）</h2>
+<p>安装依赖</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ yum install socat conntrack
+</span></span></code></pre></div><p>bridge-nf 使得 netfilter 可以对 Linux 网桥上的 IPv4/ARP/IPv6 包过滤。比如设置net.bridge.bridge-nf-call-iptables＝1 后，二层的网桥在转发包时也会被 iptables 的 FORWARD 规则所过滤。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cat &gt; /etc/modules-load.d/k8s.conf <span style="color:#e6db74">&lt;&lt; EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">overlay
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">br_netfilter
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>$ modprobe overlay <span style="color:#f92672">&amp;&amp;</span> modprobe br_netfilter
+</span></span></code></pre></div><p>IPv4 流量转发 &amp; 桥接流量走 iptables</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cat &gt; /etc/sysctl.d/99-kubernetes-cri.conf <span style="color:#e6db74">&lt;&lt; EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">net.ipv4.ip_forward                 = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">net.bridge.bridge-nf-call-iptables  = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">net.bridge.bridge-nf-call-ip6tables = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>$ sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
+</span></span></code></pre></div><h2 id="2-配置-container-runtime所有节点">2. 配置 Container Runtime（所有节点）</h2>
+<ol>
+<li>参考 教程 里的 Option1，下载 cni-plugins-linux-amd64-v1.5.1.tgz  containerd-1.6.35-linux-amd64.tar.gz  runc.amd64 三个安装包</li>
+<li>containerd-1.6.35-linux-amd64.tar.gz 解压到 /usr/local</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>tar Cxzvf /usr/local containerd-1.6.35-linux-amd64.tar.gz
+</span></span></code></pre></div><ol start="3">
+<li>启动 containerd：在 /usr/lib/systemd/system 创建 containerd.service，内容参考 <a href="https://raw.githubusercontent.com/containerd/containerd/main/containerd.service">官方文件</a>，然后用 systemctl 启动：</li>
+</ol>
+<pre tabindex="0"><code>$ cp containerd.service /usr/lib/systemd/system/
+$ systemctl daemon-reload
+$ systemctl enable --now containerd
+$ systemctl status containerd.service
+</code></pre><ol start="4">
+<li>安装 runc</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ install -m <span style="color:#ae81ff">755</span> runc.amd64 /usr/local/sbin/runc
+</span></span></code></pre></div><ol start="5">
+<li>安装 cni-plugins</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ mkdir -p /opt/cni/bin
+</span></span><span style="display:flex;"><span>$ tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.5.1.tgz
+</span></span></code></pre></div><ol start="6">
+<li>配置 containerd</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ mkdir -p  /etc/containerd/
+</span></span><span style="display:flex;"><span>$ containerd config default &gt; /etc/containerd/config.toml
+</span></span></code></pre></div><p>结合 runc 使用 systemd cgroup 驱动，顺便可以修改一个可用的镜像仓库地址，在 /etc/containerd/config.toml 中设置：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-toml" data-lang="toml"><span style="display:flex;"><span>    [<span style="color:#a6e22e">plugins</span>.<span style="color:#e6db74">&#34;io.containerd.grpc.v1.cri&#34;</span>]
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">sandbox_image</span> = <span style="color:#e6db74">&#34;registry.k8s.io/kubernetes/pause:3.9&#34;</span>
+</span></span><span style="display:flex;"><span>      ...
+</span></span><span style="display:flex;"><span>    [<span style="color:#a6e22e">plugins</span>.<span style="color:#e6db74">&#34;io.containerd.grpc.v1.cri&#34;</span>.<span style="color:#a6e22e">containerd</span>.<span style="color:#a6e22e">runtimes</span>.<span style="color:#a6e22e">runc</span>]
+</span></span><span style="display:flex;"><span>      ...
+</span></span><span style="display:flex;"><span>        [<span style="color:#a6e22e">plugins</span>.<span style="color:#e6db74">&#34;io.containerd.grpc.v1.cri&#34;</span>.<span style="color:#a6e22e">containerd</span>.<span style="color:#a6e22e">runtimes</span>.<span style="color:#a6e22e">runc</span>.<span style="color:#a6e22e">options</span>]
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">SystemdCgroup</span> = <span style="color:#66d9ef">true</span>
+</span></span></code></pre></div><p>修改后重启</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ systemctl restart containerd.service
+</span></span></code></pre></div><h2 id="3-安装-kubeadmkubelet-和-kubectl所有节点">3. 安装 kubeadm、kubelet 和 kubectl（所有节点）</h2>
+<ol>
+<li>安装 cri-tools<br>
+下载 crictl-v1.28.11-linux-amd64.tar.gz，校验后解压到 /usr/local/bin</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ tar Cxzvf /usr/local/bin/ crictl-v1.31.1-linux-amd64.tar.gz
+</span></span></code></pre></div><ol start="2">
+<li>安装 kubectl</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 下载 kubectl 二进制</span>
+</span></span><span style="display:flex;"><span>$ wget https://dl.k8s.io/release/v1.28.11/bin/linux/amd64/kubectl
+</span></span><span style="display:flex;"><span>$ install -m +x kubectl /usr/local/bin/
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 复制配置文件</span>
+</span></span><span style="display:flex;"><span>$ cp /etc/kubernetes/admin.conf /home/work/.kube/config
+</span></span><span style="display:flex;"><span>$ chown work:work /home/work/.kube/config
+</span></span><span style="display:flex;"><span>$ chmod <span style="color:#ae81ff">744</span> /home/work/.kube/config
+</span></span></code></pre></div><ol start="3">
+<li>安装  kubelet kubeadm</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ wget https://dl.k8s.io/release/v1.28.11/bin/linux/amd64/kubeadm
+</span></span><span style="display:flex;"><span>$ wget https://dl.k8s.io/release/v1.28.11/bin/linux/amd64/kubelet
+</span></span><span style="display:flex;"><span>$ install -m +x kubeadm /usr/local/bin/
+</span></span><span style="display:flex;"><span>$ install -m +x kubelet /usr/local/bin/
+</span></span><span style="display:flex;"><span>$ curl -sSL https://raw.githubusercontent.com/kubernetes/release/v0.16.2/cmd/krel/templates/latest/kubelet/kubelet.service | sed <span style="color:#e6db74">&#34;s:/usr/bin:/usr/local/bin:g&#34;</span> &gt; kubelet.service
+</span></span><span style="display:flex;"><span>$ curl -sSL https://raw.githubusercontent.com/kubernetes/release/v0.16.2/cmd/krel/templates/latest/kubeadm/10-kubeadm.conf | sed <span style="color:#e6db74">&#34;s:/usr/bin:/usr/local/bin:g&#34;</span> &gt; 10-kubeadm.conf
+</span></span><span style="display:flex;"><span>$ chmod <span style="color:#ae81ff">644</span> kubelet.service 10-kubeadm.conf
+</span></span><span style="display:flex;"><span>$ cp kubelet.service /usr/lib/systemd/system/
+</span></span><span style="display:flex;"><span>$ mkdir /usr/lib/systemd/system/kubelet.service.d/
+</span></span><span style="display:flex;"><span>$ cp 10-kubeadm.conf /usr/lib/systemd/system/kubelet.service.d/
+</span></span><span style="display:flex;"><span>$ systemctl daemon-reload
+</span></span><span style="display:flex;"><span>$ systemctl enable --now kubelet.service
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># kubelet 现在每隔几秒就会重启，因为它陷入了一个等待 kubeadm 指令的死循环。</span>
+</span></span></code></pre></div><h2 id="4-启动集群">4. 启动集群</h2>
+<ol>
+<li>申请 VIP
+创建一个 VIP，代理端口为 6443，代理机器为 Master 节点的三台机器：</li>
+</ol>
+<ul>
+<li>sever-01</li>
+<li>sever-02</li>
+<li>sever-03</li>
+</ul>
+<ol start="2">
+<li>启动 Master01 节点（sever-01 ）<br>
+kubeadm init 配置文件</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">kubeadm.k8s.io/v1beta3</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">InitConfiguration</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">bootstrapTokens</span>:
+</span></span><span style="display:flex;"><span>- <span style="color:#f92672">groups</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">system:bootstrappers:kubeadm:default-node-token</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">token</span>: <span style="color:#ae81ff">${my_k8s_cluster_token}</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ttl</span>: <span style="color:#ae81ff">24h0m0s</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">usages</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">signing</span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#ae81ff">authentication</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">localAPIEndpoint</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># master01 节点的 IP</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">advertiseAddress</span>: <span style="color:#ae81ff">10.93.83.222</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">bindPort</span>: <span style="color:#ae81ff">6443</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">nodeRegistration</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">criSocket</span>: <span style="color:#ae81ff">unix:///var/run/containerd/containerd.sock</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">sever-01</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">taints</span>: <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">kubeadm.k8s.io/v1beta3</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">ClusterConfiguration</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># VIP 和 代理端口</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">controlPlaneEndpoint</span>: <span style="color:#e6db74">&#34;10.11.110.15:6443&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiServer</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">timeoutForControlPlane</span>: <span style="color:#ae81ff">4m0s</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">extraArgs</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">service-node-port-range</span>: <span style="color:#ae81ff">8100-8300</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">certificatesDir</span>: <span style="color:#ae81ff">/etc/kubernetes/pki</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">clusterName</span>: <span style="color:#ae81ff">kubernetes</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">controllerManager</span>: {}
+</span></span><span style="display:flex;"><span><span style="color:#f92672">dns</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">CoreDNS</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">etcd</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">local</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">imageTag</span>: <span style="color:#e6db74">&#34;3.5.9-0&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">dataDir</span>: <span style="color:#ae81ff">/var/lib/etcd</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">imageRepository</span>: <span style="color:#ae81ff">/google_containers</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kubernetesVersion</span>: <span style="color:#ae81ff">1.28.11</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">networking</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">dnsDomain</span>: <span style="color:#ae81ff">cluster.local</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">serviceSubnet</span>: <span style="color:#ae81ff">10.200.0.0</span><span style="color:#ae81ff">/16</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">podSubnet</span>: <span style="color:#ae81ff">10.100.0.0</span><span style="color:#ae81ff">/16</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">scheduler</span>: {}
+</span></span></code></pre></div><p>拉取镜像 (所有节点)</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubeadm config images --config ./master01_init.yaml list
+</span></span><span style="display:flex;"><span>registry.k8s.io/kubernetes/kube-apiserver:v1.28.11
+</span></span><span style="display:flex;"><span>registry.k8s.io/kubernetes/kube-controller-manager:v1.28.11
+</span></span><span style="display:flex;"><span>registry.k8s.io/kubernetes/kube-scheduler:v1.28.11
+</span></span><span style="display:flex;"><span>registry.k8s.io/kubernetes/kube-proxy:v1.28.11
+</span></span><span style="display:flex;"><span>registry.k8s.io/kubernetes/pause:3.9
+</span></span><span style="display:flex;"><span>registry.k8s.io/kubernetes/etcd:3.5.9-0
+</span></span><span style="display:flex;"><span>registry.k8s.io/coredns:v1.10.1
+</span></span><span style="display:flex;"><span>$ kubeadm config images --config ./master01_init.yaml pull
+</span></span></code></pre></div><p>启动控制面</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 应该执行的命令</span>
+</span></span><span style="display:flex;"><span>$ kubeadm init --config master01_init.yaml --upload-certs
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 我执行的命令，少了一个 --upload-certs 会导致没有 certificate-key 生成，control-plane 加入集群必须要有这个 key</span>
+</span></span><span style="display:flex;"><span>$ kubeadm init --config master01_init.yaml
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>W0902 16:13:49.154849   <span style="color:#ae81ff">30355</span> initconfiguration.go:307<span style="color:#f92672">]</span> error unmarshaling configuration schema.GroupVersionKind<span style="color:#f92672">{</span>Group:<span style="color:#e6db74">&#34;kubeadm.k8s.io&#34;</span>, Version:<span style="color:#e6db74">&#34;v1beta3&#34;</span>, Kind:<span style="color:#e6db74">&#34;ClusterConfiguration&#34;</span><span style="color:#f92672">}</span>: strict decoding error: unknown field <span style="color:#e6db74">&#34;dns.type&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>init<span style="color:#f92672">]</span> Using Kubernetes version: v1.28.11
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>preflight<span style="color:#f92672">]</span> Running pre-flight checks
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>preflight<span style="color:#f92672">]</span> Pulling images required <span style="color:#66d9ef">for</span> setting up a Kubernetes cluster
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>preflight<span style="color:#f92672">]</span> This might take a minute or two, depending on the speed of your internet connection
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>preflight<span style="color:#f92672">]</span> You can also perform this action in beforehand using <span style="color:#e6db74">&#39;kubeadm config images pull&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Using certificateDir folder <span style="color:#e6db74">&#34;/etc/kubernetes/pki&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;ca&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;apiserver&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> apiserver serving cert is signed <span style="color:#66d9ef">for</span> DNS names <span style="color:#f92672">[</span>kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local sever-01<span style="color:#f92672">]</span> and IPs <span style="color:#f92672">[</span>10.200.0.1 10.93.83.222 10.11.110.15<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;apiserver-kubelet-client&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;front-proxy-ca&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;front-proxy-client&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;etcd/ca&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;etcd/server&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> etcd/server serving cert is signed <span style="color:#66d9ef">for</span> DNS names <span style="color:#f92672">[</span>localhost sever-01<span style="color:#f92672">]</span> and IPs <span style="color:#f92672">[</span>10.93.83.222 127.0.0.1 ::1<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;etcd/peer&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> etcd/peer serving cert is signed <span style="color:#66d9ef">for</span> DNS names <span style="color:#f92672">[</span>localhost sever-01<span style="color:#f92672">]</span> and IPs <span style="color:#f92672">[</span>10.93.83.222 127.0.0.1 ::1<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;etcd/healthcheck-client&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;apiserver-etcd-client&#34;</span> certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>certs<span style="color:#f92672">]</span> Generating <span style="color:#e6db74">&#34;sa&#34;</span> key and public key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubeconfig<span style="color:#f92672">]</span> Using kubeconfig folder <span style="color:#e6db74">&#34;/etc/kubernetes&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubeconfig<span style="color:#f92672">]</span> Writing <span style="color:#e6db74">&#34;admin.conf&#34;</span> kubeconfig file
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubeconfig<span style="color:#f92672">]</span> Writing <span style="color:#e6db74">&#34;kubelet.conf&#34;</span> kubeconfig file
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubeconfig<span style="color:#f92672">]</span> Writing <span style="color:#e6db74">&#34;controller-manager.conf&#34;</span> kubeconfig file
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubeconfig<span style="color:#f92672">]</span> Writing <span style="color:#e6db74">&#34;scheduler.conf&#34;</span> kubeconfig file
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>etcd<span style="color:#f92672">]</span> Creating static Pod manifest <span style="color:#66d9ef">for</span> local etcd in <span style="color:#e6db74">&#34;/etc/kubernetes/manifests&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>control-plane<span style="color:#f92672">]</span> Using manifest folder <span style="color:#e6db74">&#34;/etc/kubernetes/manifests&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>control-plane<span style="color:#f92672">]</span> Creating static Pod manifest <span style="color:#66d9ef">for</span> <span style="color:#e6db74">&#34;kube-apiserver&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>control-plane<span style="color:#f92672">]</span> Creating static Pod manifest <span style="color:#66d9ef">for</span> <span style="color:#e6db74">&#34;kube-controller-manager&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>control-plane<span style="color:#f92672">]</span> Creating static Pod manifest <span style="color:#66d9ef">for</span> <span style="color:#e6db74">&#34;kube-scheduler&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubelet-start<span style="color:#f92672">]</span> Writing kubelet environment file with flags to file <span style="color:#e6db74">&#34;/var/lib/kubelet/kubeadm-flags.env&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubelet-start<span style="color:#f92672">]</span> Writing kubelet configuration to file <span style="color:#e6db74">&#34;/var/lib/kubelet/config.yaml&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubelet-start<span style="color:#f92672">]</span> Starting the kubelet
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>wait-control-plane<span style="color:#f92672">]</span> Waiting <span style="color:#66d9ef">for</span> the kubelet to boot up the control plane as static Pods from directory <span style="color:#e6db74">&#34;/etc/kubernetes/manifests&#34;</span>. This can take up to 4m0s
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>apiclient<span style="color:#f92672">]</span> All control plane components are healthy after 18.636847 seconds
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>upload-config<span style="color:#f92672">]</span> Storing the configuration used in ConfigMap <span style="color:#e6db74">&#34;kubeadm-config&#34;</span> in the <span style="color:#e6db74">&#34;kube-system&#34;</span> Namespace
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubelet<span style="color:#f92672">]</span> Creating a ConfigMap <span style="color:#e6db74">&#34;kubelet-config&#34;</span> in namespace kube-system with the configuration <span style="color:#66d9ef">for</span> the kubelets in the cluster
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubelet-check<span style="color:#f92672">]</span> Initial timeout of 40s passed.
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>upload-certs<span style="color:#f92672">]</span> Skipping phase. Please see --upload-certs
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>mark-control-plane<span style="color:#f92672">]</span> Marking the node sever-01 as control-plane by adding the labels: <span style="color:#f92672">[</span>node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>mark-control-plane<span style="color:#f92672">]</span> Marking the node sever-01 as control-plane by adding the taints <span style="color:#f92672">[</span>node-role.kubernetes.io/control-plane:NoSchedule<span style="color:#f92672">]</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Using token: <span style="color:#e6db74">${</span>my_k8s_cluster_token<span style="color:#e6db74">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Configured RBAC rules to allow Node Bootstrap tokens to get nodes
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order <span style="color:#66d9ef">for</span> nodes to get long term certificate credentials
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Configured RBAC rules to allow certificate rotation <span style="color:#66d9ef">for</span> all node client certificates in the cluster
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>bootstrap-token<span style="color:#f92672">]</span> Creating the <span style="color:#e6db74">&#34;cluster-info&#34;</span> ConfigMap in the <span style="color:#e6db74">&#34;kube-public&#34;</span> namespace
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>kubelet-finalize<span style="color:#f92672">]</span> Updating <span style="color:#e6db74">&#34;/etc/kubernetes/kubelet.conf&#34;</span> to point to a rotatable kubelet client certificate and key
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>addons<span style="color:#f92672">]</span> Applied essential addon: CoreDNS
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>addons<span style="color:#f92672">]</span> Applied essential addon: kube-proxy
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Your Kubernetes control-plane has initialized successfully!
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>To start using your cluster, you need to run the following as a regular user:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  mkdir -p $HOME/.kube
+</span></span><span style="display:flex;"><span>  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+</span></span><span style="display:flex;"><span>  sudo chown <span style="color:#66d9ef">$(</span>id -u<span style="color:#66d9ef">)</span>:<span style="color:#66d9ef">$(</span>id -g<span style="color:#66d9ef">)</span> $HOME/.kube/config
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Alternatively, <span style="color:#66d9ef">if</span> you are the root user, you can run:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  export KUBECONFIG<span style="color:#f92672">=</span>/etc/kubernetes/admin.conf
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>You should now deploy a pod network to the cluster.
+</span></span><span style="display:flex;"><span>Run <span style="color:#e6db74">&#34;kubectl apply -f [podnetwork].yaml&#34;</span> with one of the options listed at:
+</span></span><span style="display:flex;"><span>  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>You can now join any number of control-plane nodes by copying certificate authorities
+</span></span><span style="display:flex;"><span>and service account keys on each node and <span style="color:#66d9ef">then</span> running the following as root:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  kubeadm join 10.11.110.15:6443 --token <span style="color:#e6db74">${</span>my_k8s_cluster_token<span style="color:#e6db74">}</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>        --discovery-token-ca-cert-hash sha256:<span style="color:#e6db74">${</span>my_discovery_token_ca_cert_hash<span style="color:#e6db74">}</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>        --control-plane 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Then you can join any number of worker nodes by running the following on each as root:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>kubeadm join 10.11.110.15:6443 --token <span style="color:#e6db74">${</span>my_k8s_cluster_token<span style="color:#e6db74">}</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span><span style="color:#ae81ff"></span>        --discovery-token-ca-cert-hash sha256:<span style="color:#e6db74">${</span>my_discovery_token_ca_cert_hash<span style="color:#e6db74">}</span>
+</span></span></code></pre></div><p>如果上一条启动命令忘记加 &lsquo;&ndash;upload-certs&rsquo; 参数导致 certificate-key 没有生成，可以用下面这个命令重新生成</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubeadm init phase upload-certs --upload-certs
+</span></span></code></pre></div><ol start="3">
+<li>启动 Master02 和 Master03（sever-02 和 sever-03 ）
+用 2 的 master01_init.yaml 文件执行同样的拉镜像操作，然后按配置加入集群</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">kubeadm.k8s.io/v1beta3</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">JoinConfiguration</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">caCertPath</span>: <span style="color:#ae81ff">/etc/kubernetes/pki/ca.crt</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">discovery</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">bootstrapToken</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">apiServerEndpoint</span>: <span style="color:#ae81ff">10.11.110.15</span>:<span style="color:#ae81ff">6443</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">token</span>: <span style="color:#ae81ff">${my_k8s_cluster_token}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">caCertHashes</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#ae81ff">sha256:${my_discovery_token_ca_cert_hash}</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">unsafeSkipCAVerification</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">timeout</span>: <span style="color:#ae81ff">5m0s</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">tlsBootstrapToken</span>: <span style="color:#ae81ff">${my_k8s_cluster_token}</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">nodeRegistration</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">criSocket</span>: <span style="color:#ae81ff">unix:///var/run/containerd/containerd.sock</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">imagePullPolicy</span>: <span style="color:#ae81ff">IfNotPresent</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">sever-02 (或者 sever-03)</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">taints</span>: <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">controlPlane</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">localAPIEndpoint</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">advertiseAddress</span>: <span style="color:#ae81ff">10.93.83.222</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">bindPort</span>: <span style="color:#ae81ff">6443</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">certificateKey</span>: <span style="color:#ae81ff">7cf18abaf200ac50cf3d31d51fbe1ca1851c7918bfbd136fc090884ec13aaf01</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 在 sever-02 执行</span>
+</span></span><span style="display:flex;"><span>$ kubeadm join --config master02_join.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 在 sever-03 执行</span>
+</span></span><span style="display:flex;"><span>$ kubeadm join --config master03_join.yaml
+</span></span></code></pre></div><ol start="4">
+<li>配置网络插件</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 下载 flannel 部署配置文件</span>
+</span></span><span style="display:flex;"><span>$ wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 修改镜像地址（如果有需要）、 pod 子网</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">data</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># 这里 Network 和前面 pod subnet 保持一致</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">net-conf.json</span>: |<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Network&#34;: &#34;10.100.0.0/16&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;EnableNFTables&#34;: false,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      &#34;Backend&#34;: {
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">        &#34;Type&#34;: &#34;vxlan&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">      }
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">    }</span>    
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ...</span>
+</span></span></code></pre></div><p>在集群中启动 flannel</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl apply -f kube-flannel.yml
+</span></span></code></pre></div><ol start="5">
+<li>加入 Worker 节点<br>
+节点数量较多，用脚本批量执行</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>yum install -y socat conntrack
+</span></span><span style="display:flex;"><span>cat &gt; /etc/modules-load.d/k8s.conf <span style="color:#e6db74">&lt;&lt; EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">overlay
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">br_netfilter
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>modprobe overlay <span style="color:#f92672">&amp;&amp;</span> modprobe br_netfilter
+</span></span><span style="display:flex;"><span>cat &gt; /etc/sysctl.d/99-kubernetes-cri.conf <span style="color:#e6db74">&lt;&lt; EOF
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">net.ipv4.ip_forward                 = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">net.bridge.bridge-nf-call-iptables  = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">net.bridge.bridge-nf-call-ip6tables = 1
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
+</span></span><span style="display:flex;"><span>tar Cxzvf /usr/local containerd-1.6.35-linux-amd64.tar.gz
+</span></span><span style="display:flex;"><span>cp containerd.service /usr/lib/systemd/system/
+</span></span><span style="display:flex;"><span>systemctl daemon-reload
+</span></span><span style="display:flex;"><span>systemctl enable --now containerd
+</span></span><span style="display:flex;"><span>systemctl status containerd.service
+</span></span><span style="display:flex;"><span>install -m <span style="color:#ae81ff">755</span> runc.amd64 /usr/local/sbin/runc
+</span></span><span style="display:flex;"><span>mkdir -p /opt/cni/bin
+</span></span><span style="display:flex;"><span>tar Cxzvf /opt/cni/bin cni-plugins-linux-amd64-v1.5.1.tgz
+</span></span><span style="display:flex;"><span>mkdir -p  /etc/containerd/
+</span></span><span style="display:flex;"><span>containerd config default &gt; /etc/containerd/config.toml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># sed -i &#39;s/sandbox_image = .*/sandbox_image = &#34;registry.k8s.io\/kubernetes\/pause:3.9&#34;/g&#39; /etc/containerd/config.toml</span>
+</span></span><span style="display:flex;"><span>sed -i <span style="color:#e6db74">&#39;s/SystemdCgroup = true/SystemdCgroup = false/g&#39;</span> /etc/containerd/config.toml
+</span></span><span style="display:flex;"><span>systemctl restart containerd.service
+</span></span><span style="display:flex;"><span>tar Cxzvf /usr/local/bin/ crictl-v1.31.1-linux-amd64.tar.gz
+</span></span><span style="display:flex;"><span>install -m +x kubeadm /usr/local/bin/
+</span></span><span style="display:flex;"><span>install -m +x kubelet /usr/local/bin/
+</span></span><span style="display:flex;"><span>chmod <span style="color:#ae81ff">644</span> kubelet.service 10-kubeadm.conf
+</span></span><span style="display:flex;"><span>cp kubelet.service /usr/lib/systemd/system/
+</span></span><span style="display:flex;"><span>mkdir /usr/lib/systemd/system/kubelet.service.d/
+</span></span><span style="display:flex;"><span>cp 10-kubeadm.conf /usr/lib/systemd/system/kubelet.service.d/
+</span></span><span style="display:flex;"><span>systemctl daemon-reload
+</span></span><span style="display:flex;"><span>systemctl enable --now kubelet.service
+</span></span><span style="display:flex;"><span>kubeadm config images --config ./master01_init.yaml list
+</span></span><span style="display:flex;"><span>kubeadm config images --config ./master01_init.yaml pull
+</span></span><span style="display:flex;"><span>hostname<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>hostname<span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>sed -i <span style="color:#e6db74">&#34;s/name: .*/name: </span><span style="color:#e6db74">${</span>hostname<span style="color:#e6db74">}</span><span style="color:#e6db74">/g&#34;</span> worker_join.yaml
+</span></span><span style="display:flex;"><span>kubeadm join --config worker_join.yaml
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ ls ./k8s
+</span></span><span style="display:flex;"><span>10-kubeadm.conf                       containerd.service                 kubelet             runc.amd64
+</span></span><span style="display:flex;"><span>cni-plugins-linux-amd64-v1.5.1.tgz    crictl-v1.31.1-linux-amd64.tar.gz  kubelet.service     worker_join.sh
+</span></span><span style="display:flex;"><span>containerd-1.6.35-linux-amd64.tar.gz  kubeadm     
+</span></span><span style="display:flex;"><span>$ tar -czf k8s_worker.tgz ./k8s
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 重复分发到各个 Worker 节点上并部署</span>
+</span></span><span style="display:flex;"><span>$ scp ./k8s_worker.tgz root@Workerxx-host:/root/
+</span></span><span style="display:flex;"><span>$ ssh root@Workerxx-host <span style="color:#e6db74">&#34;cd /root/k8s; sh worker_join.sh&#34;</span>
+</span></span></code></pre></div><ol start="6">
+<li>部署 metric-server<br>
+下载 <a href="https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.7.2/components.yaml">metric-server 部署文件</a> 并修改配置中的镜像仓库地址（如有需要）</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">apps/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Deployment</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">template</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">args</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span>        - --<span style="color:#ae81ff">kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname</span>
+</span></span><span style="display:flex;"><span>        - --<span style="color:#ae81ff">kubelet-insecure-tls</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">image</span>: <span style="color:#ae81ff">registry.k8s.io/metrics-server/metrics-server:v0.6.3</span>
+</span></span></code></pre></div><p>部署 metric-server</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ kubectl apply -f components.yaml
+</span></span><span style="display:flex;"><span>$ kubectl top node sever-10
+</span></span><span style="display:flex;"><span>NAME                          CPU<span style="color:#f92672">(</span>cores<span style="color:#f92672">)</span>   CPU%   MEMORY<span style="color:#f92672">(</span>bytes<span style="color:#f92672">)</span>   MEMORY%   
+</span></span><span style="display:flex;"><span>sever-10   917m         0%     31836Mi         6%
+</span></span></code></pre></div><ol start="7">
+<li>部署 Kubernetes-Dashboard<br>
+下载 <a href="https://raw.githubusercontent.com/kubernetes/dashboard/v2.6.1/aio/deploy/recommended.yaml">kubernetes-dashboard 部署文件</a> 并修改 <br>
+recommended.yaml</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># ...</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 修改 kubernetes-dashboard service 绑定的端口</span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Service</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">labels</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">k8s-app</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">spec</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">type</span>: <span style="color:#ae81ff">NodePort</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">ports</span>:
+</span></span><span style="display:flex;"><span>    - <span style="color:#f92672">port</span>: <span style="color:#ae81ff">8443</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">nodePort</span>: <span style="color:#ae81ff">8100</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">selector</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">k8s-app</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e"># 修改镜像地址</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>        - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">image</span>: <span style="color:#ae81ff">kubernetesui/dashboard:v2.6.1</span>
+</span></span><span style="display:flex;"><span>...
+</span></span><span style="display:flex;"><span>      <span style="color:#75715e"># 修改镜像地址</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">containers</span>:
+</span></span><span style="display:flex;"><span>        - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">dashboard-metrics-scraper</span>
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">image</span>: <span style="color:#ae81ff">kubernetesui/metrics-scraper:v1.0.8</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#75715e"># 部署 kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>$ kubectl apply -f recommended.yaml
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 创建管理员 service account</span>
+</span></span><span style="display:flex;"><span>$ kubectl apply -f create_dashboard_admin.yaml
+</span></span><span style="display:flex;"><span>$ kubectl get secret dashboard-admin-secret -n kubernetes-dashboard -o jsonpath<span style="color:#f92672">={</span><span style="color:#e6db74">&#34;.data.token&#34;</span><span style="color:#f92672">}</span> | base64 -d
+</span></span></code></pre></div><p>create_dashboard_admin.yaml</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">ServiceAccount</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">dashboard-admin</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">rbac.authorization.k8s.io/v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">ClusterRoleBinding</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">dashboard-admin-binding</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">roleRef</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">apiGroup</span>: <span style="color:#ae81ff">rbac.authorization.k8s.io</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">kind</span>: <span style="color:#ae81ff">ClusterRole</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">cluster-admin</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">subjects</span>:
+</span></span><span style="display:flex;"><span>- <span style="color:#f92672">kind</span>: <span style="color:#ae81ff">ServiceAccount</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">dashboard-admin</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>---
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">apiVersion</span>: <span style="color:#ae81ff">v1</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">kind</span>: <span style="color:#ae81ff">Secret</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">metadata</span>:
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">name</span>: <span style="color:#ae81ff">dashboard-admin-secret</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">namespace</span>: <span style="color:#ae81ff">kubernetes-dashboard</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">kubernetes.io/service-account.name</span>: <span style="color:#ae81ff">dashboard-admin</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">type</span>: <span style="color:#ae81ff">kubernetes.io/service-account-token</span>
+</span></span></code></pre></div><p>控制台地址：https://sever-01-host:8100</p>
+<h2 id="参考资料">参考资料</h2>
+<p><a href="https://github.com/kubernetes/kubeadm/blob/main/docs/ha-considerations.md#kube-vip">https://github.com/kubernetes/kubeadm/blob/main/docs/ha-considerations.md#kube-vip</a></p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/kubernetes/" rel="tag">Kubernetes</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/flink_source_api/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Flink】Data Source API 结构及实现</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/ray_framework_init/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Ray】分布式计算框架 Ray 入门</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

@@ -2,49 +2,70 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://blog.xingda.space/tech/interestinga_posts/</loc>
-    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
-  </url><url>
-    <loc>https://blog.xingda.space/categories/</loc>
-    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
-  </url><url>
     <loc>https://blog.xingda.space/tech/</loc>
-    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+    <lastmod>2025-03-12T14:19:45+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/</loc>
+    <lastmod>2025-03-12T14:19:45+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/kubernetes_deploy_nodebook/</loc>
+    <lastmod>2025-02-25T16:57:16+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/</loc>
+    <lastmod>2025-02-25T16:57:16+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/kubernetes/</loc>
+    <lastmod>2025-02-25T16:57:16+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/</loc>
+    <lastmod>2025-02-25T16:57:16+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/</loc>
+    <lastmod>2025-02-25T16:57:16+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/paimon_sink_clustring/</loc>
+    <lastmod>2025-02-19T11:14:58+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/flink/</loc>
+    <lastmod>2025-02-19T11:14:58+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/paimon/</loc>
+    <lastmod>2025-02-19T11:14:58+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/note/interesting_posts/</loc>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/note/</loc>
     <lastmod>2025-02-12T14:26:20+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/categories/%E6%94%B6%E8%97%8F/</loc>
     <lastmod>2025-02-12T14:26:20+08:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/tech/algorithem_case_notebook/</loc>
-    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blog.xingda.space/tags/algorithem/</loc>
+    <loc>https://blog.xingda.space/note/algorithem_case_notebook/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/categories/algorithem/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
+    <loc>https://blog.xingda.space/tags/algorithm/</loc>
+    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
+  </url><url>
     <loc>https://blog.xingda.space/tags/leetcode/</loc>
     <lastmod>2024-10-12T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/tags/</loc>
-    <lastmod>2024-10-12T00:00:00+00:00</lastmod>
+    <loc>https://blog.xingda.space/tech/ray_framework_init/</loc>
+    <lastmod>2024-09-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tags/ray/</loc>
+    <lastmod>2024-09-16T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/high_availability_k8s_cluster_build/</loc>
+    <lastmod>2024-09-05T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tech/flink_source_api/</loc>
     <lastmod>2024-07-13T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/tags/flink/</loc>
-    <lastmod>2024-07-13T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blog.xingda.space/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/</loc>
-    <lastmod>2024-07-13T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</loc>
-    <lastmod>2024-05-21T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blog.xingda.space/tags/kubernetes/</loc>
     <lastmod>2024-05-21T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tech/flink_fault_tolerance/</loc>

@@ -10,10 +10,10 @@
     <atom:link href="https://blog.xingda.space/categories/%E6%94%B6%E8%97%8F/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>【收藏夹】技术类文章</title>
-      <link>https://blog.xingda.space/tech/interestinga_posts/</link>
+      <link>https://blog.xingda.space/note/interesting_posts/</link>
       <pubDate>Wed, 12 Feb 2025 14:26:20 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/interestinga_posts/</guid>
-      <description>AI Vision Language Model (VLM) OpenVLA&#xA;Github主页 论文&#xA;Embodied AI Embodied AI Guide&#xA;具身智能相关指南&#xA;Github主页&#xA;无人机 飞控 INAV&#xA;开源的飞控和自动导航系统&#xA;Github主页 文档 RubyFPV 主页 ExpressLRS ELRS 开源无线控制链 Github主页 主页</description>
+      <guid>https://blog.xingda.space/note/interesting_posts/</guid>
+      <description>&lt;p&gt;技术类项目、文章收藏&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

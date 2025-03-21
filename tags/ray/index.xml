@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ray on Zhu Xingda</title>
+    <link>https://blog.xingda.space/tags/ray/</link>
+    <description>Recent content in Ray on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 16 Sep 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/tags/ray/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【Ray】分布式计算框架 Ray 入门</title>
+      <link>https://blog.xingda.space/tech/ray_framework_init/</link>
+      <pubDate>Mon, 16 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/tech/ray_framework_init/</guid>
+      <description>&lt;p&gt;&lt;strong&gt;Ray&lt;/strong&gt; 是一个开源的分布式计算框架，当前主要被应用于机器学习领域。&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

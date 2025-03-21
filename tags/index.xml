@@ -6,13 +6,34 @@
     <description>Recent content in Tags on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sat, 12 Oct 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 25 Feb 2025 16:57:16 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Algorithem</title>
-      <link>https://blog.xingda.space/tags/algorithem/</link>
+      <title>Kubernetes</title>
+      <link>https://blog.xingda.space/tags/kubernetes/</link>
+      <pubDate>Tue, 25 Feb 2025 16:57:16 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/kubernetes/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Flink</title>
+      <link>https://blog.xingda.space/tags/flink/</link>
+      <pubDate>Wed, 19 Feb 2025 11:14:58 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/flink/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Paimon</title>
+      <link>https://blog.xingda.space/tags/paimon/</link>
+      <pubDate>Wed, 19 Feb 2025 11:14:58 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/paimon/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Algorithm</title>
+      <link>https://blog.xingda.space/tags/algorithm/</link>
       <pubDate>Sat, 12 Oct 2024 00:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/tags/algorithem/</guid>
+      <guid>https://blog.xingda.space/tags/algorithm/</guid>
       <description></description>
     </item>
     <item>
@@ -23,17 +44,10 @@
       <description></description>
     </item>
     <item>
-      <title>Flink</title>
-      <link>https://blog.xingda.space/tags/flink/</link>
-      <pubDate>Sat, 13 Jul 2024 00:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/tags/flink/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Kubernetes</title>
-      <link>https://blog.xingda.space/tags/kubernetes/</link>
-      <pubDate>Tue, 21 May 2024 00:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/tags/kubernetes/</guid>
+      <title>Ray</title>
+      <link>https://blog.xingda.space/tags/ray/</link>
+      <pubDate>Mon, 16 Sep 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/tags/ray/</guid>
       <description></description>
     </item>
   </channel>

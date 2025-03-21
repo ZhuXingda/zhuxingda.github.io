@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>【Flink 基础】Data Source API 结构及实现 - Zhu Xingda</title>
+	<title>【Flink】Data Source API 结构及实现 - Zhu Xingda</title>
 	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
 	<meta name="description" content="">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,6 +52,13 @@
 			</a>
 		</li>
 		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
 			<a class="menu__link" href="">
 				
 				<span class="menu__text">生活-Life</span>
@@ -76,10 +83,10 @@
 <main class="main" role="main">
 	<article class="post">
 		<header class="post__header">
-			<h1 class="post__title">【Flink 基础】Data Source API 结构及实现</h1>
+			<h1 class="post__title">【Flink】Data Source API 结构及实现</h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-07-13T00:00:00Z">2024-07-13</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/" rel="category">大数据</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-07-13T00:00:00Z">2024-07-13</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/" rel="category">开源框架</a>
 	</span>
 </div></div>
 		</header>
@@ -88,8 +95,7 @@
 		<div class="content post__content clearfix">
 			<p>Flink 1.11 引入新的 <strong>Data Source API</strong> 以取代 <strong>SourceFunction</strong> 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。</p>
 <h3 id="data-source-api-结构">Data Source API 结构</h3>
-<p><img alt="Data Source 模型" src="https://nightlies.apache.org/flink/flink-docs-master/fig/source_components.svg"></p>
-<ul>
+<img alt="Data Source 模型" src="https://nightlies.apache.org/flink/flink-docs-master/fig/source_components.svg"><ul>
 <li><strong>Split</strong>： 描述数据源中部分数据的元数据，不是数据本身，<strong>SourceReader</strong> 拿着这个元数据去数据源读取对应的数据。</li>
 <li><strong>SplitEnumerator</strong>： 位于 <strong>JobManager</strong>，负责把数据源的数据从逻辑上拆分成多个 <strong>Splits</strong>，并把每个 <strong>Split</strong> 分发给 <strong>SourceReader</strong>。</li>
 <li><strong>SourceReader</strong>： 位于 <strong>TaskManager</strong>，负责向 <strong>SplitEnumerator</strong> 请求新的 <strong>Split</strong>，然后根据 <strong>Split</strong> 读取数据，并把数据传递给下游的算子。</li>
@@ -133,14 +139,13 @@ Split 分配器
 <li>snapshotState：执行 checkpoint 快照，将正在读取和还未读取的 <strong>Split</strong> 序列化，作为 <strong>SourceReader</strong> 的状态</li>
 <li>isAvailable：返回一个 CompletableFuture 来标识当前 <strong>SourceReader</strong> 是否有数据可以输出。如果该 Future 走到 complete 状态，则 Flink 的 runtime 会持续调用 pollNext 方法来输出数据。如果 pollNext 返回除 MOER_AVAILABLE 外的状态，则 runtime 会再次调用 isAvailable 方法并不断重复。</li>
 <li>addSplits：将 <strong>SplitEnumerator</strong> 分配的新 <strong>Split</strong> 发送到该 <strong>SourceReader</strong></li>
-<li>notiFyNoMoreSplits：当 <strong>SplitEnumerator</strong> 没有更多 Split 可以分配给该 <strong>SourceReader</strong> 时（<strong>SplitEnumeratorContext</strong> 的 SplitEnumeratorContext 方法调用时），会调用该方法</li>
+<li>notifyNoMoreSplits：当 <strong>SplitEnumerator</strong> 没有更多 Split 可以分配给该 <strong>SourceReader</strong> 时（<strong>SplitEnumeratorContext</strong> 的 SplitEnumeratorContext 方法调用时），会调用该方法</li>
 <li>handleSourceEvents：处理从 <strong>SplitEnumerator</strong> 发来的事件</li>
 <li>pauseOrResumeSplits：暂停或恢复从指定的 <strong>Splits</strong> 读取数据，<strong>SourceOperator</strong> 在对齐 <strong>Splits</strong> 的 watermark 时会调用该方法</li>
 </ul>
 </li>
 <li><strong>SourceSplit</strong><br>
-Split 接口<br>
-Flink 并未对 Split 的格式做限制，完全取决于接口的实现</li>
+Split 接口，由开发者实现</li>
 <li><strong>SourceReaderContext</strong><br>
 负责将一些 runtime 信息暴露给 <strong>SourceReader</strong>
 <ul>
@@ -153,7 +158,7 @@ Flink 并未对 Split 的格式做限制，完全取决于接口的实现</li>
 </li>
 </ol>
 <h3 id="高级接口定义">高级接口定义</h3>
-<p>flink-core 包下的接口定义对 Data Source 里各成员的功能做了基本描述，其中 <strong>SourceReader</strong> 是完全异步的（ pollNext 不能阻塞）。但很多外部数据源在读数据时是同步的操作（比如 Kafka Client 的 poll），所以需要把这些同步读数据和 <strong>SourceReader</strong> 的异步 pollNext 分到不同的线程执行，中间用一个队列来传递数据。Flink 提供了一个高级接口 <strong>SplitReader</strong> 来实现这个功能。</p>
+<p>flink-core 包下的接口定义对 Data Source 里各成员的功能做了基本描述，其中 <strong>SourceReader</strong> 是完全异步的（ pollNext 不能阻塞）。但很多外部数据源在读数据时是阻塞的（比如 Kafka Client 的 poll），所以需要把阻塞的读数据操作和 <strong>SourceReader</strong> 非阻塞的 pollNext 分到不同的线程执行，中间用一个队列来做缓冲。Flink 提供了一个高级接口 <strong>SplitReader</strong> 来实现这个功能。</p>
 <ol>
 <li><strong>SourceReaderBase</strong><br>
 实现了 <strong>SourceReader</strong> 接口，其内部用 <strong>SplitFetcherManager</strong> 管理负责读取数据的 <strong>SplitFetcher</strong>，读取的数据被写到阻塞队列经 <strong>RecordEmitter</strong> 消费后推送到下游</li>
@@ -223,7 +228,7 @@ SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBl
 <h3 id="event-time-和-watermarks">Event Time 和 Watermarks</h3>
 <p><strong>WatermarkStrategy</strong> 在构建 Source 时定义，包含 <strong>TimeStampAssigner</strong> 和 <strong>WatermarkGenerator</strong>，两个构造器在 Source 输出数据后调用</p>
 <h5 id="event-timestamps">Event Timestamps</h5>
-<p>Event Timestamp 可以由 <strong>TimeStampAssigner</strong> 在数据输出后绑定，也可以由 <strong>SourceReader</strong> 在往 <strong>ReaderOutput</strong> 输出数据时通过调用 collect(record, timestamp) 给数据记录附上时间戳</p>
+<p>Event Timestamp 可以由 <strong>TimeStampAssigner</strong> 在数据输出后绑定，也可以由 <strong>SourceReader</strong> 在往 <strong>ReaderOutput</strong> 输出数据时通过调用 collect(record, timestamp) 给数据记录附上时间戳，这类时间戳一般来自外部数据源，比如 Kafka 消息里附带的时间</p>
 <h5 id="watermarks-generation">Watermarks Generation</h5>
 <ul>
 <li>Watermark Generation 只在 streaming 模式下生效，支持对每个 split 生成独立的 watermark，以更好的观察 Event Time 倾斜以及防止暂停的 partitions 拖累整个任务的 Event Tiem 进度</li>
@@ -273,13 +278,13 @@ SourceReaderBase 的抽象实现，提供了 elementsQueue （FutureCompletingBl
 	<div class="pager__item pager__item--prev">
 		<a class="pager__link" href="/tech/flink_kubernetes_application_mode/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title">【Flink 基础】Flink Kubernetes Application Mode 启动分析</p>
+			<p class="pager__title">【Flink】Flink Kubernetes Application Mode 启动分析</p>
 		</a>
 	</div>
 	<div class="pager__item pager__item--next">
-		<a class="pager__link" href="/tech/algorithem_case_notebook/" rel="next">
+		<a class="pager__link" href="/tech/high_availability_k8s_cluster_build/" rel="next">
 			<span class="pager__subtitle">下一篇&thinsp;»</span>
-			<p class="pager__title">【leetcode】一些常见传统算法的 Golang 实现</p>
+			<p class="pager__title">【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm）</p>
 		</a>
 	</div>
 </nav>
