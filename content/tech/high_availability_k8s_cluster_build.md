@@ -2,7 +2,7 @@
 title: '【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm）'
 date: 2024-09-05
 categories:
-    - '开源框架'
+    - '分布式系统'
 tags:
     - 'Kubernetes'
 ---

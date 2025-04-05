@@ -50,7 +50,7 @@ defaultContentLanguageInSubdir = false
 
 [Params.style.vars]
   highlightColor = "#0a55a7"
-  fontFamilyPrimary = "'LXGW Bright SemiLight'"
+  fontFamilyPrimary = "-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans',Helvetica,Arial,sans-serif"
 
 [Params.sidebar]
   home = "right"
@@ -67,7 +67,7 @@ defaultContentLanguageInSubdir = false
 #   linkedin = "username"
 #   telegram = "username"
   github = "ZhuXingda"
-  email = "zhuxingda211@outlook.com"
+  email = "zhuxingda.official@gmail.com"
 
 [[Params.widgets.social.custom]]
   title = "Youtube"

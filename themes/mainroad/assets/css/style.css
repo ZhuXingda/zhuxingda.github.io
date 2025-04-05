@@ -277,6 +277,8 @@ code {
 code {
 	padding: 0 5px;
 	color: #c33;
+    font-family: monospace;
+    font-size: 13px;
 }
 
 pre {
@@ -888,7 +890,7 @@ button:not(:-moz-focusring):focus > .menu__btn-title {
 
 .list__title {
 	font-size: 20px;
-	font-size: 1.25rem;
+	font-size: 1rem;
 }
 
 .list__meta {
@@ -975,6 +977,8 @@ img {
 	max-width: 100%;
 	height: auto;
 	vertical-align: bottom;
+    padding: 3px;
+    border: 1px solid #ddd;
 }
 
 iframe,

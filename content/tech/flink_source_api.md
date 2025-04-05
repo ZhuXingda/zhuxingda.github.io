@@ -4,7 +4,7 @@ date: 2024-07-13
 tags:
     - Flink 
 categories:
-    - "开源框架"
+    - "分布式系统"
 ---
 Flink 1.11 引入新的 **Data Source API** 以取代 **SourceFunction** 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。
 <!--more-->

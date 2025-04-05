@@ -2,26 +2,30 @@
 title: "【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题"
 date: "2025-02-25T16:57:16+08:00"
 categories:
-  - "开源框架"
+  - "分布式系统"
 tags:
   - "Kubernetes"
 ---
+记录一些在使用 Kubernetes 时遇到的问题和概念。
 <!--more-->
-## 网络
-##### Service 的 type
-1. ClusterIP
-将 Service 暴露在集群内部的子网，可以通过 Ingress 和 网关暴露到外部。
-2. NodePort
-将 Service 以静态端口暴露在集群每个节点的 IP 上，访问任意节点外网 IP + static port 就能访问到 Service，在集群内部同 ClusterIP 一样为服务绑定了子网 IP 和端口。
+## 1. 网络
+### 1.1 Service 的 type
+1. **ClusterIP**
+将 Service 的访问限制在集群内部的 LAN 网，如果要在集群外访问需要进一步配置  
+- 临时访问 Service 里的 Pod 可以用 port-forward 命令
+- 给 Service 配置 external IP 地址
+- 使用 Ingress 或 其他负载均衡器。   
+2. **NodePort**
+将 Service 以静态端口暴露在集群每个节点的 WAN IP 上，访问任意节点 WAN IP + static port 会被代理到 Service，在集群内部同 ClusterIP 一样为服务绑定了子网 IP 和端口。
 ```shell
 NAME                        TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE   SELECTOR
 flink-job-rest   NodePort   10.200.88.165   <none>        8081:8153/TCP   53d   app=flink-job,component=jobmanager,type=flink-native-kubernetes
 ```
-3. LoadBalancer
+3. **LoadBalancer**
 通过一个第三方 Load Balancer 暴露 Service 到集群外部
-4. ExternalName
-## 存储
-### 迁移节点的文件系统目录到别的磁盘
+4. **ExternalName**
+## 2. 存储
+### 2.1 迁移节点的文件系统目录到别的磁盘
 - **nodefs**：包含非内存的 emptyDir volumes，log storage，ephemeral storage 和更多，默认的根目录为 `/var/lib/kubelet`。如果路径所在磁盘空间不足节点会进入 **NodeHasDiskPressure** 的状态，然后被驱逐。
 - **imagefs**：CR 用来保存 container images 和 container writable layers，containerd 的默认路径是 `/var/lib/containerd`。如果路径所在磁盘空间不足节点会报 **FreeDiskSpaceFailed** 的错误，错误信息是 `Failed to garbage collect required amount of images. Attempted to free xxx bytes, but only found 0 bytes eligible to free.`   
 #### 迁移 nodefs

@@ -5,7 +5,7 @@ tags:
     - Flink
     - Kubernetes
 categories:
-    - "开源框架"
+    - "分布式系统"
 ---
 分析 Flink 在 Kubernetes Application Mode 下启动任务的过程 
 <!--more-->
@@ -25,7 +25,7 @@ categories:
 
 一些发现：
 1. 在启动 JobManager 的过程中有在配置里设置 kubernetes.internal.jobmanager.entrypoint.class 配置项为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，但在装饰 JobManager 的 Pod 时并没有用到这项配置。
-2. 在装饰 JobManager 和 TaskManager 时 FlinkConfMountDecorator 会将在提交任务的客户端查找 `$internal.deployment.config-dir` 或 `kubernetes.flink.conf.dir` 两个配置指定的目录，并把目录下的 **logback-console.xml** 和 **log4j-console.properties** 配置文件挂载到 Pod 的 /opt/flink/conf 目录下，作为程序运行时日志输出的配置。所以提前在镜像构建时调整日志配置文件是无效的。
+2. 在装饰 JobManager 和 TaskManager 时 FlinkConfMountDecorator 会将在提交任务的客户端查找 `$internal.deployment.config-dir` 或 `kubernetes.flink.conf.dir` 两个配置指定的目录，如果目录下有 **logback-console.xml** 或 **log4j-console.properties** 配置文件，则会在创建 Pod 的 Volumn 时挂载镜像内的同名文件到 /opt/flink/conf 目录下，作为程序运行时日志输出的配置。
 
 #### Flink Docker Image 启动流程
 1. kubernetes-jobmanager.sh 脚本在 flink-dist/src/main/flink-bin/kubernetes-bin/ 目录下，按照前文 Pod Template 的构建，Flink Docker Image 启动 Container 时执行该脚本。

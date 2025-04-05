@@ -2,7 +2,7 @@
 title: "【Paimon】Paimon 的文件索引实现"
 date: "2025-02-17T11:20:20+08:00"
 categories:
-  - "开源框架"
+  - "分布式系统"
 tags:
   - "LakeHouse"
   - "Paimon"

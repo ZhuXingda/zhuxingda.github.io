@@ -4,7 +4,7 @@ description: ""
 date: "2025-02-19T11:14:58+08:00"
 thumbnail: ""
 categories:
-  - "开源框架"
+  - "分布式系统"
 tags:
   - "Paimon"
   - "Flink"

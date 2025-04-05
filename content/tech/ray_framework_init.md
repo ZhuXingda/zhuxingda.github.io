@@ -2,7 +2,7 @@
 title: '【Ray】分布式计算框架 Ray 入门'
 date: 2024-09-16
 categories:
-    - '开源框架'
+    - '分布式系统'
 tags:
     - 'Ray'
 ---
