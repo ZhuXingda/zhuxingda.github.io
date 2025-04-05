@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>分布式协议总结 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">分布式协议总结</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-03-30T22:29:20&#43;08:00">2025-03-30</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="category">分布式系统</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>总结多种分布式协议的实现原理</p>
+<h2 id="1-cap-理论">1. CAP 理论</h2>
+<ul>
+<li><strong>Consistency</strong>: 一致性，客户端每次从分布式系统读数据时，都是最新的准确的，或者返回 error</li>
+<li><strong>Availability</strong>：可用性，客户端每次从分布式系统读数据时，得到的都是非 error 响应，并不保证一定是最新的数据</li>
+<li><strong>Partition tolerance</strong>：分区容错性，分布式系统在内部因网络异常导致数据丢失、延迟时，产生不一致的 partition ，但系统仍可对外提供服务。 <br>
+CAP 理论指一个分布式系统不能同时满足 C A P 这三个特性。</li>
+</ul>
+<h4 id="11-满足-cp">1.1 满足 CP</h4>
+<p>同时满足<code>一致性</code>和<code>分区容错性</code>，当系统中存在分区时，即节点上的数据存在不一致，要满足一致性则必然只能等待分区消失后再提供服务，或者部分节点返回 error，这样就不能再满足<code>可用性</code></p>
+<h4 id="12-满足-ap">1.2 满足 AP</h4>
+<p>同时满足<code>可用性</code>和<code>分区容错性</code>，当系统存在分区时，为保证可用性所有节点都必须返回非 error 的值，则必然存在不一致的值，导致不满足<code>一致性</code></p>
+<h4 id="13-满足-ca">1.3 满足 CA</h4>
+<p>同时满足<code>一致性</code>和<code>可用性</code>，则系统每个节点返回的数据都是最新准确非 erro 的值，当系统存在分区时显然不能满足，因此系统不能对外提供服务，导致不满足<code>分区一致性</code></p>
+<h2 id="2-base-理论">2. Base 理论</h2>
+<p>Base 理论指分布式系统可以同时满足</p>
+<ul>
+<li><strong>B</strong>asically Available：基本可用，相对于完全可用，通过延迟响应、流量削峰等手段保障功能整体正常，实现基本可用</li>
+<li><strong>S</strong>oft <strong>S</strong>tate：软状态，指系统在没有外部输入时其整体状态也可能随时间而变化，因为最终一致性分区会随时间完成同步</li>
+<li><strong>E</strong>ventually consistent：最终一致性，指系统的副本在经过一定时间的同步之后最终能够完全一致，不需要保证数据的强一致性</li>
+</ul>
+<p>可以认为 Base 理论在一致性和可用性上做了适当妥协来达成分区容错性</p>
+<h2 id="3-2pc-协议">3. 2PC 协议</h2>
+<p>向分布式系统提交数据时，为保证<code>一致性</code>引入一个 <strong>协调者</strong> 来协调所有节点的写入，各节点被称为 <strong>参与者</strong><br>
+过程：</p>
+<ol>
+<li>Prepare 阶段：协调者给每个参与者发送 Prepare 消息，各参与者执行写入，但未提交事务;</li>
+<li>Commit 阶段：如果协调者接收到参与者失败或超时的消息，则回滚所有参与者；如果全都成功则发送 Commit 消息给所有参与者。参与者根据消息执行回滚或提交事务。
+异常处理：</li>
+<li>协调者故障：记录协调者的操作日志，重新拉起新的协调者后，根据操作日志向所有参与者询问状态，根据返回信息继续执行；</li>
+<li>参与者故障：由于协调者无法收到所有参与者的返回消息，导致协调者阻塞，设置协调者超时机制，指定时间内没有收到所有参与者执行写入成功的消息就全部回滚。<br>
+存在的问题：</li>
+<li>协调者和参与者在Commit 阶段同时故障，导致新的协调者拉起来后不知道故障的参与者处于什么状态（是否 commit 成功），导致无法回滚</li>
+<li>单个参与者的超时或故障会阻塞所有的参与者，效率较低</li>
+</ol>
+<h2 id="4-3pc-协议">4. 3PC 协议</h2>
+<p>在 2PC 协议的基础上，将 Prepare 阶段分为两个阶段：</p>
+<ol>
+<li>CanCommit 阶段：协调者向所有参与者发送 CanCommit 请求，各参与者根据自身是否能提交事务 commit 来响应请求。</li>
+<li>PreCommit 阶段：如果所有参与者在 CanCommit 阶段都返回 Yes，则进入 PreCommit 阶段，各参与者执行写入但不提交事务。这一阶段参与者和协调者都引入超时机制（ 2PC 协议只对参与者有超时机制）</li>
+<li>DoCommit 阶段：同 2PC Commit 阶段，唯一区别是参与者如果在超时时间内没有收到协调者发来的 Docommit 请求则自动提交 commit。</li>
+</ol>
+<p>相较于 2PC，3PC 解决了问题 2 降低了单个参与者阻塞对整体的影响，但问题 1 仍无法解决。 <br>
+3PC 协调者出现超时执行者自动 commit 还引入了新的问题：如果部分协调者出现了网络异常接收不到来自协调者的回滚请求，则会超时自动 commit，网络恢复后集群出现分区不能保证一致性</p>
+<h2 id="5-paxos-协议">5. Paxos 协议</h2>
+<h2 id="6-raft-协议">6. Raft 协议</h2>
+<p><a href="https://raft.github.io/raft.pdf">论文原文</a>
+<a href="https://docs.qq.com/doc/DY0VxSkVGWHFYSlZJ?_t=1609557593539">论文译文</a></p>
+<h4 id="61-角色成员">6.1 角色成员</h4>
+<ul>
+<li><strong>Leader</strong> Leader 通过选举产生，负责处理客户端请求，并向 Follower 同步请求对应的日志，任意时刻系统内最多只有一个 Leader</li>
+<li><strong>Follower</strong> Follower 接收并持久化 Leader 同步的请求日志，在 Leader 触发下提交日志</li>
+<li><strong>Candidate</strong> Follower 竞选 Leader 时的临时角色，选举结束后消失</li>
+</ul>
+<h4 id="62-选举">6.2 选举</h4>
+<p>选举过程：</p>
+<ol>
+<li>每位 Leader 都对应一个任期（term），任期内 Leader 会接收客户端请求，并将请求对应的指令日志同步到各 Follower，同时也会向所有 Follower 发送定时心跳</li>
+<li>当 Follower 在超时时间后仍未收到来自 Leader 的心跳消息，则会等待一段随机时间后发起 Leader 选举</li>
+<li>Follower 将自己的角色转换为 Candidate，向其他 Follower 发送 RequestVote RPC 请求，请求中的 term 为当前 term + 1</li>
+<li>Candidate 根据投票结果产生对应变化：
+<ul>
+<li>赢得选举：Candidate 收到来自多数 Follower 发送的赞成票（term 相同）就赢得选举，成为新的 Leader 集群进入新的 term</li>
+<li>其他 Candidate 获胜：收到来自其他 Candidate 的 AppendEntries RPC 请求，如果请求中的 term 大于等于该 Candidate 当前的 term 则承认败选转回 Follower 状态，否则拒绝请求并保持 Candidate 状态</li>
+<li>选举超时：如果多个 Candidate 瓜分选票都拿不到多数赞成票，Candidate 会因为超时而进入新一轮选举，将 term + 1 后发送新的 RequestVote RPC 请求</li>
+</ul>
+</li>
+</ol>
+<p>每个 Candidate 的选举超时时间采用固定区间内的随机值，避免长时间选票瓜分导致选举迟迟不能结束</p>
+<h4 id="63-日志同步">6.3 日志同步</h4>
+<ol>
+<li><strong>同步日志</strong>
+Leader 接收客户端请求后，会将请求对应的操作日志追加到日志中，然后向其他 Followers 并行发送 AppendEntries RPC 请求来同步日志，当日志都同步成功后 Leader 执行请求返回结果。<br>
+<img alt="log" src="https://qqadapt.qpic.cn/txdocpic/0/17ad6a18d9c67d1362166afa6c159920/0?w=1928&h=1236">
+如图，每条日志包含了请求的操作、被创建时的 term、在日志中的索引。如果 Leader 成功将日志同步到了大多数节点上，就认为执行日志中的操作是安全的可以被执行，被称为 committed，Leader 会记录最新 committed 的日志的索引，并将其放入后面的 AppendEntries RPC 请求中，Follower 在接收到后会执行 committed 的日志对应的操作。</li>
+<li><strong>一致性检查</strong></li>
+<li><strong>修复不一致</strong></li>
+</ol>
+<h4 id="heading"></h4>
+<h2 id="zab-协议">Zab 协议</h2>
+<h2 id="gossip-协议">Gossip 协议</h2>
+<h2 id="craq-协议">CRAQ 协议</h2>
+<p><a href="https://pdos.csail.mit.edu/6.824/papers/craq.pdf">论文原文</a></p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E5%8D%8F%E8%AE%AE/" rel="tag">分布式协议</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/flink_watermark_source_code/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Flink】Flink Watermark 产生和传递原理</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

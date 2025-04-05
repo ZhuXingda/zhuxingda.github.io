@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Flink】Flink Data Sink API - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Flink】Flink Data Sink API</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-11-28T00:00:00Z">2024-11-28</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="category">分布式系统</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>新的 Flink Sink API 取代了旧的 SinkFunction API，以提供更灵活的功能</p>
+<p>Flink 版本：2.0</p>
+<h2 id="sink-和-sinkwriter">Sink 和 SinkWriter</h2>
+<p>Sink 和 SinkWriter 接口是初级接口，保证 at-least-once</p>
+<h4 id="sinkwriter">SinkWriter</h4>
+<ul>
+<li><strong>write</strong> 上游数据传入，执行具体写到外部的逻辑</li>
+<li><strong>flush</strong> 在执行 <code>checkpoint</code> 或输出结束时会被调用，调用后将所有已传入但未写出的数据写出，保证 <code>at-least-once</code></li>
+<li><strong>writeWatermark</strong> 从上游传递的 watermark 会在此写入，可以用来实现一些特殊的逻辑</li>
+</ul>
+<h2 id="supportswriterstate-和-statefulsinkwriter">SupportsWriterState 和 StatefulSinkWriter</h2>
+<p>在 Sink 接口的基础上继承 <code>SupportsWriterState</code> 即表示该 Sink 的 SinkWriter 是有状态的，需要实现 <code>StatefulSinkWriter</code> 接口</p>
+<h4 id="supportswriterstate">SupportsWriterState</h4>
+<ul>
+<li><strong>restoreWriter</strong> 从 State 恢复 StatefulSinkWriter 实例</li>
+<li><strong>getWriterStateSerializer</strong> 定义 StatefulSinkWriter 的 State 序列化器</li>
+</ul>
+<h4 id="statefulsinkwriter">StatefulSinkWriter</h4>
+<p>StatefulSinkWriter 可以不用在 SinkWriter.flush 时保证将所有数据写出，而是将其存入状态中</p>
+<ul>
+<li><strong>snapshotState</strong> 执行 checkpoint 时被调用，将当前状态存入 State ()</li>
+</ul>
+<h2 id="supportscommittercommittingsinkwriter-和-committer">SupportsCommitter、CommittingSinkWriter 和 Committer</h2>
+<p>在 Sink 接口的基础上继承 SupportsCommitter 表示该 Sink 支持二段提交，保证 <code>exactly-once</code>。</p>
+<ul>
+<li>CommittingSinkWriter 负责输出数据，逻辑上视为 preCommits；</li>
+<li>Committer 在 CommittingSinkWriter 输出后确保这段输出完全成功，执行 actually commits</li>
+</ul>
+<h4 id="supportscommitter">SupportsCommitter</h4>
+<ul>
+<li><strong>createCommitter</strong> 创建 Committer</li>
+<li><strong>getCommittableSerializer</strong> 创建 Committable 的序列化器</li>
+</ul>
+<h4 id="committingsinkwriter">CommittingSinkWriter</h4>
+<ul>
+<li><strong>prepareCommit</strong> 在 SinkWriter.flush 后，StatefulSinkWriter.snapshotState 前被调用，产生 Committables 并输出到下游</li>
+</ul>
+<h4 id="committer">Committer</h4>
+<ul>
+<li><strong>commit</strong> 执行真正的 commit 操作，根据 CommitRequest 里的 Committable 执行特定的 commit 操作，使 CommittingSinkWriter 的写入完全成功</li>
+</ul>
+<h2 id="streamoperator">StreamOperator</h2>
+<h4 id="sinkwriteroperator">SinkWriterOperator</h4>
+<p>SinkWriterOperator 是 SinkWriter 对应的 StreamOperator，其执行流程大致如下</p>
+<ol>
+<li><strong>初始化</strong>
+<ol>
+<li>SinkWriterOperator 初始化 SinkWriterStateHandler 和 CommittableSerializer</li>
+<li>setup</li>
+<li>initializeState   从 State 中恢复未提交的 Committable (如果存在，兼容旧接口) 和 endOfInput 状态</li>
+</ol>
+</li>
+<li><strong>processElement</strong> 处理写入的数据</li>
+<li><strong>processWatermark</strong> 处理 watermark</li>
+<li><strong>prepareSnapshotPreBarrier</strong> 执行 Checkpoint 前
+<ol>
+<li>调用 SinkWriter.flush</li>
+<li>emitCommittables 将 Committables 封装成 CommittableMessage 并输出到下游
+<ol>
+<li>调用 CommittingSinkWriter#prepareCommit</li>
+<li>如果有从 State 恢复的 Committable 先提交</li>
+<li>提交 CommittingSinkWriter 产生的 Committables</li>
+<li>CommittableMessage 包含一批 Committable 的汇总信息 CommittableSummary 和每个 Committable 的详细信息 CommittableWithLineage</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><strong>snapshotState</strong> 执行 Checkpoint
+<ol>
+<li>StatefulSinkWriterStateHandler#snapshotState 更新 StatefulSinkWriter 的 State</li>
+</ol>
+</li>
+<li><strong>endInput</strong> 输入结束
+<ol>
+<li>更新 endOfInput 和 endOfInput 状态</li>
+<li>调用 SinkWriter.flush</li>
+<li>将 SinkWriter 剩下的 Committables 都推送到下游（注意不是保存到 State）</li>
+</ol>
+</li>
+</ol>
+<h4 id="committeroperator">CommitterOperator</h4>
+<p>CommitterOperator 是 Committer 对应的 StreamOperator，也是 SinkWriterOperator 的下游算子，其执行流程大致如下</p>
+<ol>
+<li><strong>初始化</strong>
+<ol>
+<li>CommitterOperator</li>
+<li>setup</li>
+<li>initializeState
+<ol>
+<li>调用 SupportsCommitter#createCommitter 创建 Committer</li>
+<li>从 State 中恢复未提交的 Committables 并保存至 CommittableCollector</li>
+<li>如果 2 中有未提交 Committables 存在，则调用 CommitterOperator#commitAndEmitCheckpoints 将其和 <code>CompletedCheckpointId</code> 一起提交</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><strong>processElement</strong><br>
+CommittableCollector 处理 CommittableMessage</li>
+<li><strong>snapshotState</strong> 执行 Checkpoint<br>
+将 CommittableCollector 中未提交的 Committables 保存到 State</li>
+<li><strong>notifyCheckpointComplete</strong> Checkpoint 执行完成<br>
+commitAndEmitCheckpoints
+<ol>
+<li>从 CommittableCollector 中取出所有这次 Checkpoint 及之前的未提交的 Committables</li>
+<li>CheckpointCommittableManager#commit 提交每一个取出的 Committable，组成 CommitRequest 交由 Committer 执行，如果 Sink 实现了 SupportsPostCommitTopology 接口则将 Committable 和 CheckpointId 继续推到下游算子</li>
+<li>从 CommittableCollector 中移除已提交的 Committable</li>
+</ol>
+</li>
+<li><strong>endInput</strong> 输入结束
+<ol>
+<li>更新 endInput</li>
+<li>将 CommittableCollector 中未提交的 Committable 全部提交</li>
+</ol>
+</li>
+</ol>
+<h2 id="自定义-sink-拓扑">自定义 Sink 拓扑</h2>
+<ol>
+<li><strong>SupportsPreWriteTopology 接口</strong><br>
+支持在 SinkWriter 之前执行自定义逻辑的算子</li>
+<li><strong>SupportsPreCommitTopology 接口</strong><br>
+支持在 SinkWriter 之后 Committer 之前执行自定义逻辑的算子</li>
+<li><strong>SupportsPostCommitTopology 接口</strong><br>
+支持在 Committer 之后执行自定义逻辑的算子</li>
+</ol>
+<h2 id="paimon-是如何实现-flink-sink-的">Paimon 是如何实现 Flink Sink 的</h2>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/flink/" rel="tag">Flink</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/paimon/" rel="tag">Paimon</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/ray_framework_init/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Ray】分布式计算框架 Ray 入门</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/paimon_sink_clustring/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Paimon】Paimon 表排序</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

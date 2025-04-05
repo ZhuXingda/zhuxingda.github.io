@@ -15,5 +15,12 @@
       <guid>https://blog.xingda.space/tech/paimon_sink_clustring/</guid>
       <description>&lt;p&gt;Paimon （1.0）对 Bucket Unaware 的 Append Only Table 支持写入时排序以提升查询效率，同时对分 Bucket 的 Append Only Table和 Dynamic Bucket 的 Primary Key Table ，提供了异步的 Sort Compact 支持。&lt;/p&gt;</description>
     </item>
+    <item>
+      <title>【Flink】Flink Data Sink API</title>
+      <link>https://blog.xingda.space/tech/flink_sink_api/</link>
+      <pubDate>Thu, 28 Nov 2024 00:00:00 +0000</pubDate>
+      <guid>https://blog.xingda.space/tech/flink_sink_api/</guid>
+      <description>&lt;p&gt;新的 Flink Sink API 取代了旧的 SinkFunction API，以提供更灵活的功能&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>

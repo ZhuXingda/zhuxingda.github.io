@@ -86,30 +86,38 @@
 			<h1 class="post__title">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-02-25T16:57:16&#43;08:00">2025-02-25</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/" rel="category">开源框架</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-02-25T16:57:16&#43;08:00">2025-02-25</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="category">分布式系统</a>
 	</span>
 </div></div>
 		</header>
 		
 		
 		<div class="content post__content clearfix">
-			<h2 id="网络">网络</h2>
-<h5 id="service-的-type">Service 的 type</h5>
+			<p>记录一些在使用 Kubernetes 时遇到的问题和概念。</p>
+<h2 id="1-网络">1. 网络</h2>
+<h3 id="11-service-的-type">1.1 Service 的 type</h3>
 <ol>
-<li>ClusterIP
-将 Service 暴露在集群内部的子网，可以通过 Ingress 和 网关暴露到外部。</li>
-<li>NodePort
-将 Service 以静态端口暴露在集群每个节点的 IP 上，访问任意节点外网 IP + static port 就能访问到 Service，在集群内部同 ClusterIP 一样为服务绑定了子网 IP 和端口。</li>
+<li><strong>ClusterIP</strong>
+将 Service 的访问限制在集群内部的 LAN 网，如果要在集群外访问需要进一步配置</li>
+</ol>
+<ul>
+<li>临时访问 Service 里的 Pod 可以用 port-forward 命令</li>
+<li>给 Service 配置 external IP 地址</li>
+<li>使用 Ingress 或 其他负载均衡器。</li>
+</ul>
+<ol start="2">
+<li><strong>NodePort</strong>
+将 Service 以静态端口暴露在集群每个节点的 WAN IP 上，访问任意节点 WAN IP + static port 会被代理到 Service，在集群内部同 ClusterIP 一样为服务绑定了子网 IP 和端口。</li>
 </ol>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>NAME                        TYPE       CLUSTER-IP      EXTERNAL-IP   PORT<span style="color:#f92672">(</span>S<span style="color:#f92672">)</span>         AGE   SELECTOR
 </span></span><span style="display:flex;"><span>flink-job-rest   NodePort   10.200.88.165   &lt;none&gt;        8081:8153/TCP   53d   app<span style="color:#f92672">=</span>flink-job,component<span style="color:#f92672">=</span>jobmanager,type<span style="color:#f92672">=</span>flink-native-kubernetes
 </span></span></code></pre></div><ol start="3">
-<li>LoadBalancer
+<li><strong>LoadBalancer</strong>
 通过一个第三方 Load Balancer 暴露 Service 到集群外部</li>
-<li>ExternalName</li>
+<li><strong>ExternalName</strong></li>
 </ol>
-<h2 id="存储">存储</h2>
-<h3 id="迁移节点的文件系统目录到别的磁盘">迁移节点的文件系统目录到别的磁盘</h3>
+<h2 id="2-存储">2. 存储</h2>
+<h3 id="21-迁移节点的文件系统目录到别的磁盘">2.1 迁移节点的文件系统目录到别的磁盘</h3>
 <ul>
 <li><strong>nodefs</strong>：包含非内存的 emptyDir volumes，log storage，ephemeral storage 和更多，默认的根目录为 <code>/var/lib/kubelet</code>。如果路径所在磁盘空间不足节点会进入 <strong>NodeHasDiskPressure</strong> 的状态，然后被驱逐。</li>
 <li><strong>imagefs</strong>：CR 用来保存 container images 和 container writable layers，containerd 的默认路径是 <code>/var/lib/containerd</code>。如果路径所在磁盘空间不足节点会报 <strong>FreeDiskSpaceFailed</strong> 的错误，错误信息是 <code>Failed to garbage collect required amount of images. Attempted to free xxx bytes, but only found 0 bytes eligible to free.</code></li>
@@ -259,6 +267,12 @@ at org.apache.flink.runtime.security.modules.JaasModule.generateDefaultConfigFil
 		<a class="pager__link" href="/tech/paimon_sink_clustring/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
 			<p class="pager__title">【Paimon】Paimon 表排序</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/flink_task_data_transfer_source_code/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Flink】Flink 跨 Task 数据传输代码分析</p>
 		</a>
 	</div>
 </nav>

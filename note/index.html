@@ -86,6 +86,27 @@
 	
 	<header class="list__header">
 		<h2 class="list__title post__title">
+			<a href="/note/interview_prepare/" rel="bookmark">
+			x
+			</a>
+		</h2>
+		<div class="list__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-03-27T16:48:23&#43;08:00">2025-03-27</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/" rel="category">Categories</a>
+	</span>
+</div></div>
+	</header>
+	<div class="content list__excerpt post__content clearfix">
+		1. 算法 2. Java 3. Golang 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 4.3 ORC 协议 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析
+Paxos 协议 Paxos协议详解
+Raft 协议 Raft协议详解 Raft论文
+Gossip 协议
+5.2 Flink Flink State Backend 和持久化 Flink Watermark 生成原理及作用 Flink OperatorChain 生成过程 Flink Operator 调度过程 Flink SQL 解析及执行过程 StreamGraph、JobGraph、ExecutionGraph 生成过程 Flink 背压处理机制 Flink HA 原理 5.3 Kafka 架构设计 5.
+	</div>
+</article><article class="list__item post">
+	
+	<header class="list__header">
+		<h2 class="list__title post__title">
 			<a href="/note/interesting_posts/" rel="bookmark">
 			【收藏夹】技术类文章
 			</a>
@@ -130,7 +151,7 @@
 			<li class="widget__item">
 				<a class="widget__link" href="/categories/algorithem/">Algorithem</a></li>
 			<li class="widget__item">
-				<a class="widget__link" href="/categories/%E5%BC%80%E6%BA%90%E6%A1%86%E6%9E%B6/">开源框架</a></li>
+				<a class="widget__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/">分布式系统</a></li>
 			<li class="widget__item">
 				<a class="widget__link" href="/categories/%E6%94%B6%E8%97%8F/">收藏</a></li>
 		</ul>
@@ -145,20 +166,23 @@
 		<a class="widget-taglist__link widget__link btn" href="/tags/leetcode/" title="Leetcode">Leetcode</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/paimon/" title="Paimon">Paimon</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/ray/" title="Ray">Ray</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E5%8D%8F%E8%AE%AE/" title="分布式协议">分布式协议</a>
 	</div>
 </div>
 <div class="widget-recent widget">
 	<h4 class="widget__title">近期文章</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/tech/distribute_system_protocal/">分布式协议总结</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_watermark_source_code/">【Flink】Flink Watermark 产生和传递原理</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_task_inside_source_code/">【Flink】Flink Task 和 OperatorChain 源码</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_task_data_transfer_source_code/">【Flink】Flink 跨 Task 数据传输代码分析</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/kubernetes_deploy_nodebook/">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/paimon_sink_clustring/">【Paimon】Paimon 表排序</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_sink_api/">【Flink】Flink Data Sink API</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/ray_framework_init/">【Ray】分布式计算框架 Ray 入门</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/high_availability_k8s_cluster_build/">【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm）</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_source_api/">【Flink】Data Source API 结构及实现</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/flink_kubernetes_application_mode/">【Flink】Flink Kubernetes Application Mode 启动分析</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/flink_fault_tolerance/">【Flink】Fault Tolerance 实现原理</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/flink_memory_management/">【Flink】Taskmanager 内存管理</a></li>
 		</ul>
 	</div>
 </div>
@@ -172,7 +196,7 @@
 			</a>
 		</div>
 		<div class="widget-social__item widget__item">
-			<a class="widget-social__link widget__link btn" title="Email" href="mailto:zhuxingda211@outlook.com">
+			<a class="widget-social__link widget__link btn" title="Email" href="mailto:zhuxingda.official@gmail.com">
 				<svg class="widget-social__link-icon icon icon-mail" width="24" height="24" viewBox="0 0 24 24"><path d="M0 3h24v18H0zm2 16h20V7l-10 6L2 7zM22 5H2l10 6z"/></svg>
 				<span>Email</span>
 			</a>
