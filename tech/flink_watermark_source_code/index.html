@@ -94,8 +94,8 @@
 		
 		<div class="content post__content clearfix">
 			<p>Flink Watermark 的产生原理和传递过程</p>
-<h2 id="产生-watermark">产生 Watermark</h2>
-<h4 id="定义-watermarkstrategy-并在创建-sourceoperator-时传入">定义 WatermarkStrategy 并在创建 SourceOperator 时传入</h4>
+<h2 id="1-产生-watermark">1. 产生 Watermark</h2>
+<h4 id="11-定义-watermarkstrategy-并在创建-sourceoperator-时传入">1.1 定义 WatermarkStrategy 并在创建 SourceOperator 时传入</h4>
 <p><strong>WatermarkStrategy</strong> 配置传入 SourceOperatorFactory</p>
 <ol>
 <li>StreamExecutionEnvironment#fromSource</li>
@@ -106,7 +106,7 @@
 <li>SourceOperatorFactory#createStreamOperator</li>
 <li>SourceOperator#SourceOperator</li>
 </ol>
-<h4 id="初始化-sourceoperator-时创建-timestampsandwatermarks-对象">初始化 SourceOperator 时创建 TimestampsAndWatermarks 对象</h4>
+<h4 id="12-初始化-sourceoperator-时创建-timestampsandwatermarks-对象">1.2 初始化 SourceOperator 时创建 TimestampsAndWatermarks 对象</h4>
 <ol>
 <li>SourceOperator#open</li>
 <li>TimestampsAndWatermarks#createProgressiveEventTimeLogic<br>
@@ -115,7 +115,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>ProgressiveTimestampsAndWatermarks#startPeriodicWatermarkEmits</li>
 <li>ProgressiveTimestampsAndWatermarks#triggerPeriodicEmit 如果 <code>pipeline.auto-watermark-interval</code> 配置不为 0 开启周期性触发 watermark</li>
 </ol>
-<h4 id="sourceoperator-在开始推送数据时创建-mainoutput-和-splitlocaloutput">SourceOperator 在开始推送数据时创建 MainOutput 和 SplitLocalOutput</h4>
+<h4 id="13-sourceoperator-在开始推送数据时创建-mainoutput-和-splitlocaloutput">1.3 SourceOperator 在开始推送数据时创建 MainOutput 和 SplitLocalOutput</h4>
 <ol>
 <li>SourceOperator#emitNext</li>
 <li>SourceOperator#emitNextNotReading</li>
@@ -123,7 +123,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>TimestampsAndWatermarks#createMainOutput</li>
 <li>ProgressiveTimestampsAndWatermarks#createMainOutput 创建 MainOutput 和 SplitLocalOutput</li>
 </ol>
-<h4 id="触发-mainoutput-周期性输出-watermark">触发 MainOutput 周期性输出 Watermark</h4>
+<h4 id="14-触发-mainoutput-周期性输出-watermark">1.4 触发 MainOutput 周期性输出 Watermark</h4>
 <ol>
 <li>ProgressiveTimestampsAndWatermarks#triggerPeriodicEmit</li>
 <li>SourceOutputWithWatermarks#emitPeriodicWatermark</li>
@@ -131,49 +131,32 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>BoundedOutOfOrdernessWatermarks#onPeriodicEmit 回到 WatermarkStrategy 里配置的 WatermarkGenerator，调用定义输出 watermark</li>
 <li>WatermarkOutput#emitWatermark</li>
 </ol>
-<h4 id="触发-splitlocaloutputs-周期性输出-watermark">触发 SplitLocalOutputs 周期性输出 Watermark</h4>
+<h4 id="15-触发-splitlocaloutputs-周期性输出-watermark">1.5 触发 SplitLocalOutputs 周期性输出 Watermark</h4>
 <ol>
 <li>ProgressiveTimestampsAndWatermarks#triggerPeriodicEmit</li>
-<li>SplitLocalOutputs#emitPeriodicWatermark
-2.1 SourceOutputWithWatermarks#emitPeriodicWatermark 后面的逻辑同 MainOutput
-2.2 WatermarkOutputMultiplexer#onPeriodicEmit
-2.3 WatermarkOutputMultiplexer#updateCombinedWatermark 更新 combinedWatermark 并推送到 underlyingOutput
-2.3.1 CombinedWatermarkStatus#updateCombinedWatermark 取所有 partialWatermarks 里的最小值作为 combinedWatermark
-2.3.2 WatermarkToDataOutput#emitWatermark
-2.3.3 PushingAsyncDataInput.DataOutput#emitWatermark 将 watermark 推送到下游</li>
+<li>SplitLocalOutputs#emitPeriodicWatermark<br>
+2.1 SourceOutputWithWatermarks#emitPeriodicWatermark 后面的逻辑同 MainOutput<br>
+2.2 WatermarkOutputMultiplexer#onPeriodicEmit <br>
+2.3 WatermarkOutputMultiplexer#updateCombinedWatermark <br>
+更新 combinedWatermark 并推送到 underlyingOutput<br>
+2.3.1 CombinedWatermarkStatus#updateCombinedWatermark <br>
+取所有 partialWatermarks 里的最小值作为 combinedWatermark<br>
+2.3.2 WatermarkToDataOutput#emitWatermark<br>
+2.3.3 PushingAsyncDataInput.DataOutput#emitWatermark <br>
+将 watermark 推送到下游</li>
 </ol>
-<h4 id="datasource-触发-mainoutput-watermark-更新">DataSource 触发 MainOutput watermark 更新</h4>
+<h4 id="16-datasource-触发-mainoutput-watermark-更新">1.6 DataSource 触发 MainOutput watermark 更新</h4>
 <ol>
 <li>SourceOutput#collect(T, long) 这里需要 DataSource 支持，在 <a href="../flink_source_api">【Flink】Data Source API 结构及实现</a> 里有介绍</li>
 <li>SourceReaderBase.SourceOutputWrapper#collect(T, long)</li>
-<li>SourceOutputWithWatermarks#collect(T, long)</li>
+<li>SourceOutputWithWatermarks#collect(T, long) <br>
+3.1 TimestampAssigner#extractTimestamp 根据定义从数据和传入的时间戳中提取 watermark<br>
+3.1 PushingAsyncDataInput.DataOutput#emitRecord 先将带 watermark 的数据推送到下游<br>
+3.2 WatermarkGenerator#onEvent <br>
+3.2.1 BoundedOutOfOrdernessWatermarks#onEvent 更新最大的 watermark （以 BoundedOutOfOrdernessWatermarks 为例）</li>
 </ol>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">collect</span>(T record) {
-</span></span><span style="display:flex;"><span>        collect(record, TimestampAssigner.<span style="color:#a6e22e">NO_TIMESTAMP</span>);
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">@Override</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">collect</span>(T record, <span style="color:#66d9ef">long</span> timestamp) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> assignedTimestamp <span style="color:#f92672">=</span> timestampAssigner.<span style="color:#a6e22e">extractTimestamp</span>(record, timestamp);
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// IMPORTANT: The event must be emitted before the watermark generator is called.</span>
-</span></span><span style="display:flex;"><span>            recordsOutput.<span style="color:#a6e22e">emitRecord</span>(reusingRecord.<span style="color:#a6e22e">replace</span>(record, assignedTimestamp));
-</span></span><span style="display:flex;"><span>            watermarkGenerator.<span style="color:#a6e22e">onEvent</span>(record, assignedTimestamp, onEventWatermarkOutput);
-</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">catch</span> (ExceptionInChainedOperatorException e) {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> e;
-</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">catch</span> (Exception e) {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> ExceptionInChainedOperatorException(e);
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>    }
-</span></span></code></pre></div><pre><code>3.1 TimestampAssigner#extractTimestamp 根据定义从数据和传入的时间戳中提取 watermark
-3.1 PushingAsyncDataInput.DataOutput#emitRecord 先将带 watermark 的数据推送到下游
-3.2 WatermarkGenerator#onEvent
-    3.2.1 BoundedOutOfOrdernessWatermarks#onEvent 更新最大的 watermark （以 BoundedOutOfOrdernessWatermarks 为例）
-</code></pre>
-<h4 id="timestampsandwatermarksoperator-产生-watermark">TimestampsAndWatermarksOperator 产生 Watermark</h4>
-<h2 id="传递-watermark">传递 Watermark</h2>
+<h4 id="17-timestampsandwatermarksoperator-产生-watermark">1.7 TimestampsAndWatermarksOperator 产生 Watermark</h4>
+<h2 id="2-传递-watermark">2. 传递 Watermark</h2>
 <ol>
 <li>BoundedOutOfOrdernessWatermarks#onPeriodicEmit</li>
 <li>WatermarkToDataOutput#emitWatermark</li>
@@ -181,7 +164,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>Input#processWatermark</li>
 <li>AbstractStreamOperator#processWatermark</li>
 </ol>
-<h4 id="timeservice-处理-watermark">TimeService 处理 Watermark</h4>
+<h4 id="21-timeservice-处理-watermark">2.1 TimeService 处理 Watermark</h4>
 <ol>
 <li>AbstractStreamOperator#processWatermark</li>
 <li>InternalTimeServiceManager#advanceWatermark</li>
@@ -189,7 +172,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>InternalTimerServiceImpl#advanceWatermark</li>
 <li>Triggerable#onEventTime</li>
 </ol>
-<h4 id="传递给-output">传递给 Output</h4>
+<h4 id="22-传递给-output">2.2 传递给 Output</h4>
 <ol>
 <li>AbstractStreamOperator#processWatermark</li>
 <li>Output#emitWatermark</li>
@@ -203,7 +186,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>ResultSubpartition#add</li>
 <li>PipelinedSubpartition#add 数据写入 ResultSubpartition 的 Buffer</li>
 </ol>
-<h4 id="input-读出-watermark-localinputchannel-为例">Input 读出 Watermark （LocalInputChannel 为例）</h4>
+<h4 id="23-input-读出-watermark-localinputchannel-为例">2.3 Input 读出 Watermark （LocalInputChannel 为例）</h4>
 <ol>
 <li>StatusWatermarkValve#inputWatermark</li>
 <li>AbstractStreamTaskNetworkInput#processElement</li>
@@ -218,7 +201,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>LocalInputChannel#getNextBuffer 从 subpartitionView 读取 Buffer</li>
 <li>LocalInputChannel#requestSubpartition 从 partitionManager 获取 ResultSubpartitionView</li>
 </ol>
-<h4 id="input-输出-watermark-到下游">Input 输出 Watermark 到下游</h4>
+<h4 id="24-input-输出-watermark-到下游">2.4 Input 输出 Watermark 到下游</h4>
 <ol>
 <li>StreamTask#processInput</li>
 <li>StreamInputProcessor#processInput</li>
@@ -226,11 +209,13 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>PushingAsyncDataInput#emitNext</li>
 <li>AbstractStreamTaskNetworkInput#emitNext</li>
 <li>AbstractStreamTaskNetworkInput#processElement</li>
-<li>StatusWatermarkValve#inputWatermark 更新该 inputChannel 的 watermark 和 watermark aligned 状态，并更新所有 channel 的 watermark 组成的 priorityQueue 顺序</li>
-<li>StatusWatermarkValve#findAndOutputNewMinWatermarkAcrossAlignedChannels 将当前所有 channel 里最小的 watermark 输出到下游</li>
+<li>StatusWatermarkValve#inputWatermark <br>
+更新该 inputChannel 的 watermark 和 watermark aligned 状态，并更新所有 channel 的 watermark 组成的 priorityQueue 顺序</li>
+<li>StatusWatermarkValve#findAndOutputNewMinWatermarkAcrossAlignedChannels <br>
+将当前所有 channel 里最小的 watermark 输出到下游</li>
 <li>DataOutput#emitWatermark</li>
 </ol>
-<h2 id="总结">总结</h2>
+<h2 id="3-总结">3. 总结</h2>
 <ol>
 <li>数据源的 <strong>SourceReader</strong> 调用 <strong>SourceOutput</strong> 输出 record 或同时输出 rocord 和时间戳</li>
 <li>如果是流式任务 <strong>SourceOperator</strong> 会用 <strong>ProgressiveTimestampsAndWatermarks</strong> 作为 eventTimeLogic，并周期性触发 <strong>WatermarkGenerator</strong> 的 <code>onPeriodicEmit</code> 方法；</li>
@@ -238,8 +223,8 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li><strong>WatermarkGenerator</strong> 决定 watermark 的累积逻辑以及何时推送到下游</li>
 <li>watermark 被转换成 Record 并推送到下游</li>
 </ol>
-<h2 id="关于空闲数据源和-watermark-对齐">关于空闲数据源和 Watermark 对齐</h2>
-<h4 id="空闲数据源">空闲数据源</h4>
+<h2 id="4-关于空闲数据源和-watermark-对齐">4. 关于空闲数据源和 Watermark 对齐</h2>
+<h4 id="41-空闲数据源">4.1 空闲数据源</h4>
 <p>如果 Source 长时间没有数据输出，会导致 watermark 无法更新，下游依赖 watermark 更新的算子无法继续处理数据</p>
 <ol>
 <li>为解决这一问题，<strong>WatermarkStrategy</strong> 提供了 <code>withIdleness</code> 选项设置空闲数据源的 idle timeout duration，当超过这个时间没有数据输出时会将 <code>WatermarkStatus#IDLE_STATUS</code> 通过 <code>Output#emitWatermark</code> 传递到下游</li>
@@ -249,7 +234,7 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成</li>
 <li>如果 Source 结束输出数据，应该往下游推 <code>Long.MAX_VALUE</code> 作为 watermark 而不是 <code>WatermarkStatus#IDLE_STATUS</code></li>
 <li>所有发送过 <code>WatermarkStatus#IDLE_STATUS</code> 的算子在重新发送 <code>WatermarkStatus#ACTIVE_STATUS</code> 后就能恢复到正常工作状态</li>
 </ol>
-<h4 id="watermark-对齐">Watermark 对齐</h4>
+<h4 id="42-watermark-对齐">4.2 Watermark 对齐</h4>
 <p>如果数据源的一个或多个 partitions/splits/shards 输出数据的速度比其他的快很多/慢很多，会导致 watermark 更新速度不一致下游依赖 watermark 更新的算子无法正确处理数据，比如 TumblingEventTimeWindows 缓存很多数据而不触发聚合</p>
 		</div>
 		<footer class="post__footer">
