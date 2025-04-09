@@ -27,7 +27,7 @@
       <link>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</link>
       <pubDate>Tue, 21 May 2024 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_kubernetes_application_mode/</guid>
-      <description>&lt;p&gt;分析 Flink 在 Kubernetes Application Mode 下启动任务的过程&lt;/p&gt;</description>
+      <description>&lt;p&gt;梳理 Flink 在 Kubernetes Application Mode 下启动任务的过程，分析为什么 Flink SQL 任务不能以 Application Mode 运行&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

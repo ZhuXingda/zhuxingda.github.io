@@ -93,147 +93,167 @@
 		
 		
 		<div class="content post__content clearfix">
-			<p>分析 Flink 在 Kubernetes Application Mode 下启动任务的过程</p>
+			<p>梳理 Flink 在 Kubernetes Application Mode 下启动任务的过程，分析为什么 Flink SQL 任务不能以 Application Mode 运行</p>
 <h2 id="flink-k8s-application-mode-启动代码调用栈">Flink K8s Application Mode 启动代码调用栈</h2>
 <h4 id="console-client-启动流程">Console Client 启动流程</h4>
-<table>
-<thead>
-<tr>
-<th>sec</th>
-<th>代码</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>org.apache.flink.client.cli.CliFrontend#runApplication</td>
-<td></td>
-</tr>
-<tr>
-<td>2</td>
-<td>org.apache.flink.client.deployment.application.cli.ApplicationClusterDeployer#run</td>
-<td></td>
-</tr>
-<tr>
-<td>2.1</td>
-<td>org.apache.flink.client.deployment.DefaultClusterClientServiceLoader#getClusterClientFactory</td>
-<td></td>
-</tr>
-<tr>
-<td>2.2</td>
-<td>org.apache.flink.client.deployment.AbstractContainerizedClusterClientFactory#getClusterSpecification</td>
-<td></td>
-</tr>
-<tr>
-<td>3</td>
-<td>org.apache.flink.client.deployment.ClusterDescriptor#deployApplicationCluster</td>
-<td></td>
-</tr>
-<tr>
-<td>3.1</td>
-<td>org.apache.flink.kubernetes.KubernetesClusterDescriptor#deployApplicationCluster</td>
-<td>启动 Kubernetes deployment</td>
-</tr>
-<tr>
-<td>3.1.1</td>
-<td>org.apache.flink.kubernetes.KubernetesClusterDescriptor#deployClusterInternal</td>
-<td>构建 Jobmanager 的 Container 、Pod Template 和 Deployment，然后下发给 Kubernetes 集群执行</td>
-</tr>
-<tr>
-<td>3.1.1.1</td>
-<td>org.apache.flink.kubernetes.kubeclient.factory.KubernetesJobManagerFactory#buildKubernetesJobManagerSpecification</td>
-<td></td>
-</tr>
-<tr>
-<td>3.1.1.1.1</td>
-<td>org.apache.flink.kubernetes.kubeclient.decorators.CmdJobManagerDecorator#decorateFlinkPod</td>
-<td>设置 Pod 的启动命令 kubernetes-jobmanager.sh kubernetes-application [&hellip;kubernetes.jobmanager.entrypoint.args]。</td>
-</tr>
-</tbody>
-</table>
+<ol>
+<li>org.apache.flink.client.cli.CliFrontend#runApplication</li>
+<li>org.apache.flink.client.deployment.application.cli.ApplicationClusterDeployer#run <br>
+2.1 org.apache.flink.client.deployment.DefaultClusterClientServiceLoader#getClusterClientFactory <br>
+2.2 org.apache.flink.client.deployment.AbstractContainerizedClusterClientFactory#getClusterSpecification</li>
+<li>org.apache.flink.client.deployment.ClusterDescriptor#deployApplicationCluster <br>
+3.1 org.apache.flink.kubernetes.KubernetesClusterDescriptor#deployApplicationCluster 启动 Kubernetes deployment  <br>
+3.1.1 org.apache.flink.kubernetes.KubernetesClusterDescriptor#deployClusterInternal
+构建 Jobmanager 的 Container 、Pod Template 和 Deployment，然后下发给 Kubernetes 集群执行部署
+3.1.1.1 org.apache.flink.kubernetes.kubeclient.factory.KubernetesJobManagerFactory#buildKubernetesJobManagerSpecification<br>
+3.1.1.1.1 org.apache.flink.kubernetes.kubeclient.decorators.CmdJobManagerDecorator#decorateFlinkPod
+设置 Pod 的启动命令kubernetes-jobmanager.sh kubernetes-application [&hellip;kubernetes.jobmanager.entrypoint.args]</li>
+</ol>
 <p>一些发现：</p>
 <ol>
 <li>在启动 JobManager 的过程中有在配置里设置 kubernetes.internal.jobmanager.entrypoint.class 配置项为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，但在装饰 JobManager 的 Pod 时并没有用到这项配置。</li>
 <li>在装饰 JobManager 和 TaskManager 时 FlinkConfMountDecorator 会将在提交任务的客户端查找 <code>$internal.deployment.config-dir</code> 或 <code>kubernetes.flink.conf.dir</code> 两个配置指定的目录，如果目录下有 <strong>logback-console.xml</strong> 或 <strong>log4j-console.properties</strong> 配置文件，则会在创建 Pod 的 Volumn 时挂载镜像内的同名文件到 /opt/flink/conf 目录下，作为程序运行时日志输出的配置。</li>
 </ol>
-<h4 id="flink-docker-image-启动流程">Flink Docker Image 启动流程</h4>
+<h4 id="flink-pod-启动脚本">Flink Pod 启动脚本</h4>
 <ol>
-<li>kubernetes-jobmanager.sh 脚本在 flink-dist/src/main/flink-bin/kubernetes-bin/ 目录下，按照前文 Pod Template 的构建，Flink Docker Image 启动 Container 时执行该脚本。</li>
-<li>kubernetes-jobmanager.sh 进一步调用 ${FLINK_BIN_DIR}/flink-console.sh kubernetes-application [&hellip;args]，在该脚本中，CLASS_TO_RUN 变量被设置为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，然后以该类为入口正式启动 JobManager。这里解释了为什么前面设置了 kubernetes.internal.jobmanager.entrypoint.class 参数却没有用到。</li>
+<li>kubernetes-jobmanager.sh 脚本在 flink-dist/src/main/flink-bin/kubernetes-bin/ 目录下，按照前文 Pod Template 的构建，Flink Pod 启动时执行该脚本。</li>
+<li>kubernetes-jobmanager.sh 进一步调用 ${FLINK_BIN_DIR}/flink-console.sh kubernetes-application [&hellip;args]，在该脚本中，CLASS_TO_RUN 变量被设置为 org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint，然后以该类为入口正式启动 JobManager。</li>
 </ol>
-<h4 id="kubernetesapplicationclusterentrypoint-启动流程">KubernetesApplicationClusterEntrypoint 启动流程</h4>
-<table>
-<thead>
-<tr>
-<th>sec</th>
-<th>代码</th>
-<th>作用</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>org.apache.flink.kubernetes.entrypoint.KubernetesApplicationClusterEntrypoint</td>
-<td></td>
-</tr>
-<tr>
-<td>2</td>
-<td>org.apache.flink.runtime.entrypoint.ClusterEntrypoint#runClusterEntrypoint</td>
-<td></td>
-</tr>
-<tr>
-<td>3</td>
-<td>org.apache.flink.runtime.entrypoint.ClusterEntrypoint#startCluster</td>
-<td></td>
-</tr>
-<tr>
-<td>4</td>
-<td>org.apache.flink.runtime.entrypoint.ClusterEntrypoint#runCluster</td>
-<td></td>
-</tr>
-<tr>
-<td>5</td>
-<td>org.apache.flink.runtime.entrypoint.component.DefaultDispatcherResourceManagerComponentFactory#create</td>
-<td></td>
-</tr>
-<tr>
-<td>6</td>
-<td>org.apache.flink.runtime.dispatcher.runner.DefaultDispatcherRunnerFactory#createDispatcherRunner</td>
-<td></td>
-</tr>
-<tr>
-<td>7</td>
-<td>org.apache.flink.client.deployment.application.ApplicationDispatcherLeaderProcessFactoryFactory#createFactory</td>
-<td></td>
-</tr>
-<tr>
-<td>8</td>
-<td>org.apache.flink.client.deployment.application.ApplicationDispatcherGatewayServiceFactory#ApplicationDispatcherGatewayServiceFactory</td>
-<td></td>
-</tr>
-<tr>
-<td>9</td>
-<td>org.apache.flink.client.deployment.application.ApplicationDispatcherGatewayServiceFactory#create</td>
-<td></td>
-</tr>
-<tr>
-<td>10</td>
-<td>org.apache.flink.client.deployment.application.ApplicationDispatcherBootstrap#ApplicationDispatcherBootstrap</td>
-<td></td>
-</tr>
-<tr>
-<td>11</td>
-<td>org.apache.flink.client.deployment.application.ApplicationDispatcherBootstrap#runApplicationEntryPoint</td>
-<td></td>
-</tr>
-<tr>
-<td>12</td>
-<td>org.apache.flink.client.ClientUtils#executeProgram</td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<h4 id="容器内-pod-启动流程">容器内 Pod 启动流程</h4>
+<ol>
+<li>KubernetesApplicationClusterEntrypoint#main <br>
+1.1 KubernetesApplicationClusterEntrypoint#getPackagedProgram 获取用户定义任务程序包 <br>
+1.2 KubernetesApplicationClusterEntrypoint#getPackagedProgramRetriever</li>
+<li>ClusterEntrypoint#runClusterEntrypoint</li>
+<li>ClusterEntrypoint#startCluster   启动集群</li>
+<li>ClusterEntrypoint#runCluster
+4.1 ClusterEntrypoint#initializeServices <br>
+创建 workingDirectory rpcService ioExecutor blobServer metricRegistry executionGraphInfoStore 等集群运行需要的的服务和资源
+4.2 ClusterEntrypoint#createDispatcherResourceManagerComponentFactory<br>
+创建 DispatcherResourceManagerComponentFactory 实例，该 abstract 方法根据部署方式不同有多种实现
+4.3 ApplicationClusterEntryPoint#createDispatcherResourceManagerComponentFactory <br>
+这里 DefaultDispatcherResourceManagerComponentFactory 包含了一个 DefaultDispatcherRunnerFactory，又包含了一个 ApplicationDispatcherLeaderProcessFactoryFactory
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">protected</span> DispatcherResourceManagerComponentFactory
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">createDispatcherResourceManagerComponentFactory</span>(<span style="color:#66d9ef">final</span> Configuration configuration) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">new</span> DefaultDispatcherResourceManagerComponentFactory(
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">new</span> DefaultDispatcherRunnerFactory(
+</span></span><span style="display:flex;"><span>                    ApplicationDispatcherLeaderProcessFactoryFactory.<span style="color:#a6e22e">create</span>(
+</span></span><span style="display:flex;"><span>                            configuration, SessionDispatcherFactory.<span style="color:#a6e22e">INSTANCE</span>, program)),
+</span></span><span style="display:flex;"><span>            resourceManagerFactory,
+</span></span><span style="display:flex;"><span>            JobRestEndpointFactory.<span style="color:#a6e22e">INSTANCE</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li>DefaultDispatcherResourceManagerComponentFactory#create<br>
+启动 webMonitor resourceManagerService dispatcherRunner</li>
+<li>DefaultDispatcherRunnerFactory#createDispatcherRunner
+6.1 ApplicationDispatcherLeaderProcessFactoryFactory#createFactory <br>
+创建 DispatcherLeaderProcess 的工厂类，这里创建的是 SessionDispatcherLeaderProcessFactory
+6.1.1 ApplicationDispatcherGatewayServiceFactory#ApplicationDispatcherGatewayServiceFactory
+6.1 DefaultDispatcherRunner#create<br>
+创建 DispatcherRunner 实例
+6.2 DefaultDispatcherRunner#start<br>
+启动 DispatcherRunner 实例，开始 Leader 选举，在 Leader 选举结束后 Leader 的 DefaultDispatcherRunner#grantLeadership 方法会被调用
+6.3 DefaultDispatcherRunner#grantLeadership
+6.4 DefaultDispatcherRunner#startNewDispatcherLeaderProcess
+创建并启动 DispatcherLeaderProcess
+6.5 DefaultDispatcherRunner#createNewDispatcherLeaderProcess
+6.6 DispatcherLeaderProcessFactory#create
+6.7 SessionDispatcherLeaderProcessFactory#create <br>
+这里创建的是 SessionDispatcherLeaderProcess 实例
+6.8 JobPersistenceComponentFactory#createJobGraphStore
+创建 JobGraphStore，用于从异常中恢复 Job 的运行
+6.9 HaServicesJobPersistenceComponentFactory#createJobGraphStore
+6.10 HighAvailabilityServices#getJobGraphStore<br>
+如果集群配置了高可用 Service，比如 KubernetesLeaderElectionHaServices 和 ZooKeeperLeaderElectionHaServices，则从高可用服务中获取 JobGraphStore，否则返回一个无用的 StandaloneJobGraphStore</li>
+<li>DispatcherLeaderProcess#start</li>
+<li>SessionDispatcherLeaderProcess#onStart
+8.1 SessionDispatcherLeaderProcess#startServices
+8.1.1 JobGraphStore#start<br>
+启动 JobGraphStore
+8.2 SessionDispatcherLeaderProcess#createDispatcherBasedOnRecoveredJobGraphsAndRecoveredDirtyJobResults
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> CompletableFuture<span style="color:#f92672">&lt;</span>Void<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">createDispatcherBasedOnRecoveredJobGraphsAndRecoveredDirtyJobResults</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 获取执行失败的 Jobs 的 JobResults，如果是初次执行这里应该是没有的</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> CompletableFuture<span style="color:#f92672">&lt;</span>Collection<span style="color:#f92672">&lt;</span>JobResult<span style="color:#f92672">&gt;&gt;</span> dirtyJobsFuture <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>            CompletableFuture.<span style="color:#a6e22e">supplyAsync</span>(<span style="color:#66d9ef">this</span>::getDirtyJobResultsIfRunning, ioExecutor);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> dirtyJobsFuture
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">thenApplyAsync</span>(
+</span></span><span style="display:flex;"><span>                    dirtyJobs <span style="color:#f92672">-&gt;</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#75715e">// 恢复失败 Jobs 的 JobGraphs</span>
+</span></span><span style="display:flex;"><span>                            <span style="color:#66d9ef">this</span>.<span style="color:#a6e22e">recoverJobsIfRunning</span>(
+</span></span><span style="display:flex;"><span>                                    dirtyJobs.<span style="color:#a6e22e">stream</span>()
+</span></span><span style="display:flex;"><span>                                            .<span style="color:#a6e22e">map</span>(JobResult::getJobId)
+</span></span><span style="display:flex;"><span>                                            .<span style="color:#a6e22e">collect</span>(Collectors.<span style="color:#a6e22e">toSet</span>())),
+</span></span><span style="display:flex;"><span>                    ioExecutor)
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 用失败 Jobs 的 JobResults 和 JobGraphs 创建 Dispatcher，初次执行的话两个都为空</span>
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">thenAcceptBoth</span>(dirtyJobsFuture, <span style="color:#66d9ef">this</span>::createDispatcherIfRunning)
+</span></span><span style="display:flex;"><span>            .<span style="color:#a6e22e">handle</span>(<span style="color:#66d9ef">this</span>::onErrorIfRunning);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>8.3 SessionDispatcherLeaderProcess#createDispatcher
+8.4 DispatcherGatewayServiceFactory#create
+8.5 ApplicationDispatcherGatewayServiceFactory#create <br>
+创建 Dispatcher 实例，其中包含了一个 ApplicationDispatcherBootstrap 用于执行初次执行的 Job，或者恢复失败的 Job， <br>
+Dispatcher 被包装为 DispatcherGatewayService 返回
+8.6 RpcEndpoint#start<br>
+启动 Dispatcher</li>
+</ol>
+<h4 id="执行用户定义的-main-方法">执行用户定义的 main() 方法</h4>
+<ol>
+<li>ApplicationDispatcherBootstrap#ApplicationDispatcherBootstrap</li>
+<li>ApplicationDispatcherBootstrap#runApplicationEntryPoint</li>
+<li>ClientUtils#executeProgram<br>
+切换线程的 ClassLoader 为 UserCode ClassLoader，执行用户定义的 main() 方法
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">executeProgram</span>(
+</span></span><span style="display:flex;"><span>        PipelineExecutorServiceLoader executorServiceLoader,
+</span></span><span style="display:flex;"><span>        Configuration configuration,
+</span></span><span style="display:flex;"><span>        PackagedProgram program,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">boolean</span> enforceSingleJobExecution,
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">boolean</span> suppressSysout)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throws</span> ProgramInvocationException {
+</span></span><span style="display:flex;"><span>    checkNotNull(executorServiceLoader);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> ClassLoader userCodeClassLoader <span style="color:#f92672">=</span> program.<span style="color:#a6e22e">getUserCodeClassLoader</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">final</span> ClassLoader contextClassLoader <span style="color:#f92672">=</span> Thread.<span style="color:#a6e22e">currentThread</span>().<span style="color:#a6e22e">getContextClassLoader</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>        Thread.<span style="color:#a6e22e">currentThread</span>().<span style="color:#a6e22e">setContextClassLoader</span>(userCodeClassLoader);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        LOG.<span style="color:#a6e22e">info</span>(
+</span></span><span style="display:flex;"><span>                <span style="color:#e6db74">&#34;Starting program (detached: {})&#34;</span>,
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">!</span>configuration.<span style="color:#a6e22e">getBoolean</span>(DeploymentOptions.<span style="color:#a6e22e">ATTACHED</span>));
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 设置 ContextEnvironment 和 StreamContextEnvironment，在执行用户 main() 方法构建完 Pipeline 时，</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 这里传入的 EmbeddedExecutorServiceLoader 会被用来创建 PipelineExecutor，Pipeline 会被转换成 JobGraph</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 然后提交到前面启动的 DispatcherGateway</span>
+</span></span><span style="display:flex;"><span>        ContextEnvironment.<span style="color:#a6e22e">setAsContext</span>(
+</span></span><span style="display:flex;"><span>                executorServiceLoader,
+</span></span><span style="display:flex;"><span>                configuration,
+</span></span><span style="display:flex;"><span>                userCodeClassLoader,
+</span></span><span style="display:flex;"><span>                enforceSingleJobExecution,
+</span></span><span style="display:flex;"><span>                suppressSysout);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        StreamContextEnvironment.<span style="color:#a6e22e">setAsContext</span>(
+</span></span><span style="display:flex;"><span>                executorServiceLoader,
+</span></span><span style="display:flex;"><span>                configuration,
+</span></span><span style="display:flex;"><span>                userCodeClassLoader,
+</span></span><span style="display:flex;"><span>                enforceSingleJobExecution,
+</span></span><span style="display:flex;"><span>                suppressSysout);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>            program.<span style="color:#a6e22e">invokeInteractiveModeForExecution</span>();
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>            ContextEnvironment.<span style="color:#a6e22e">unsetAsContext</span>();
+</span></span><span style="display:flex;"><span>            StreamContextEnvironment.<span style="color:#a6e22e">unsetAsContext</span>();
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">finally</span> {
+</span></span><span style="display:flex;"><span>        Thread.<span style="color:#a6e22e">currentThread</span>().<span style="color:#a6e22e">setContextClassLoader</span>(contextClassLoader);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li>PackagedProgram#invokeInteractiveModeForExecution<br>
+异步反射调用 main() 方法</li>
+</ol>
+<h4 id="总结">总结</h4>
+<p>综上可以发现 Application Mode 启动过程中会在 JobManager 上执行用户开发的 Jar 包，解析成 JobGraph 后提交到自己的 DispatcherGateway 执行，而 Flink SQL 在 SQL Client 端就已经解析成 JobGraph 而不是 Jar 包，所以以 Application Mode 运行没有必要，如果想要像 Application Mode 一样，一个 Flink Cluster 上只运行一个 SQL 任务，任务结束时就销毁 Cluster，可以将这部分功能放在 SQL Client 来实现，任务结束后给 SQL Client 一个回调，收到回调后销毁 Cluster。</p>
 		</div>
 		<footer class="post__footer">
 			
