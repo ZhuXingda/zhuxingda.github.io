@@ -9,8 +9,25 @@ tags:
   - ""
 ---
 ## 1. 算法
-## 2. Java
-## 3. Golang
+## 2. 编程语言
+#### 2.1 Java
+- JVM 内存模型
+- 内存回收
+    - G1
+- 多线程
+    - Volatile
+    - CompletableFuture
+    - StampedLock
+    - ForkJoinPool
+    - BlockingQueue
+- 问题排查
+    - 线程堆栈
+    - 对象内存
+#### 2.2 Golang
+- 调度器
+- 内存回收 
+    - 逃逸分析
+#### 2.3 C++
 ## 4. 数据库
 #### 4.1 RocksDB
 #### 4.2 Parquet 协议
@@ -30,8 +47,9 @@ tags:
 3. Raft 协议
 [Raft协议详解](https://zhuanlan.zhihu.com/p/32052223)
 [Raft论文](https://docs.qq.com/doc/DY0VxSkVGWHFYSlZJ?_t=1609557593539)
-
-4. Gossip 协议
+4. ZAP 协议
+5. Gossip 协议
+6. CRAQ 协议
 #### 5.2 Flink
 - Flink State Backend 和持久化
 - Flink Watermark 生成原理及作用
@@ -48,3 +66,19 @@ tags:
 2. KubeRay
 #### 5.5 Kubernetes
 #### 5.6 JuiceFS
+## 6. 操作系统
+#### IPC
+#### 文件 IO
+- VFS
+- inode
+https://www.ruanyifeng.com/blog/2011/12/inode.html
+- 页表
+- mmap
+- sendFile
+https://xie.infoq.cn/article/a34cf4d2c6556d6c81be17303
+#### 网络 IO
+- IO 多路复用
+## 7. 网络
+#### TCP/IP
+#### 
+## 8. AI
