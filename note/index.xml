@@ -13,14 +13,14 @@
       <link>https://blog.xingda.space/note/interview_prepare/</link>
       <pubDate>Thu, 27 Mar 2025 16:48:23 +0800</pubDate>
       <guid>https://blog.xingda.space/note/interview_prepare/</guid>
-      <description>1. 算法 2. Java 3. Golang 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 4.3 ORC 协议 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析&#xA;Paxos 协议 Paxos协议详解&#xA;Raft 协议 Raft协议详解 Raft论文&#xA;Gossip 协议&#xA;5.2 Flink Flink State Backend 和持久化 Flink Watermark 生成原理及作用 Flink OperatorChain 生成过程 Flink Operator 调度过程 Flink SQL 解析及执行过程 StreamGraph、JobGraph、ExecutionGraph 生成过程 Flink 背压处理机制 Flink HA 原理 5.3 Kafka 架构设计 5.</description>
+      <description>1. 算法 2. 编程语言 2.1 Java JVM 内存模型 内存回收 G1 多线程 Volatile CompletableFuture StampedLock ForkJoinPool BlockingQueue 问题排查 线程堆栈 对象内存 2.2 Golang 调度器 内存回收 逃逸分析 2.3 C++ 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 4.3 ORC 协议 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析 Paxos 协议 Paxos协议详解 Raft 协议 Raft协议详解 Raft论文 ZAP 协议 Gossip 协议 CRAQ 协议 5.2 Flink Flink State Backend 和持久化 Flink Watermark 生成原理及作用 Flink OperatorChain 生成过程 Flink Operator 调度过程 Flink SQL 解析及执行过程 StreamGraph、JobGraph、ExecutionGraph 生成过程 Flink 背压处理机制 Flink HA 原理 5.</description>
     </item>
     <item>
       <title>【收藏夹】技术类文章</title>
       <link>https://blog.xingda.space/note/interesting_posts/</link>
       <pubDate>Wed, 12 Feb 2025 14:26:20 +0800</pubDate>
       <guid>https://blog.xingda.space/note/interesting_posts/</guid>
-      <description>&lt;p&gt;技术类项目、文章收藏&lt;/p&gt;</description>
+      <description>&lt;p&gt;博客、项目、文章收藏&lt;/p&gt;</description>
     </item>
     <item>
       <title>【leetcode】一些常见传统算法的 Golang 实现</title>

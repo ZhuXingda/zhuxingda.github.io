@@ -141,13 +141,14 @@ CAP 理论指一个分布式系统不能同时满足 C A P 这三个特性。</l
 <h2 id="6-raft-协议">6. Raft 协议</h2>
 <p><a href="https://raft.github.io/raft.pdf">论文原文</a>
 <a href="https://docs.qq.com/doc/DY0VxSkVGWHFYSlZJ?_t=1609557593539">论文译文</a></p>
-<h4 id="61-角色成员">6.1 角色成员</h4>
+<h4 id="61-基础">6.1 基础</h4>
+<h5 id="611-角色成员">6.1.1 角色成员</h5>
 <ul>
 <li><strong>Leader</strong> Leader 通过选举产生，负责处理客户端请求，并向 Follower 同步请求对应的日志，任意时刻系统内最多只有一个 Leader</li>
 <li><strong>Follower</strong> Follower 接收并持久化 Leader 同步的请求日志，在 Leader 触发下提交日志</li>
 <li><strong>Candidate</strong> Follower 竞选 Leader 时的临时角色，选举结束后消失</li>
 </ul>
-<h4 id="62-选举">6.2 选举</h4>
+<h5 id="612-选举">6.1.2 选举</h5>
 <p>选举过程：</p>
 <ol>
 <li>每位 Leader 都对应一个任期（term），任期内 Leader 会接收客户端请求，并将请求对应的指令日志同步到各 Follower，同时也会向所有 Follower 发送定时心跳</li>
@@ -162,16 +163,34 @@ CAP 理论指一个分布式系统不能同时满足 C A P 这三个特性。</l
 </li>
 </ol>
 <p>每个 Candidate 的选举超时时间采用固定区间内的随机值，避免长时间选票瓜分导致选举迟迟不能结束</p>
-<h4 id="63-日志同步">6.3 日志同步</h4>
+<h5 id="613-日志同步">6.1.3 日志同步</h5>
 <ol>
-<li><strong>同步日志</strong>
+<li><strong>同步日志</strong>  <br>
 Leader 接收客户端请求后，会将请求对应的操作日志追加到日志中，然后向其他 Followers 并行发送 AppendEntries RPC 请求来同步日志，当日志都同步成功后 Leader 执行请求返回结果。<br>
-<img alt="log" src="https://qqadapt.qpic.cn/txdocpic/0/17ad6a18d9c67d1362166afa6c159920/0?w=1928&h=1236">
-如图，每条日志包含了请求的操作、被创建时的 term、在日志中的索引。如果 Leader 成功将日志同步到了大多数节点上，就认为执行日志中的操作是安全的可以被执行，被称为 committed，Leader 会记录最新 committed 的日志的索引，并将其放入后面的 AppendEntries RPC 请求中，Follower 在接收到后会执行 committed 的日志对应的操作。</li>
-<li><strong>一致性检查</strong></li>
-<li><strong>修复不一致</strong></li>
+如图，每条日志包含了请求的操作、被创建时的 term、在日志中的索引。<br>
+如果 Leader 成功将日志同步到了大多数节点上，就认为执行日志中的操作是安全的可以被执行，被称为 committed，Leader 会记录最新 committed 的日志的索引，并将其放入后面的 AppendEntries RPC 请求中，Follower 在接收到后会执行被 committed 的日志对应的操作。 <br>
+<img src="https://qqadapt.qpic.cn/txdocpic/0/17ad6a18d9c67d1362166afa6c159920/0?w=1928&h=1236" width="500px"/></li>
+<li><strong>一致性检查和修复不一致</strong><br>
+Raft 利用 index 和 term 标识唯一的一条日志，不同节点上同一条日志之前的所有日志保证完全相同。通过一致性检查发现并修复不同的情况：
+<ol>
+<li>Leader 上任后向 Follower 发送 AppendEntries RPC 请求，如果请求中的 index 和 Follower 的最新 index + 1 不一致 Follower 会拒绝请求。</li>
+<li>Leader 收到拒绝后表明一致性检查失败，Leader 会尝试对失败的 Leader 同步 index - 1 的日志并不断重复，直到同步到 Leader 和 Follower 一致的日志请求成功，这次同步会将 Leader 从这条一致日志之后的所有日志一并同步给 Follower，并覆盖掉不同步的部分，从而使 Leader 和 Follower 完全一致。</li>
+<li>步骤 2 还存在其他优化手段来降低发现不一致和同步的耗时</li>
 </ol>
-<h4 id="heading"></h4>
+</li>
+</ol>
+<h5 id="614-safety-额外限制">6.1.4 Safety 额外限制</h5>
+<p>在前面的基础上还需要进一步的限制才能保证 Leader 在指定的 term 包含全部已提交的日志</p>
+<ol>
+<li><strong>选举限制</strong>  <br>
+Candidate 在拉选票时，Follower 只会在这位 Candidate 拥有 Follower 处全部 committed 日志记录的情况下，才会投票给它。当 Candidate 赢下大多数选票胜选时，既表明新的 Leader 拥有和绝大多数节点相同的 committed 日志记录，又因为 Leader committed 日志的前提是日志成功同步到大多数节点，因此可以认为新 Leader 拥有全部已经 committed 的日志记录。这样就避免了需要从 Follower 同步日志到新的 Leader，使日志的同步只存在于 Leader 到 Follower</li>
+<li><strong>对以前 term 日志的 commit</strong> <br>
+对于前任 term 已同步但未 commit 的日志记录，新任 Leader 不能根据这条记录是否被同步到多数节点，来判断其是否可以被 commit。每任 Leader 只能 commit 属于现任 term 的日志记录。  <br>
+<img src="https://qqadapt.qpic.cn/txdocpic/0/0d10ed6c377a446005e21e9638f9a30b/0?w=1626&h=1724" width="500px"/>   <br>
+当出现如上图所示的 Leader 交替 Crash 和 Recover 情况，可能会前一位 Leader 同步到多数节点的日志还未 committed， 后一位 Leader 开始同步下一条日志时会覆盖掉前任 term 同步后未 committed 的日志，因此前任 term 日志同步的份数不能作为 commit 的依据。只能通过在 commit 本任 term 的日志记录时利用一致性修复来将前任 term 的日志同步和 commit 到其他节点</li>
+</ol>
+<h5 id="615-follower-和-candidate-crash">6.1.5 Follower 和 Candidate Crash</h5>
+<h4 id="62">6.2</h4>
 <h2 id="zab-协议">Zab 协议</h2>
 <h2 id="gossip-协议">Gossip 协议</h2>
 <h2 id="craq-协议">CRAQ 协议</h2>
