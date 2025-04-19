@@ -9,11 +9,11 @@
     <lastBuildDate>Thu, 27 Mar 2025 16:48:23 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/note/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>x</title>
+      <title>面试准备 checklist</title>
       <link>https://blog.xingda.space/note/interview_prepare/</link>
       <pubDate>Thu, 27 Mar 2025 16:48:23 +0800</pubDate>
       <guid>https://blog.xingda.space/note/interview_prepare/</guid>
-      <description>1. 算法 2. 编程语言 2.1 Java JVM 内存模型 内存回收 G1 多线程 Volatile CompletableFuture StampedLock ForkJoinPool BlockingQueue 问题排查 线程堆栈 对象内存 2.2 Golang 调度器 内存回收 逃逸分析 2.3 C++ 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 4.3 ORC 协议 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析 Paxos 协议 Paxos协议详解 Raft 协议 Raft协议详解 Raft论文 ZAP 协议 Gossip 协议 CRAQ 协议 5.2 Flink Flink State Backend 和持久化 Flink Watermark 生成原理及作用 Flink OperatorChain 生成过程 Flink Operator 调度过程 Flink SQL 解析及执行过程 StreamGraph、JobGraph、ExecutionGraph 生成过程 Flink 背压处理机制 Flink HA 原理 5.</description>
+      <description>1. 算法 2. 编程语言 2.1 Java JVM 内存模型 内存回收 G1 多线程 Volatile CompletableFuture StampedLock ForkJoinPool BlockingQueue 问题排查 线程堆栈 对象内存 2.2 Golang 调度器 d 内存回收 逃逸分析 2.3 C++ 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 4.3 ORC 协议 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析 Paxos 协议 Paxos协议详解 Raft 协议 Raft协议详解 Raft论文 ZAP 协议 Gossip 协议 CRAQ 协议 5.2 Flink Flink State Backend 和持久化 Flink Watermark 生成原理及作用 d Flink OperatorChain 生成过程 Flink Operator 调度 Flink SQL API、Stream API 任务解析及执行过程 Flink 背压处理机制 Flink HighAvailableService 原理及实现 Flink Souce Sink Connector 源码分析 d 5.</description>
     </item>
     <item>
       <title>【收藏夹】技术类文章</title>

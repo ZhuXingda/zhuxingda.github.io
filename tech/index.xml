@@ -30,13 +30,6 @@
       <description>&lt;p&gt;Flink Task 的部署过程&lt;/p&gt;</description>
     </item>
     <item>
-      <title>【Flink】Flink 跨 Task 数据传输代码分析</title>
-      <link>https://blog.xingda.space/tech/flink_task_data_transfer_source_code/</link>
-      <pubDate>Wed, 12 Mar 2025 14:19:45 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/flink_task_data_transfer_source_code/</guid>
-      <description>&lt;p&gt;主要分析数据如何在组成 Flink 任务的各 Task 之间输入输出，包含常见的 Flink 如何实现背压的问题。&lt;/p&gt;</description>
-    </item>
-    <item>
       <title>【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</title>
       <link>https://blog.xingda.space/tech/kubernetes_deploy_nodebook/</link>
       <pubDate>Tue, 25 Feb 2025 16:57:16 +0800</pubDate>
@@ -90,7 +83,7 @@
       <link>https://blog.xingda.space/tech/flink_fault_tolerance/</link>
       <pubDate>Thu, 12 Oct 2023 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_fault_tolerance/</guid>
-      <description>&lt;p&gt;Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。&lt;/p&gt;</description>
+      <description>&lt;p&gt;Flink 是如何在程序异常后恢复运行的，本文简述一下其中的原理。&lt;/p&gt;</description>
     </item>
     <item>
       <title>【Flink】Taskmanager 内存管理</title>

@@ -83,7 +83,7 @@
       <link>https://blog.xingda.space/tech/flink_fault_tolerance/</link>
       <pubDate>Thu, 12 Oct 2023 00:00:00 +0000</pubDate>
       <guid>https://blog.xingda.space/tech/flink_fault_tolerance/</guid>
-      <description>&lt;p&gt;Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。&lt;/p&gt;</description>
+      <description>&lt;p&gt;Flink 是如何在程序异常后恢复运行的，本文简述一下其中的原理。&lt;/p&gt;</description>
     </item>
     <item>
       <title>【Flink】Taskmanager 内存管理</title>

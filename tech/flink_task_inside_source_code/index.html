@@ -181,7 +181,7 @@ TaskExecutor 运行时会用到的组件，其中 TaskManagerServices 还包含�
 <li><strong>TaskExecutor#submitTask</strong> 创建 Task 并在专门的线程执行</li>
 <li><strong>Task#doRun</strong> Task 执行
 <ul>
-<li><strong>Task#loadAndInstantiateInvokable</strong> 初始化 Task 实际执行的 TaskInvokable 对象，取决于 TaskInformation 里的 invokableClassName，暨 JobVertex 的 name 对应的 Class</li>
+<li><strong>Task#loadAndInstantiateInvokable</strong> 初始化 Task 实际执行的 TaskInvokable 对象，取决于 TaskInformation 里的 invokableClassName，即 JobVertex 的 name 对应的 Class</li>
 </ul>
 </li>
 <li><strong>Task#restoreAndInvoke</strong></li>
@@ -608,9 +608,9 @@ TaskExecutor 运行时会用到的组件，其中 TaskManagerServices 还包含�
 
 <nav class="pager flex">
 	<div class="pager__item pager__item--prev">
-		<a class="pager__link" href="/tech/flink_task_data_transfer_source_code/" rel="prev">
+		<a class="pager__link" href="/tech/kubernetes_deploy_nodebook/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title">【Flink】Flink 跨 Task 数据传输代码分析</p>
+			<p class="pager__title">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</p>
 		</a>
 	</div>
 	<div class="pager__item pager__item--next">
