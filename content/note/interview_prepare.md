@@ -1,5 +1,5 @@
 ---
-title: "x"
+title: "面试准备 checklist"
 description: ""
 date: "2025-03-27T16:48:23+08:00"
 thumbnail: ""
@@ -24,7 +24,7 @@ tags:
     - 线程堆栈
     - 对象内存
 #### 2.2 Golang
-- 调度器
+- 调度器 d
 - 内存回收 
     - 逃逸分析
 #### 2.3 C++
@@ -52,13 +52,13 @@ tags:
 6. CRAQ 协议
 #### 5.2 Flink
 - Flink State Backend 和持久化
-- Flink Watermark 生成原理及作用
+- Flink Watermark 生成原理及作用 d
 - Flink OperatorChain 生成过程
-- Flink Operator 调度过程
-- Flink SQL 解析及执行过程
-- StreamGraph、JobGraph、ExecutionGraph 生成过程
+- Flink Operator 调度
+- Flink SQL API、Stream API 任务解析及执行过程
 - Flink 背压处理机制
-- Flink HA 原理
+- Flink HighAvailableService 原理及实现
+- Flink Souce Sink Connector 源码分析 d
 #### 5.3 Kafka
 1. 架构设计
 #### 5.4 Ray
@@ -68,7 +68,9 @@ tags:
 #### 5.6 JuiceFS
 ## 6. 操作系统
 #### IPC
-#### 文件 IO
+#### 内存
+- 虚拟内存
+#### 文件系统
 - VFS
 - inode
 https://www.ruanyifeng.com/blog/2011/12/inode.html
@@ -78,6 +80,8 @@ https://www.ruanyifeng.com/blog/2011/12/inode.html
 https://xie.infoq.cn/article/a34cf4d2c6556d6c81be17303
 #### 网络 IO
 - IO 多路复用
+#### 进程和线程
+- 进程的虚拟内存，物理内存，共享内存
 ## 7. 网络
 #### TCP/IP
 #### 

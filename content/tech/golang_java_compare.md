@@ -1,0 +1,74 @@
+---
+title: "Go 和 Java 在多线程、内存模型、垃圾回收上的对比"
+description: ""
+date: "2025-04-10T17:14:15+08:00"
+thumbnail: ""
+categories:
+  - "编程语言"
+tags:
+  - "Go"
+  - "Java"
+draft: true
+---
+<!--more-->
+## 线程模型
+#### 1. JDK 19 以下 版本（排除最早的 Green Threads 老版本）   
+![aaaa](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*dn9UGdqLAiqAinaz)
+采用 1 ：1 的线程模型，即每个用户线程对应一个内核线程
+- 线程的创建、销毁、切换都由操作系统的调度器完成，JVM 不参与
+- 目前主流操作系统使用`抢占式线程调度策略`，当 JVM 线程阻塞时，比如 Object.wait()、Thread.sleep()、Thread.join()、LockSupport.park() 等导致线程进入 WAITING 或 TIMED_WAITING 状态，或者抢占 synchronized 锁时进入 BLOCKED 状态，线程都会释放 CPU，只有回到 RUNNABLE 状态后线程才能被系统调度器重新调度进入 RUNNING 状态
+- JVM 线程在遇到 I/O 阻塞时仍然保持 RUNNABLE 状态，但其对应的内核态线程会被操作系统挂起直到 I/O 操作完成
+- JVM 的最大线程数出了自身的配置外，还受限于 Linux Kernel 的线程数限制
+- JVM 的线程创和切换涉及用户态和内核态的切换、CPU 上下文切换，开销较大，通常采用线程池来减少线程创建的开销
+#### 2. JDK 19 及以上版本
+[参考资料](https://www.topgoer.com/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/GMP%E5%8E%9F%E7%90%86%E4%B8%8E%E8%B0%83%E5%BA%A6.html)
+![aaa](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*HwHaRnlYGS1ISYd_)
+JDK 19 引入了 `virtual thread` 虚拟线程，采用 M：N 的线程模型，一个内核线程对应一个用户态的平台线程，一个平台线程对应多个虚拟线程
+- 虚拟线程的调度、销毁、切换都由 JVM 完成，不需要操作系统调度器参与
+- JVM 对虚拟线程采用`协作式线程调度策略`，当线程阻塞时会主动从平台线程上卸载，让调度器调度其他线程运行
+- 虚拟线程的最大线程数不受 Linux Kernel 的线程数限制，只受限于 JVM 的配置和系统内存，可以创建大量虚拟线程用以处理 I/O 密集型任务
+- 虚拟线程的创建和切换都在用户态完成，避免了用户态和内核态的切换、CPU 上下文切换的开销
+#### 3. Go
+Go （1.1 版本以后）也采用 M：N 的线程模型，同时还采用了 GMP 调度器来调度协程的执行
+![aaa](https://www.topgoer.com/static/7.1/gmp/12.jpg)
+- **G** 代表协程，是最小的调度单位
+- **M** 代表内核线程
+- **P** 代表逻辑处理器，每个 P 和 M 一对一绑定，每个 P 维护一个本地队列用于存放待执行的 G
+运行过程：
+1. goroutine 创建时，如果有 P 的本地队列未满，则直接放入本地队列，如果全部 P 的本地队列已满，则将 G 放入全局队列
+2. M 从 绑定的 P 的本地队列获取 G 执行，如果本地队列为空，则从全局队列中获取 G 执行
+3. **Work Stealing** 机制：当 M 绑定的 P 本地队列为空且全局队列也为空时，M 可以从其他 P 的本地队列中窃取 G 来执行，以避免空闲的 M 被销毁
+4. **Handoff** 机制：当 M 因系统调用阻塞时，P 和 M 解绑并寻找其他空闲的 M 绑定，如果没有空闲的 M 则创建新的 M
+5. 当 G 因用户态阻塞时，G 会被 M 放回队列状态从 _Gruning 变为 _Gwaiting，M 会继续执行其他 G
+6. **基于协作的抢占调度**（1.2 以前）：Go 运行时会启动一个名为 sysmon 的 M 来监控 runtime 的 GC 情况，向长时间运行的 G （超过 10ms）发出抢占调度，将其 `stackguard0` 设置为 `StackPreempt`，当 G 下一次执行函数时会被 runtime 强制调度，被移入队列中。但因为只有在执行函数时才会检查 `stackguard0`，所以对执行 for 循环对这种 G 无效
+7. **基于信号的抢占调度**（1.2 以后）：将被抢占的 G 标记为可抢占状态，同时向 M 发送抢占信号 `SIGURG`，操作系统会中断 M 的执行并执行信号处理函数，信号处理函数会将 G 的状态切换到 `_Gpreempted` 并移入队列中
+
+## 内存管理
+## GO
+#### Go 内存分配
+Go 向操作系统申请的连续虚拟内存在物理上分为三个区域：
+- `spans` 存储指向内存管理单元 mspan 的指针，每个 mspan 包含 N 个 page
+- `bitmap` 标识 `arena` 中的 page 是否包含对象及是否被 GC 标记，bitmap 中两个 bit 对应 arena 中一个 byte
+- `arena` 实时上的堆，每 8KB 划分为一个最小的内存申请单位 page
+在逻辑管理上进一步划分：
+- `mspan`：对应 n 个 连续的page，在逻辑上 mspan 被划分为更小的 object，每个 object 的大小由 `spanclass` 决定。Go 划分了从小到大 67 种 mspan 用来保存不同大小的对象
+- `heapArena`：64 位的 X86 架构下每个 heapArena 对应 64MB 的内存，对应多个 mspan
+- `mheap`：由一个 heapArena 二维数组构成，对应物理上的整个 `arena` 
+- `mcache`：Go 为每个 P 维护一个 mcache 用来缓存 mspan，其中将 mspan 按是否被 GC scan 分为两类，每类按 spanclass 进一步划分为多个 mspan 列表。mcache 动态地从 `mcentral` 中获取 mspan 并缓存。
+- `mcentral`：每个 mcentral 负责缓存一类 `spanclass` 的全部 mspan，负责向 `mcache` 分配 mspan，当 mcentral 缓存的 mspan 不足时，向 `mheap` 申请新的 mspan，如果 mheap 也不足则向 OS 申请一组新的 page。mcentral 带有全局锁，并发访问时需要加锁。   
+
+#### 垃圾回收
+Go 采用 `Mark & Sweep 标记清理` 的垃圾回收方法，不对内存做整理，不对内存里的对象做分代。   
+运行过程包含五个阶段：
+1. 
+###### 三色标记法
+三色标记法用三种颜色表示三种类型的对象：
+- `白色` GC scan 未访问过的对象
+- `灰色` GC scan 访问过的对象，但其引用的一个或多个对象还未被 scan
+- `黑色` GC scan 访问过的对象，且其引用的所有对象都已被 scan
+堆内的对象随时间和 GC scan 的推进会不断从白色变为灰色，再变为黑色，就像一条波浪从黑色向白色推进，其中灰色就是黑白交界的波面 `wavefront`，当波面随着推进消失时只剩下黑色和白色的对象，其中白色就是需要回收的不可达对象。
+###### 写屏障
+内存屏障可以保证代码对内存的操作顺序不会被编译器调整，也不会被 CPU 乱序执行打乱。Go 的垃圾回收在标记阶段不会 STW ，导致用户代码并发执行改变对象引用关系，导致标记结果与实际可达性不一致，因此利用写屏障来保证标记的正确性。   
+- `弱三色不变性`：
+## 参考
+https://draven.co/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/#%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6%E5%99%A8

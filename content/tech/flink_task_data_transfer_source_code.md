@@ -4,9 +4,10 @@ description: ""
 date: "2025-03-12T14:19:45+08:00"
 thumbnail: ""
 categories:
-  - ""
+  - "分布式系统"
 tags:
   - "Flink"
+draft: true
 ---
 主要分析数据如何在组成 Flink 任务的各 Task 之间输入输出，包含常见的 Flink 如何实现背压的问题。
 <!--more-->

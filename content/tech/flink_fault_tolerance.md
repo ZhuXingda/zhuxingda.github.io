@@ -6,7 +6,7 @@ tags:
 categories:
     - "分布式系统"
 ---
-Flink 是如何在程序异常结束后恢复的，本文简述一下其中的原理。
+Flink 是如何在程序异常后恢复运行的，本文简述一下其中的原理。
 <!--more-->
 ## 原理
 #### Flink 容错机制的实现原理
@@ -25,7 +25,7 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
 ![](https://nightlies.apache.org/flink/flink-docs-release-2.0/fig/stream_unaligning.svg)
 算子在执行 checkpoint 时也可以不必 **barrier aligment**，其原理是： 
 1. 算子在某个 input buffer 接收到 checkpoint 的第一个 barrier 时，就将其添加到 output buffer 的最后面（立即输出到下游）；
-2. 算子将这次 checkpoint 对应的所有未输出到下游的数据（包含上游算子的 output buffer 在 barrier 之前的数据，这个算子 input buffer 在 barrier 之前的数据，这个算子 output buffer 里在 barrier 之后的数据）做 snapshot 保存到算子的 state
+2. 算子将这次 checkpoint 对应的所有未输出到下游的数据（包含上游算子的 output buffer 在 barrier 之前的数据，这个算子 input buffer 在 barrier 之后的数据，这个算子 output buffer 里的所有数据）做 snapshot 保存到算子的 state
 3. 恢复时先将状态里所有 inflght 数据恢复到算子，再开始处理上游传来的数据
 #### 不同程度的容错机制
 任务发生故障时，根据不同的容错机制可能会出现以下结果：
@@ -34,6 +34,7 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
 **at-least-once** 需要数据源 **source** 支持回朔到快照发生的进度，比如 Kafka 回到某个 offset，同时整个数据链路保证在成功执行一次 checkpoint 快照时，所有数据源已发出的数据都被成功 sink 到下游。   
   - 精确一次 **exactly-once** ：Flink 从故障恢复，没有结果丢失和重复。   
 **exactly-once** 在 **at-least-once** 的基础上还需要数据输出 **Sink** 支持事务写入或者幂等写入。
+
 ## 实现
 #### JobMaster 发起 checkpoint
 ###### JobMaster 创建 ExecutionGraph
@@ -46,6 +47,7 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
 7. SchedulerBase#createAndRestoreExecutionGraph
 8. DefaultExecutionGraphFactory#createAndRestoreExecutionGraph
 9. DefaultExecutionGraphBuilder#buildGraph
+
 ###### ExecutionGraph 通过 CheckpointCoordinator 开启 checkpoint
 1. DefaultExecutionGraph#enableCheckpointing
 2. CheckpointCoordinator#createActivatorDeactivator   
@@ -56,6 +58,7 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
 用一个 ScheduledExecutor 定期触发 ScheduledTrigger 执行
 6. CheckpointCoordinator.ScheduledTrigger#run
 7. CheckpointCoordinator#triggerCheckpoint
+
 ###### CheckpointCoordinator 触发 CheckpointTriggerRequest 执行
 1. CheckpointCoordinator.CheckpointTriggerRequest 创建一个 CheckpointTriggerRequest   
 2. CheckpointRequestDecider#chooseRequestToExecute 对 CheckpointTriggerRequest 做一个限流   
@@ -80,7 +83,8 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
     6. RpcTaskManagerGateway#triggerCheckpoint  RPC 请求触发 TaskManager 执行 checkpoint   
     6. TaskExecutorGateway#triggerCheckpoint   
     7. TaskExecutor#triggerCheckpoint   
-#### StreamTask 执行 checkpoint （以 SourceStreamTask 为例）
+
+#### SourceStreamTask 触发 checkpoint
 1. Task#triggerCheckpointBarrier
 2. SourceOperatorStreamTask#triggerCheckpointAsync
 3. SourceOperatorStreamTask#triggerCheckpointNowAsync   
@@ -88,20 +92,33 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
 4. StreamTask#triggerUnfinishedChannelsCheckpoint   
     创建 CheckpointBarrier 并下发到每个 InputGate 的每个 InputChannel
 5. CheckpointBarrierHandler#processBarrier  
-    CheckpointBarrierHandler 接口有两个实现， CheckpointBarrierTracker 对应 checkpoint mode 为 `at-least-once` ， SingleCheckpointBarrierHandler 对应 checkpoint mode 为 `exactly-once`
-6. CheckpointBarrierHandler#processBarrier  
-    CheckpointBarrierHandler 支持 `aligned` 和 `unaligned` 两种 checkpoint 模式
+    CheckpointBarrierHandler 接口有两个实现：
+    - CheckpointBarrierTracker 对应 checkpoint mode 为 `at-least-once`，不会阻塞 InputChannel 的输入，直到所有 InputChannel 都收到 barrier 调用 CheckpointBarrierHandler#notifyCheckpoint 触发 checkpoint 执行   
+    - SingleCheckpointBarrierHandler 对应 checkpoint mode 为 `exactly-once`，接收和记录 barriers 并交由 **BarrierHandlerState** 决定何时触发 checkpoint 以及对 Inputchannel 的操作    
+6. SingleCheckpointBarrierHandler#processBarrier    
+    SingleCheckpointBarrierHandler 支持 `aligned` 和 `unaligned` 两种 checkpoint 模式
 7. SingleCheckpointBarrierHandler#markCheckpointAlignedAndTransformState    
-    记录 InputChannel 的 barrier 对齐情况，并将 barrier 交由 BarrierHandlerState 处理   
+    将 barrier 交由 BarrierHandlerState 处理并记录 InputChannel 的 barrier 对齐情况   
 8. BarrierHandlerState#barrierReceived  
-    根据配置不同 BarrierHandlerState 有多个实现，用以实现不同的 barrier 处理情况，这里以最基础的 aligned checkpoint 处理为例    
-9. AbstractAlignedBarrierHandlerState#barrierReceived   
+    BarrierHandlerState 接收 barrier 并根据 barrier 转换自身的类型，由不同类型代表算子处理 checkpoint 时的多个状态：       
+    - **WaitingForFirstBarrier** `aligned` 模式下等待第一个 barrier  
+    - **CollectingBarriers** `aligned` 模式下等待所有 barrier  
+    - **AlternatingWaitingForFirstBarrier** `aligned` 模式下等待第一个 barrier，有超时限制
+    - **AlternatingCollectingBarriers** `aligned` 模式下等待所有 barrier，有超时限制
+    - **AlternatingWaitingForFirstBarrierUnaligned** `unaligned` 模式下等待第一个 barrier，有超时限制
+    - **AlternatingCollectingBarriersUnaligned** `unaligned` 模式下等待所有 barrier，有超时限制
+9. AbstractAlignedBarrierHandlerState#barrierReceived  以 `aligned` 模式为例   
     SourceTask 并不暂停 InputChannel 的输入，所有 barrier 都收到后触发全局 checkpoint   
 10. AbstractAlignedBarrierHandlerState#triggerGlobalCheckpoint  
     执行全局 checkpoint ，完成后恢复所有 InputChannel 的输入，并进入 WaitingForFirstBarrier 的状态    
-... 
-11. StreamTask#performCheckpoint
-12. SubtaskCheckpointCoordinatorImpl#checkpointState
+11. SingleCheckpointBarrierHandler#triggerCheckpoint
+12. CheckpointBarrierHandler#notifyCheckpoint   
+    回调 StreamTask 执行 checkpoint
+
+#### StreamTask 执行 checkpoint
+1. StreamTask#triggerCheckpointOnBarrier
+2. StreamTask#performCheckpoint
+3. SubtaskCheckpointCoordinatorImpl#checkpointState
     对所有 SubTask 执行 checkpoint
     - OperatorChain#prepareSnapshotPreBarrier 所有 SubTask 执行 StreamOperator#prepareSnapshotPreBarrier
     - OperatorChain#broadcastEvent 向所有 SubTask 的下游广播 CheckpointBarrier
@@ -109,6 +126,21 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
     - SubtaskCheckpointCoordinatorImpl#takeSnapshotSync 所有 SubTask 执行 OperatorChain#snapshotState，这一步会传入 CheckpointStreamFactory 用于输出 State 持久化后的数据流，根据配置数据流会被写入不同的 State Backend
     - SubtaskCheckpointCoordinatorImpl#finishAndReportAsync 
     SubTask 执行 checkpoint 结束后通知 JobMaster
+
+#### StreamTask 接收上游的 barrier
+1. OperatorChain#broadcastEvent    
+    遍历所有 RecordWrters 广播 CheckpointBarrier
+2. RecordWriterOutput#broadcastEvent
+3. RecordWriter#broadcastEvent
+4. ResultPartitionWriter#broadcastEvent    
+    将 CheckpointBarrier 写到 Buffer    
+... 省略从上游算子的 Output Buffer 到下游算子的 Input Buffer     
+5. AbstractStreamTaskNetworkInput#emitNext
+6. CheckpointedInputGate#pollNext
+7. CheckpointedInputGate#handleEvent
+8. CheckpointBarrierHandler#processBarrier   
+    到这一步就和前面 SourceStreamTask 触发 checkpoint 一样了
+
 #### JobMaster 确认 checkpoint 执行结果
 1. AsyncCheckpointRunnable#run
 2. AsyncCheckpointRunnable#reportCompletedSnapshotStates
@@ -122,4 +154,5 @@ Flink 是如何在程序异常结束后恢复的，本文简述一下其中的�
     PendingCheckpoint 记录完成 checkpoint 的 Task
 10. CheckpointCoordinator#completePendingCheckpoint
 11. CheckpointCoordinator#finalizeCheckpoint
+
 #### 从 checkpoint 恢复

@@ -64,7 +64,10 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成
         3.2.1 BoundedOutOfOrdernessWatermarks#onEvent 更新最大的 watermark （以 BoundedOutOfOrdernessWatermarks 为例）
 
 #### 1.7 TimestampsAndWatermarksOperator 产生 Watermark
-
+如果 watermark 的配置是通过 DataStream#assignTimestampsAndWatermarks 方法在 DataSource 之后配置的，Flink 会在 Source 的 OperatorChain 里创建 TimestampsAndWatermarksOperator 来处理 watermark 的生成和传递。
+1. TimestampsAndWatermarksOperator 继承了 ProcessingTimeService.ProcessingTimeCallback 接口，如果是流式任务 Operator 会循环注册定时器，时间间隔为 `pipeline.auto-watermark-interval`，每次触发都会调用会调用 `WatermarkGenerator#onPeriodicEmit` 接口
+2. TimestampsAndWatermarksOperator 会完全忽略上游发送的 `WatermarkStatus`，但会将上游发送的 watermark 传递给下游
+3. 上游发送的 StreamRecord 在 TimestampsAndWatermarksOperator#processElement 方法里被替换成 TimestampAssigner 产生的新 timestamp，然后被传给 `WatermarkGenerator#onEvent` 接口更新 watermark
 
 ## 2. 传递 Watermark
 1. BoundedOutOfOrdernessWatermarks#onPeriodicEmit
@@ -138,4 +141,5 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成
 6. 所有发送过 `WatermarkStatus#IDLE_STATUS` 的算子在重新发送 `WatermarkStatus#ACTIVE_STATUS` 后就能恢复到正常工作状态
 
 #### 4.2 Watermark 对齐
-如果数据源的一个或多个 partitions/splits/shards 输出数据的速度比其他的快很多/慢很多，会导致 watermark 更新速度不一致下游依赖 watermark 更新的算子无法正确处理数据，比如 TumblingEventTimeWindows 缓存很多数据而不触发聚合   
+如果数据源的一个或多个 partitions/splits/shards 输出数据的速度比其他的快很多/慢很多，会导致 watermark 更新速度差距太大，下游依赖 watermark 更新的算子无法正确处理数据，比如 TumblingEventTimeWindows 缓存很多数据而不触发聚合   
+1. 

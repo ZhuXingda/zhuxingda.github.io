@@ -74,7 +74,7 @@ TaskExecutor 运行时会用到的组件，其中 TaskManagerServices 还包含�
 ### Task 执行
 1. **TaskExecutor#submitTask** 创建 Task 并在专门的线程执行
 2. **Task#doRun** Task 执行
-    - **Task#loadAndInstantiateInvokable** 初始化 Task 实际执行的 TaskInvokable 对象，取决于 TaskInformation 里的 invokableClassName，暨 JobVertex 的 name 对应的 Class
+    - **Task#loadAndInstantiateInvokable** 初始化 Task 实际执行的 TaskInvokable 对象，取决于 TaskInformation 里的 invokableClassName，即 JobVertex 的 name 对应的 Class
 3. **Task#restoreAndInvoke**
 4. **TaskInvokable#invoke** 执行 JobVertex 对应的实际任务，TaskInvokable 接口有多个实现，包含 BatchTask、StreamTask、DataSinkTask、DataSourceTask 等
 5. **StreamTask#invoke** 这里以 StreamTask 为例往下分析
