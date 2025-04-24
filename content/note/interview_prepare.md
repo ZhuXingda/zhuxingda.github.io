@@ -30,8 +30,8 @@ tags:
 #### 2.3 C++
 ## 4. 数据库
 #### 4.1 RocksDB
-#### 4.2 Parquet 协议
-#### 4.3 ORC 协议
+#### 4.2 Parquet 协议 d
+#### 4.3 ORC 协议 d
 #### 4.4 Paimon
 1. LSM Tree 文件结构
 2. 文件索引
