@@ -86,6 +86,23 @@
 	
 	<header class="list__header">
 		<h2 class="list__title post__title">
+			<a href="/tech/flink_job_execute_deployment/" rel="bookmark">
+			【Flink】Flink 任务执行和部署原理
+			</a>
+		</h2>
+		<div class="list__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-24T17:22:01&#43;08:00">2025-04-24</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="category">分布式系统</a>
+	</span>
+</div></div>
+	</header>
+	<div class="content list__excerpt post__content clearfix">
+		<p>分析 Flink 任务完整的提交过程，主要关注在这个过程中任务的格式变化和调度执行。</p>
+	</div>
+</article><article class="list__item post">
+	
+	<header class="list__header">
+		<h2 class="list__title post__title">
 			<a href="/tech/distribute_system_protocal/" rel="bookmark">
 			分布式协议总结
 			</a>
@@ -235,23 +252,6 @@
 	<div class="content list__excerpt post__content clearfix">
 		<p>Flink 1.11 引入新的 <strong>Data Source API</strong> 以取代 <strong>SourceFunction</strong> 接口，本文将简述其结构，以便针对某个数据源开发自定义的 Source 连接器。</p>
 	</div>
-</article><article class="list__item post">
-	
-	<header class="list__header">
-		<h2 class="list__title post__title">
-			<a href="/tech/flink_kubernetes_application_mode/" rel="bookmark">
-			【Flink】Flink Kubernetes Application Mode 启动分析
-			</a>
-		</h2>
-		<div class="list__meta meta">
-<div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2024-05-21T00:00:00Z">2024-05-21</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" rel="category">分布式系统</a>
-	</span>
-</div></div>
-	</header>
-	<div class="content list__excerpt post__content clearfix">
-		<p>梳理 Flink 在 Kubernetes Application Mode 下启动任务的过程，分析为什么 Flink SQL 任务不能以 Application Mode 运行</p>
-	</div>
 </article>
 </main>
 
@@ -272,6 +272,10 @@
 			<li class="widget__item">
 				<a class="widget__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/">分布式系统</a></li>
 			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/">大数据</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a></li>
+			<li class="widget__item">
 				<a class="widget__link" href="/categories/%E6%94%B6%E8%97%8F/">收藏</a></li>
 		</ul>
 	</div>
@@ -283,25 +287,27 @@
 		<a class="widget-taglist__link widget__link btn" href="/tags/flink/" title="Flink">Flink</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/kubernetes/" title="Kubernetes">Kubernetes</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/leetcode/" title="Leetcode">Leetcode</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/network/" title="Network">Network</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/paimon/" title="Paimon">Paimon</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/ray/" title="Ray">Ray</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E5%8D%8F%E8%AE%AE/" title="分布式协议">分布式协议</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" title="文件格式">文件格式</a>
 	</div>
 </div>
 <div class="widget-recent widget">
 	<h4 class="widget__title">近期文章</h4>
 	<div class="widget__content">
 		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/tech/tcpdump_usage_notebook/">【Linux】Linux 服务器抓包记录</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_job_execute_deployment/">【Flink】Flink 任务执行和部署原理</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/data_index_structure/">Bloom Filter、 Bitmap、 Skip List </a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/data_storage_file_format/">ORC 和 Parquet 文件格式</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/distribute_system_protocal/">分布式协议总结</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_watermark_source_code/">【Flink】Flink Watermark 产生和传递原理</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_task_inside_source_code/">【Flink】Flink Task 和 OperatorChain 源码</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/kubernetes_deploy_nodebook/">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/paimon_sink_clustring/">【Paimon】Paimon 表排序</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_sink_api/">【Flink】Flink Data Sink API</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/ray_framework_init/">【Ray】分布式计算框架 Ray 入门</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/high_availability_k8s_cluster_build/">【Kubernetes】高可用 Kubernetes 集群搭建（with kubeadm）</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/flink_source_api/">【Flink】Data Source API 结构及实现</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/flink_kubernetes_application_mode/">【Flink】Flink Kubernetes Application Mode 启动分析</a></li>
 		</ul>
 	</div>
 </div>

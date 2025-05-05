@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>面试准备 checklist - Zhu Xingda</title>
+	<title>Bloom Filter、 Bitmap、 Skip List  - Zhu Xingda</title>
 	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
 	<meta name="description" content="">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,14 +44,14 @@
 				
 			</a>
 		</li>
-		<li class="menu__item">
+		<li class="menu__item menu__item--active">
 			<a class="menu__link" href="/tech/">
 				
 				<span class="menu__text">技术-Tech</span>
 				
 			</a>
 		</li>
-		<li class="menu__item menu__item--active">
+		<li class="menu__item">
 			<a class="menu__link" href="/note/">
 				
 				<span class="menu__text">笔记本-NoteBook</span>
@@ -83,131 +83,17 @@
 <main class="main" role="main">
 	<article class="post">
 		<header class="post__header">
-			<h1 class="post__title">面试准备 checklist</h1>
+			<h1 class="post__title">Bloom Filter、 Bitmap、 Skip List </h1>
 			<div class="post__meta meta">
 <div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-03-27T16:48:23&#43;08:00">2025-03-27</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/" rel="category">Categories</a>
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-24T17:01:03&#43;08:00">2025-04-24</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/" rel="category">Categories</a>
 	</span>
 </div></div>
 		</header>
 		
 		
 		<div class="content post__content clearfix">
-			<h2 id="1-算法">1. 算法</h2>
-<h2 id="2-编程语言">2. 编程语言</h2>
-<h4 id="21-java">2.1 Java</h4>
-<ul>
-<li>JVM 内存模型</li>
-<li>内存回收
-<ul>
-<li>G1</li>
-</ul>
-</li>
-<li>多线程
-<ul>
-<li>Volatile</li>
-<li>CompletableFuture</li>
-<li>StampedLock</li>
-<li>ForkJoinPool</li>
-<li>BlockingQueue</li>
-</ul>
-</li>
-<li>问题排查
-<ul>
-<li>线程堆栈</li>
-<li>对象内存</li>
-</ul>
-</li>
-</ul>
-<h4 id="22-golang">2.2 Golang</h4>
-<ul>
-<li>调度器 d</li>
-<li>内存回收
-<ul>
-<li>逃逸分析</li>
-</ul>
-</li>
-</ul>
-<h4 id="23-c">2.3 C++</h4>
-<h2 id="4-数据库">4. 数据库</h2>
-<h4 id="41-rocksdb">4.1 RocksDB</h4>
-<h4 id="42-parquet-协议-d">4.2 Parquet 协议 d</h4>
-<h4 id="43-orc-协议-d">4.3 ORC 协议 d</h4>
-<h4 id="44-paimon">4.4 Paimon</h4>
-<ol>
-<li>LSM Tree 文件结构</li>
-<li>文件索引</li>
-<li>异步 Compaction</li>
-</ol>
-<h4 id="45-iceberg">4.5 Iceberg</h4>
-<ol>
-<li>和 Paimon 的异同</li>
-</ol>
-<h2 id="5-分布式系统">5. 分布式系统</h2>
-<h4 id="51-分布式协议">5.1 分布式协议</h4>
-<ol>
-<li>CAP一致性协议
-<a href="https://tech.youzan.com/cap-coherence-protocol-and-application-analysis/">CAP一致性协议及应用分析</a></li>
-<li>Paxos 协议
-<a href="https://chinalhr.github.io/post/distributed-systems-consensus-algorithm-paxos/">Paxos协议详解</a></li>
-<li>Raft 协议
-<a href="https://zhuanlan.zhihu.com/p/32052223">Raft协议详解</a>
-<a href="https://docs.qq.com/doc/DY0VxSkVGWHFYSlZJ?_t=1609557593539">Raft论文</a></li>
-<li>ZAP 协议</li>
-<li>Gossip 协议</li>
-<li>CRAQ 协议</li>
-</ol>
-<h4 id="52-flink">5.2 Flink</h4>
-<ul>
-<li>Flink State Backend 和持久化 d</li>
-<li>Flink Watermark 生成原理及作用 d</li>
-<li>Flink OperatorChain 生成过程</li>
-<li>Flink Operator 调度 d</li>
-<li>Flink SQL API、Stream API 任务解析及执行过程 d</li>
-<li>Flink 背压处理机制</li>
-<li>Flink HighAvailableService 原理及实现</li>
-<li>Flink Souce Sink Connector 源码分析 d</li>
-</ul>
-<h4 id="53-kafka">5.3 Kafka</h4>
-<ol>
-<li>架构设计</li>
-</ol>
-<h4 id="54-ray">5.4 Ray</h4>
-<ol>
-<li>Ray core 架构及实现</li>
-<li>KubeRay</li>
-</ol>
-<h4 id="55-kubernetes">5.5 Kubernetes</h4>
-<h4 id="56-juicefs">5.6 JuiceFS</h4>
-<h2 id="6-操作系统">6. 操作系统</h2>
-<h4 id="ipc">IPC</h4>
-<h4 id="内存">内存</h4>
-<ul>
-<li>虚拟内存</li>
-</ul>
-<h4 id="文件系统">文件系统</h4>
-<ul>
-<li>VFS</li>
-<li>inode
-<a href="https://www.ruanyifeng.com/blog/2011/12/inode.html">https://www.ruanyifeng.com/blog/2011/12/inode.html</a></li>
-<li>页表</li>
-<li>mmap</li>
-<li>sendFile
-<a href="https://xie.infoq.cn/article/a34cf4d2c6556d6c81be17303">https://xie.infoq.cn/article/a34cf4d2c6556d6c81be17303</a></li>
-</ul>
-<h4 id="网络-io">网络 IO</h4>
-<ul>
-<li>IO 多路复用</li>
-</ul>
-<h4 id="进程和线程">进程和线程</h4>
-<ul>
-<li>进程的虚拟内存，物理内存，共享内存</li>
-</ul>
-<h2 id="7-网络">7. 网络</h2>
-<h4 id="tcpip">TCP/IP</h4>
-<h4 id="heading"></h4>
-<h2 id="8-ai">8. AI</h2>
-
+			
 		</div>
 		<footer class="post__footer">
 			
@@ -247,9 +133,15 @@
 
 <nav class="pager flex">
 	<div class="pager__item pager__item--prev">
-		<a class="pager__link" href="/note/interesting_posts/" rel="prev">
+		<a class="pager__link" href="/tech/data_storage_file_format/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title">【收藏夹】技术类文章</p>
+			<p class="pager__title">ORC 和 Parquet 文件格式</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/flink_job_execute_deployment/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">【Flink】Flink 任务执行和部署原理</p>
 		</a>
 	</div>
 </nav>

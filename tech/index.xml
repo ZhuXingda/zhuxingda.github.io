@@ -6,8 +6,36 @@
     <description>Recent content in Teches on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sun, 30 Mar 2025 22:29:20 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 29 Apr 2025 16:40:40 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tech/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【Linux】Linux 服务器抓包记录</title>
+      <link>https://blog.xingda.space/tech/tcpdump_usage_notebook/</link>
+      <pubDate>Tue, 29 Apr 2025 16:40:40 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/tcpdump_usage_notebook/</guid>
+      <description>&lt;p&gt;经常遇到需要在服务器抓包分析问题的情况，这里记录一下常用的抓包工具。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>【Flink】Flink 任务执行和部署原理</title>
+      <link>https://blog.xingda.space/tech/flink_job_execute_deployment/</link>
+      <pubDate>Thu, 24 Apr 2025 17:22:01 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/flink_job_execute_deployment/</guid>
+      <description>&lt;p&gt;分析 Flink 任务完整的提交过程，主要关注在这个过程中任务的格式变化和调度执行。&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Bloom Filter、 Bitmap、 Skip List </title>
+      <link>https://blog.xingda.space/tech/data_index_structure/</link>
+      <pubDate>Thu, 24 Apr 2025 17:01:03 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/data_index_structure/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>ORC 和 Parquet 文件格式</title>
+      <link>https://blog.xingda.space/tech/data_storage_file_format/</link>
+      <pubDate>Mon, 21 Apr 2025 10:43:15 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/data_storage_file_format/</guid>
+      <description>&lt;p&gt;ORC 和 Parquet 是两种常用的列式存储格式，都支持 schema 定义、索引、压缩等特性，本文分别分析两种文件的格式和实现原理&lt;/p&gt;</description>
+    </item>
     <item>
       <title>分布式协议总结</title>
       <link>https://blog.xingda.space/tech/distribute_system_protocal/</link>

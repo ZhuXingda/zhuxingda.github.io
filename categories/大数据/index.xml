@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>大数据 on Zhu Xingda</title>
+    <link>https://blog.xingda.space/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/</link>
+    <description>Recent content in 大数据 on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Mon, 21 Apr 2025 10:43:15 +0800</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ORC 和 Parquet 文件格式</title>
+      <link>https://blog.xingda.space/tech/data_storage_file_format/</link>
+      <pubDate>Mon, 21 Apr 2025 10:43:15 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/data_storage_file_format/</guid>
+      <description>&lt;p&gt;ORC 和 Parquet 是两种常用的列式存储格式，都支持 schema 定义、索引、压缩等特性，本文分别分析两种文件的格式和实现原理&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

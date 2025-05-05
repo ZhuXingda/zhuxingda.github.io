@@ -6,8 +6,15 @@
     <description>Recent content in Flink on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 25 Mar 2025 19:27:37 +0800</lastBuildDate>
+    <lastBuildDate>Thu, 24 Apr 2025 17:22:01 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/flink/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【Flink】Flink 任务执行和部署原理</title>
+      <link>https://blog.xingda.space/tech/flink_job_execute_deployment/</link>
+      <pubDate>Thu, 24 Apr 2025 17:22:01 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/flink_job_execute_deployment/</guid>
+      <description>&lt;p&gt;分析 Flink 任务完整的提交过程，主要关注在这个过程中任务的格式变化和调度执行。&lt;/p&gt;</description>
+    </item>
     <item>
       <title>【Flink】Flink Watermark 产生和传递原理</title>
       <link>https://blog.xingda.space/tech/flink_watermark_source_code/</link>

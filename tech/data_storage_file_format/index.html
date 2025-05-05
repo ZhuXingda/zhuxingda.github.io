@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>ORC 和 Parquet 文件格式 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
+					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页-Index</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术-Tech</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本-NoteBook</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活-Life</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+				
+				<span class="menu__text">关于我-About Me</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">ORC 和 Parquet 文件格式</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-21T10:43:15&#43;08:00">2025-04-21</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/" rel="category">大数据</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>ORC 和 Parquet 是两种常用的列式存储格式，都支持 schema 定义、索引、压缩等特性，本文分别分析两种文件的格式和实现原理</p>
+<h1 id="1-orc">1. ORC</h1>
+<p><a href="https://github.com/apache/orc-format/blob/main/specification/ORCv1.md">官方文档</a><br>
+ORC 是一种列式存储格式，文件中不仅保存了数据，还保存了数据的格式和编码信息，以及数据的索引。</p>
+<h3 id="11-文件格式">1.1 文件格式</h3>
+<p>如上图所示 ORC 文件由多个 Stripe、一个 Metadata、一个 File Footer 和一个 PostScript 组成</p>
+<h4 id="111-stripe">1.1.1 Stripe</h4>
+<p>Stripe 是 ORC 文件的基本存储单元，每个 Stripe 相互独立，同一行数据只能包含在同一个 Stripe 中。 Stripe 中的数据在逻辑上划分成多个 Row Group，默认每 10000 行数据构成一个 Row Group。Stripe 物理上划分为 Index Streams、Data Streams 和 Footer。</p>
+<ul>
+<li><strong>Stream</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Stream</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// if you add new index stream kinds, you need to make sure to update
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// StreamName to ensure it is added to the stripe in the right area
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">enum</span> Kind {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    PRESENT <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DATA <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    LENGTH <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DICTIONARY_DATA <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DICTIONARY_COUNT <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    SECONDARY <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    ROW_INDEX <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    BLOOM_FILTER <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    BLOOM_FILTER_UTF8 <span style="color:#f92672">=</span> <span style="color:#ae81ff">8</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#75715e">// Virtual stream kinds to allocate space for encrypted index and data.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    ENCRYPTED_INDEX <span style="color:#f92672">=</span> <span style="color:#ae81ff">9</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    ENCRYPTED_DATA <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#75715e">// stripe statistics streams
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    STRIPE_STATISTICS <span style="color:#f92672">=</span> <span style="color:#ae81ff">100</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#75715e">// A virtual stream kind that is used for setting the encryption IV.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    FILE_STATISTICS <span style="color:#f92672">=</span> <span style="color:#ae81ff">101</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  }<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> Kind kind <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint32</span> column <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> length <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>Stream 是 ORC 文件中的最小存储单元，Stream 分为多种类型，其中 ROW_INDEX 对应 Row Index，用于存储 Row Group 的统计信息，BLOOM_FILTER 对应 Bloom Filter Index，用于快速判断查询条件是否命中。</p>
+<ul>
+<li><strong>Index Streams</strong>
+<ol>
+<li>Row Index</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">RowIndex</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">repeated</span> RowIndexEntry entry <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">RowIndexEntry</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">repeated</span> <span style="color:#66d9ef">uint64</span> positions <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> [<span style="color:#66d9ef">packed</span><span style="color:#f92672">=</span><span style="color:#66d9ef">true</span>];<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#66d9ef">optional</span> ColumnStatistics statistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">ColumnStatistics</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> numberOfValues <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> IntegerStatistics intStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> DoubleStatistics doubleStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> StringStatistics stringStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> BucketStatistics bucketStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> DecimalStatistics decimalStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> DateStatistics dateStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> BinaryStatistics binaryStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">8</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> TimestampStatistics timestampStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">9</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">bool</span> hasNull <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> bytesOnDisk <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> CollectionStatistics collectionStatistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">12</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><ol start="2">
+<li>Bloom Filter</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">BloomFilter</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint32</span> numHashFunctions <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> <span style="color:#66d9ef">fixed64</span> bitset <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">bytes</span> utf8bitset <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">BloomFilterIndex</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> BloomFilter bloomFilter <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div></li>
+<li><strong>Data Streams</strong><br>
+实际存储数据的部分，每个 Stream 对应一个 Row Group 的一列数据。</li>
+<li><strong>Stripe Footer</strong></li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">StripeFooter</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> Stream streams <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> ColumnEncoding columns <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">string</span> writerTimezone <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// one for each column encryption variant
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">repeated</span> StripeEncryptionVariant encryption <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">ColumnEncoding</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">enum</span> Kind {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DIRECT <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DICTIONARY <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DIRECT_V2 <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>    DICTIONARY_V2 <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  }<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> Kind kind <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint32</span> dictionarySize <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// The encoding of the bloom filters for this column:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">//   0 or missing = none or original
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">//   1            = ORC-135 (utc for timestamps)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint32</span> bloomEncoding <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">StripeEncryptionVariant</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> Stream streams <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> ColumnEncoding encoding <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>记录了:</p>
+<ol>
+<li>Stripe 中各个 Stream 的类型、对应的列、整体长度。</li>
+<li>每个列的编码方式</li>
+<li>每个 Stream 中每个列的编码方式</li>
+</ol>
+<h4 id="112-metadata">1.1.2 Metadata</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">StripeStatistics</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> ColumnStatistics colStats <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Metadata</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> StripeStatistics stripeStats <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>Metadata 由各个 Stripe 的列统计信息组成</p>
+<h4 id="113-file-footer">1.1.3 File Footer</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-protobuf" data-lang="protobuf"><span style="display:flex;"><span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">Footer</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> headerLength <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> contentLength <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> StripeInformation stripes <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> Type types <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> UserMetadataItem metadata <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> numberOfRows <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">repeated</span> ColumnStatistics statistics <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint32</span> rowIndexStride <span style="color:#f92672">=</span> <span style="color:#ae81ff">8</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// Each implementation that writes ORC files should register for a code
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// 0 = ORC Java
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// 1 = ORC C++
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// 2 = Presto
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// 3 = Scritchley Go from https://github.com/scritchley/orc
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint32</span> writer <span style="color:#f92672">=</span> <span style="color:#ae81ff">9</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// information about the encryption in this file
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> Encryption encryption <span style="color:#f92672">=</span> <span style="color:#ae81ff">10</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#66d9ef">optional</span> CalendarKind calendar <span style="color:#f92672">=</span> <span style="color:#ae81ff">11</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#66d9ef">message</span> <span style="color:#a6e22e">StripeInformation</span> {<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// the global file offset of the start of the stripe
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> offset <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// the number of bytes of index
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> indexLength <span style="color:#f92672">=</span> <span style="color:#ae81ff">2</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// the number of bytes of data
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> dataLength <span style="color:#f92672">=</span> <span style="color:#ae81ff">3</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// the number of bytes in the stripe footer
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> footerLength <span style="color:#f92672">=</span> <span style="color:#ae81ff">4</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// the number of rows in this stripe
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> numberOfRows <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// If this is present, the reader should use this value for the encryption
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// stripe id for setting the encryption IV. Otherwise, the reader should
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// use one larger than the previous stripe&#39;s encryptStripeId.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// For unmerged ORC files, the first stripe will use 1 and the rest of the
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// stripes won&#39;t have it set. For merged files, the stripe information
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// will be copied from their original files and thus the first stripe of
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// each of the input files will reset it to 1.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// Note that 1 was choosen, because protobuf v3 doesn&#39;t serialize
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// primitive types that are the default (eg. 0).
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">uint64</span> encryptStripeId <span style="color:#f92672">=</span> <span style="color:#ae81ff">6</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>  <span style="color:#75715e">// For each encryption variant, the new encrypted local key to use
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// until we find a replacement.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#66d9ef">repeated</span> <span style="color:#66d9ef">bytes</span> encryptedLocalKeys <span style="color:#f92672">=</span> <span style="color:#ae81ff">7</span>;<span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>}<span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>File Footer 负责记录文件的 metadata ：</p>
+<ul>
+<li><strong>Stripe 信息</strong><br>
+记录每个 Stripe 的：位置和长度、Index Data 的长度、Row Data 的长度、Stripe Footer 的长度、包含的数据行数</li>
+<li><strong>列信息</strong><br>
+记录每个列的 metadata ，包含：列的数据类型、复合数据类型的子类型列表、列的名字等信息</li>
+<li><strong>列统计信息</strong><br>
+记录每一列的 MAX MIN SUM 等信息，用于查询时谓词下推</li>
+<li>**用户自定义 metadata **<br>
+用户自定义的 Key - Value 键值对</li>
+</ul>
+<h4 id="114-postscript">1.1.4 PostScript</h4>
+<p>记录文件的 Footer 长度、Metadata 长度、压缩方式、压缩块大小、文件版本、magic number 等信息</p>
+<h3 id="12-文件索引">1.2 文件索引</h3>
+<h4 id="121-列统计信息-column-statistics">1.2.1 列统计信息 Column Statistics</h4>
+<p>由文件格式可知 ORC 一共有三级列统计信息：</p>
+<ol>
+<li>每个 Stripe 内 RowGroup 的列统计信息———— Row Index，即每个 Data Stream 的统计信息</li>
+<li>每个 Stripe 的列统计信息</li>
+<li>整个文件的列统计信息<br>
+查询时利用各级列统计信息逐级下推，减少不必要的数据扫描。<br>
+对所有 primative 类型的列统计信息包括：最大值、最小值，对数值类型还包括总和，对可为 NULL 的类型还包括 hasNull 的布尔值。</li>
+</ol>
+<h4 id="122-bloom-filter-index">1.2.2 Bloom Filter Index</h4>
+<p>Bloom Filter Index 只存在于 RowGroup 级，即每个 Data Stream 对应一个 Bloom Filter Index，Bloom Filter 更适合精确的点查询。<br>
+存储时 Bloom Filter Index 和 Row Index 对应的 Stream 交替保存在一起，读取时一起读取用于快速判断是否需要读取该 Stream。</p>
+<h2 id="2parquet">2.Parquet</h2>
+<p><a href="https://parquet.apache.org/docs/file-format/">官方文档</a><br>
+<a href="https://github.com/apache/parquet-format/blob/master/src/main/thrift/parquet.thrift">Thrift 定义</a><br>
+Parquet 也是列式存储格式，同时保存了数据和数据的 metadata 。Parquet 支持数据和 metadata 不保存在同一个文件中，一个 metadata 文件可以对应多个数据文件。</p>
+<h3 id="21-文件结构">2.1 文件结构</h3>
+<p><img alt="Parquet 文件格式" src="https://parquet.apache.org/images/FileLayout.gif"><br>
+Parquet 文件主要由以下部分组成：</p>
+<ol>
+<li>文件头的 Magic Number，4 个字节</li>
+<li>实际保存数据的 Column Chunks</li>
+<li>文件 Footer，保存文件的 MetaData</li>
+<li>Footer 的长度，4 个字节</li>
+<li>文件尾的 Magic Number，4 个字节
+下面着重分析 Column Chunks 和 Footer 的结构。</li>
+</ol>
+<h4 id="211-column-chunks">2.1.1 Column Chunks</h4>
+<p>文件的数据部分首先划分成多个 Row Groups</p>
+<ol>
+<li><strong>Row Group</strong><br>
+一行数据只存在于一个 Row Group 中，Row Group 推荐的大小在 512MB - 1GB，每个 Row Group 包含每一列的一个 Column Chunk</li>
+<li><strong>Column Chunk</strong><br>
+一个 Column Chunk 对应一个列，由多个 Pages 组成</li>
+<li><strong>Page</strong><br>
+Page 是 Parquet 文件中最小的数据存储单元</li>
+</ol>
+<ul>
+<li><strong>DataPage</strong><br>
+保存实际的列数据，由以下部分组成：
+<ul>
+<li>Page header</li>
+<li>repetition levels data</li>
+<li>definition levels data</li>
+<li>encoded values 编码后的数据</li>
+</ul>
+</li>
+<li><strong>DictionaryPage</strong><br>
+如果 DataPage 中的数据为字典编码，即将数据的不同 value 保存到一个字典中，DataPage 实际保存 value 在字典中的坐标，则会将编码用的字典保存在 DictionaryPage 中，DictionaryPage 位于所有 DataPage 之前。这适用于不重复值较少的列，比如一些枚举字段，如果不重复的值太多导致字典的大小过大则不推荐使用字典编码，会降级到 plain 编码。</li>
+<li><strong>DataPageV2</strong><br>
+新的 DataPage 类型，其 definition levels 和 repetition levels 都是非压缩可以直接读</li>
+</ul>
+<h4 id="212-index">2.1.2 Index</h4>
+<ol>
+<li><strong>Page Index</strong>
+在旧版本中 ColumnChunk 的列统计信息保存在 ColumnMetaData 中，DataPage 的列统计信息保存在 DataPageHeader 中，这导致在从 DataPages 读取数据时需要扫描每一个 DataPageHeader 来决定是否跳过这个 page，效率很低。因此在 RowGroup Metadata 增加两个列维度的数据结构：
+<ul>
+<li>ColumnIndex：记录 page 和 page 的列统计信息</li>
+<li>OffsetIndex：记录 page 在文件中的 offset、压缩后的大小、以及 page 里最小的行号<br>
+这两个结构保存在 RowGroup 之后靠近 Footer 的地方，这样如果查询不需要用索引过滤，就可以直接读取 RowGroup 的数据，减少 IO 开销。<br>
+利用这两个 Index 可以实现：</li>
+<li>如果查询的过滤条件包含有序的列，可以通过 ColumnIndex 二分查找找到该列满足条件的 page，然后根据 OffsetIndex 中 page 对应的 row index range 过滤其他列的 page，最后只读取满足条件的行。</li>
+<li>如果查询的过滤条件是无序的列，也可以用 ColumnIndex 过滤掉不满足条件的 page 及这些 page 对应其他列的 page，减少读取的行数。
+以一列时间戳和一列 value 为例：</li>
+</ul>
+</li>
+</ol>
+<pre tabindex="0"><code class="language-csv" data-lang="csv">column index for column ts:
+Boundary order: UNORDERED
+                          null count  min                                       max                                     
+page-0                         0  2025-04-12T10:00:00.000                   2025-04-12T10:01:15.000                 
+page-1                         0  2025-04-12T10:00:00.000                   2025-04-12T10:01:00.000                 
+page-2                         0  2025-04-12T10:00:00.000                   2025-04-12T10:01:00.000                 
+page-3                         0  2025-04-12T10:00:00.000                   2025-04-12T10:01:00.000
+...
+offset index for column ts:
+                          offset   compressed size       first row index
+page-0                  15579636               799                     0
+page-1                  15580435               206                 20000
+page-2                  15580641               211                 40000
+page-3                  15580852               222                 60000
+...
+
+column index for column value:
+Boundary order: UNORDERED
+                      null count  min                                       max                                     
+page-0                         0  1.0                                       9.71663529025E11                        
+page-1                         0  1.0                                       4.515E11                                
+page-2                         0  0.666666666667                            2.91880144088E11                        
+page-3                         0  1.0                                       6.48308164166E11
+...
+offset index for column value:
+                          offset   compressed size       first row index
+page-0                   2716801             35079                     0
+page-1                   2751880             37579                 20000
+page-2                   2789459             37277                 40000
+page-3                   2826736             37638                 60000
+...
+</code></pre><ol start="2">
+<li><strong>Bloom Filer</strong><br>
+对一些不重复值较少的列，利用字典编码可以实现查询时谓词下推，过滤掉不需要读取的 page，但如果不重复值较多会导致字典编码在存储上开销很大，因此引入 Bloom Filter 来解决这种情况下的过滤问题。</li>
+</ol>
+<h4 id="213-footer">2.1.3 Footer</h4>
+<ol>
+<li><strong>FileMetaData</strong></li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-thrift" data-lang="thrift"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">FileMetaData</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** Version of this file **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">1</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i32</span> version
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 定义数据表的格式，由一个单根节点的树构成，
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  * 按深度优先顺序打平保存到这个 list 里 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">2</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">list</span>&lt;SchemaElement&gt; schema;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 一共包含的列数 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">3</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> num_rows
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 全部 RowGroups 的 MetaData  **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">4</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">list</span>&lt;RowGroup&gt; row_groups
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 可选的 key/value MetaData **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">5</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">list</span>&lt;KeyValue&gt; key_value_metadata
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 写这个 Parquet 文件的签名，格式为
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">   * &lt;Application&gt; version &lt;App Version&gt; (build &lt;App Build Hash&gt;). */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">6</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">string</span> created_by
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 每个 Column 里的值排 min max value 的顺序
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">  * 由这里的 ColumnOrder 指定 */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">7</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">list</span>&lt;ColumnOrder&gt; column_orders;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 文件使用的加密算法，仅对 footer 为 plaintext 的文件有效 */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">8</span>: <span style="color:#66d9ef">optional</span> EncryptionAlgorithm encryption_algorithm
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 对文件 footer 加密的 key 的 metadata */</span> 
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">9</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">binary</span> footer_signing_key_metadata
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">/** RowGroup MetaData **/</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">RowGroup</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 每个 Column Chunk 的 Metadata，按 FileMetaData 里 schema 的顺序排列 */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">1</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">list</span>&lt;ColumnChunk&gt; columns
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** RowGroup 下所有未压缩数据的总字节数 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">2</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> total_byte_size
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** RowGroup 下总的数据行数 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">3</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> num_rows
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 如果设置了按该顺序对 RowGroup 下所有行排序，用来排序的列是所有列中的一部分 */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">4</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">list</span>&lt;SortingColumn&gt; sorting_columns
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** RowGroup 里第一个 Page 开始的地方和文件开头之间的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">5</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> file_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** RowGroup 下所有压缩数据的总字节数 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">6</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> total_compressed_size
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** RowGroup 的序号 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">7</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i16</span> ordinal
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">ColumnChunk</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** ColumnChunk 所在的文件，如果为空表示与 FileMetaData 在同一个问题件 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">1</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">string</span> file_path
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** ColumnMetaData 开头到文件开头的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">2</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> file_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** ColumnChunk 的列元信息 */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">3</span>: <span style="color:#66d9ef">optional</span> ColumnMetaData meta_data
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** OffsetIndex 在文件里的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">4</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> offset_index_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** OffsetIndex 的大小，单位字节 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">5</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i32</span> offset_index_length
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** ColumnIndex 在文件里的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">6</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> column_index_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** ColumnIndex 的大小，单位字节 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">7</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i32</span> column_index_length
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 加密列的加密元信息 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">8</span>: <span style="color:#66d9ef">optional</span> ColumnCryptoMetaData crypto_metadata
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** ColumnChunk 列元数据加密后的结果 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">9</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">binary</span> encrypted_column_metadata
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">ColumnMetaData</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 列的类型 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">1</span>: <span style="color:#66d9ef">required</span> Type type
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 该列的所有编码方式 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">2</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">list</span>&lt;Encoding&gt; encodings
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** Path in schema **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">3</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">list</span>&lt;<span style="color:#66d9ef">string</span>&gt; path_in_schema
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 压缩方式 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">4</span>: <span style="color:#66d9ef">required</span> CompressionCodec codec
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 该列 value 的数量 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">5</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> num_values
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 该 ColumnChunk 所有未压缩的数据大小 (包括 headers) **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">6</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> total_uncompressed_size
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 该 ColumnChunk 所有压缩的数据大小 (including the headers) **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">7</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> total_compressed_size
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 可选的 key/value metadata **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">8</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">list</span>&lt;KeyValue&gt; key_value_metadata
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 从文件开头到第一个 data page 之间的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">9</span>: <span style="color:#66d9ef">required</span> <span style="color:#66d9ef">i64</span> data_page_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 从文件开头到 Footer 的 index page 之间的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">10</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> index_page_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 从文件开头到唯一的一个 dictionary page 之间的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">11</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> dictionary_page_offset
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 该 ColumnChunk 的列统计信息 */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">12</span>: <span style="color:#66d9ef">optional</span> Statistics statistics;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 该 ColumnChunk 下所有 page 用到的编码方式 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">13</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">list</span>&lt;PageEncodingStats&gt; encoding_stats;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** 从文件开头到 bloom filter 的数据之间的 offset **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">14</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i64</span> bloom_filter_offset;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/** bloom filter 数据的字节大小 **/</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">15</span>: <span style="color:#66d9ef">optional</span> <span style="color:#66d9ef">i32</span> bloom_filter_length;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">/**
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">   * Optional statistics to help estimate total memory when converted to in-memory
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">   * representations. The histograms contained in these statistics can
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">   * also be useful in some cases for more fine-grained nullability/list length
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">   * filter pushdown.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">   */</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#ae81ff">16</span>: <span style="color:#66d9ef">optional</span> SizeStatistics size_statistics;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" rel="tag">文件格式</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/distribute_system_protocal/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">分布式协议总结</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/data_index_structure/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">Bloom Filter、 Bitmap、 Skip List </p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>
