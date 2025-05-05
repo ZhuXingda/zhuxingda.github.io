@@ -51,11 +51,11 @@ tags:
 5. Gossip 协议
 6. CRAQ 协议
 #### 5.2 Flink
-- Flink State Backend 和持久化
+- Flink State Backend 和持久化 d
 - Flink Watermark 生成原理及作用 d
 - Flink OperatorChain 生成过程
-- Flink Operator 调度
-- Flink SQL API、Stream API 任务解析及执行过程
+- Flink Operator 调度 d
+- Flink SQL API、Stream API 任务解析及执行过程 d
 - Flink 背压处理机制
 - Flink HighAvailableService 原理及实现
 - Flink Souce Sink Connector 源码分析 d

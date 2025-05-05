@@ -24,6 +24,12 @@ flink-job-rest   NodePort   10.200.88.165   <none>        8081:8153/TCP   53d   
 3. **LoadBalancer**
 通过一个第三方 Load Balancer 暴露 Service 到集群外部
 4. **ExternalName**
+### 1.2 CNI 和 Flannel
+容器网络接口（CNI）是 Kubernetes 用来管理容器网络接口的规范，由实现这个接口的插件来管理整个 Kubernetes 集群的网络，实现集群内部的网络互通。   
+Kubernetes 定义了三种通信 IP：
+- Cluster IP：Service 对象的 IP，是一个虚拟 IP 只有和 Service Port 一起才能被访问，且只能被集群内部访问
+- Node IP：集群内每个节点的 IP，NodePort 类型的 Service 会暴露在每个节点的指定 Port 上
+- Pod IP：容器 Pod 的 IP，由 CNI 插件负责分配和通信
 ## 2. 存储
 ### 2.1 迁移节点的文件系统目录到别的磁盘
 - **nodefs**：包含非内存的 emptyDir volumes，log storage，ephemeral storage 和更多，默认的根目录为 `/var/lib/kubelet`。如果路径所在磁盘空间不足节点会进入 **NodeHasDiskPressure** 的状态，然后被驱逐。
