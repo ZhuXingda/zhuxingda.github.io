@@ -73,7 +73,7 @@ Base 理论指分布式系统可以同时满足
 Leader 接收客户端请求后，会将请求对应的操作日志追加到日志中，然后向其他 Followers 并行发送 AppendEntries RPC 请求来同步日志，当日志都同步成功后 Leader 执行请求返回结果。  
 如图，每条日志包含了请求的操作、被创建时的 term、在日志中的索引。   
 如果 Leader 成功将日志同步到了大多数节点上，就认为执行日志中的操作是安全的可以被执行，被称为 committed，Leader 会记录最新 committed 的日志的索引，并将其放入后面的 AppendEntries RPC 请求中，Follower 在接收到后会执行被 committed 的日志对应的操作。    
-<img src="https://qqadapt.qpic.cn/txdocpic/0/17ad6a18d9c67d1362166afa6c159920/0?w=1928&h=1236" width="500px"/>
+<img src="/images/raft_figure_3.5.png" width="500px"/>
 2. **一致性检查和修复不一致**   
 Raft 利用 index 和 term 标识唯一的一条日志，不同节点上同一条日志之前的所有日志保证完全相同。通过一致性检查发现并修复不同的情况：   
     1. Leader 上任后向 Follower 发送 AppendEntries RPC 请求，如果请求中的 index 和 Follower 的最新 index + 1 不一致 Follower 会拒绝请求。   
@@ -86,13 +86,26 @@ Raft 利用 index 和 term 标识唯一的一条日志，不同节点上同一�
 **Candidate 在拉选票时，Follower 只会在这位 Candidate 拥有 Follower 处全部 committed 日志记录的情况下，才会投票给它**。当 Candidate 赢下大多数选票胜选时，既表明新的 Leader 拥有和绝大多数节点相同的 committed 日志记录，又因为 Leader committed 日志的前提是日志成功同步到大多数节点，因此可以认为新 Leader 拥有全部已经 committed 的日志记录。这样就避免了需要从 Follower 同步日志到新的 Leader，使日志的同步只存在于 Leader 到 Follower
 2. **对以前 term 日志的 commit**    
 对于前任 term 已同步但未 commit 的日志记录，新任 Leader 不能根据这条记录是否被同步到多数节点，来判断其是否可以被 commit。**每任 Leader 只能 commit 属于现任 term 的日志记录**。     
-<img src="https://qqadapt.qpic.cn/txdocpic/0/0d10ed6c377a446005e21e9638f9a30b/0?w=1626&h=1724" width="500px"/>      
-当出现如上图所示的 Leader 交替 Crash 和 Recover 情况，可能会前一位 Leader 同步到多数节点的日志还未 committed， 后一位 Leader 开始同步下一条日志时会覆盖掉前任 term 同步后未 committed 的日志，因此前任 term 日志同步的份数不能作为 commit 的依据。只能通过在 commit 本任 term 的日志记录时利用一致性修复来将前任 term 的日志同步和 commit 到其他节点    
+当出现如图所示的 Leader 交替 Crash 和 Recover 情况，可能会前一任 Leader 同步到多数节点的日志还未 committed， 后一任 Leader 开始同步下一条日志时会覆盖掉这些前任未 committed 的日志，因此前任 term 日志同步的份数不能作为 commit 的依据，只能通过在 commit 本任 term 的日志记录时利用一致性修复来将前任 term 的日志同步和 commit 到其他节点    
+<img src="/images/raft_figure_3.7.png" width="500px"/>     
 
 ##### 6.1.5 Follower 和 Candidate Crash
-
-#### 6.2 
+#### 6.2 集群成员变更
+#### 6.3 日志压缩
+#### 6.4 客户端交互
 ## Zab 协议
+Zab (Zookeeper Atomic Broadcast) 协议是 Zookeeper 用来保证数据一致性的协议，遵循该协议的分布式集群也采取主从结构。
+#### 集群基础信息
+1. **集群角色**   
+- Leader：负责处理客户端请求，并向其他 Follower 同步请求对应的数据，任意时刻集群内最多只有一个 Leader
+- Follower：接收并持久化 Leader 同步的请求数据，在 Leader 触发下提交数据，接收并处理客户端读请求，接收客户端写请求并转发给 Leader，当 Leader 失效时发起 Leader 选举
+- Observer：不参与集群的 Leader 选举，其余行为和 Follower 相同
+2. **集群状态**
+- 广播模式：集群中存在 Leader 处于正常工作状态，客户端写请求被转发给 Leader 处理，Leader 同步数据到其他 Follower，如果超过半数 Follower 同步成功则提交数据，否则回滚数据
+- 恢复模式：集群中不存在 Leader 不能对外提供服务，集群内会进行 Leader 选举，当选 Leader 的节点需要有最新的数据并获得超过半数 Follower 的投票，选举成功后 Leader 将数据同步到其他 Follower ，超过半数 Follower 同步成功后集群进入广播模式
+3. **zxid**   
+zxid 是 long 类型的全局事物 ID，由 epoch 和 计数器组成，epoch 表示 Leader 的任期，计数器表示该任期内的命令计数，zxid 全局单调递增
+#### 选举
 ## Gossip 协议
 ## CRAQ 协议
 [论文原文](https://pdos.csail.mit.edu/6.824/papers/craq.pdf)

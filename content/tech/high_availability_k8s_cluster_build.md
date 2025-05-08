@@ -46,7 +46,7 @@ EOF
 $ sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
 ```
 ## 2. 配置 Container Runtime（所有节点）
-1. 参考 教程 里的 Option1，下载 cni-plugins-linux-amd64-v1.5.1.tgz  containerd-1.6.35-linux-amd64.tar.gz  runc.amd64 三个安装包   
+1. 参考[教程](https://github.com/containerd/containerd/blob/main/docs/getting-started.md) 里的 Option1，下载 cni-plugins-linux-amd64-v1.5.1.tgz  containerd-1.6.35-linux-amd64.tar.gz  runc.amd64 三个安装包   
 2. containerd-1.6.35-linux-amd64.tar.gz 解压到 /usr/local
 ```shell
 tar Cxzvf /usr/local containerd-1.6.35-linux-amd64.tar.gz
@@ -119,11 +119,8 @@ $ systemctl enable --now kubelet.service
 # kubelet 现在每隔几秒就会重启，因为它陷入了一个等待 kubeadm 指令的死循环。
 ```
 ## 4. 启动集群
-1. 申请 VIP
-创建一个 VIP，代理端口为 6443，代理机器为 Master 节点的三台机器：
-* sever-01 
-* sever-02 
-* sever-03
+1. 申请 VIP   
+创建一个 VIP，代理端口为 6443，代理机器为 Master 节点的三台机器：sever-01 sever-02 sever-03   
 2. 启动 Master01 节点（sever-01 ）   
 kubeadm init 配置文件
 ```yaml

@@ -13,19 +13,19 @@ defaultContentLanguageInSubdir = false
 
 [menus]
   [[menus.main]]
-    name = '主页-Index'
+    name = '主页'
     pageRef = '/'
     weight = 10
   [[menus.main]]
-    name = '技术-Tech'
+    name = '技术'
     pageRef = '/tech'
     weight = 20
   [[menus.main]]
-    name = '笔记本-NoteBook'
+    name = '笔记本'
     pageRef = '/note'
     weight = 20
   [[menus.main]]
-    name = '生活-Life'
+    name = '生活'
     pageRef = '/Sport'
     weight = 30
 
@@ -44,8 +44,8 @@ defaultContentLanguageInSubdir = false
 
 [Params.logo]
 #   image = "favicon.ico"
-  title = "欢迎来到朱兴达的个人博客"
-  subtitle = "Welcome to Zhu Xingda's Personal Blog"
+  title = "上下而求索"
+  subtitle = "朱兴达的个人博客"
   backgroundImage = "/img/background.JPG"
 
 [Params.style.vars]

@@ -7,6 +7,7 @@ categories:
   - ""
 tags:
   - ""
+draft: true
 ---
 ## 1. 算法
 ## 2. 编程语言
@@ -27,7 +28,6 @@ tags:
 - 调度器 d
 - 内存回收 
     - 逃逸分析
-#### 2.3 C++
 ## 4. 数据库
 #### 4.1 RocksDB
 #### 4.2 Parquet 协议 d
