@@ -24,10 +24,10 @@
 	<div class="container header__container">
 		
 	<div class="logo">
-		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
 			<div class="logo__item logo__text">
-					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
-					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
 				</div>
 		</a>
 	</div>
@@ -40,35 +40,35 @@
 		<li class="menu__item">
 			<a class="menu__link" href="/">
 				
-				<span class="menu__text">主页-Index</span>
+				<span class="menu__text">主页</span>
 				
 			</a>
 		</li>
 		<li class="menu__item menu__item--active">
 			<a class="menu__link" href="/tech/">
 				
-				<span class="menu__text">技术-Tech</span>
+				<span class="menu__text">技术</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="/note/">
 				
-				<span class="menu__text">笔记本-NoteBook</span>
+				<span class="menu__text">笔记本</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="">
 				
-				<span class="menu__text">生活-Life</span>
+				<span class="menu__text">生活</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
-			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
 				
-				<span class="menu__text">关于我-About Me</span>
+				<span class="menu__text">关于我</span>
 				
 			</a>
 		</li>
@@ -160,7 +160,7 @@
 </span></span><span style="display:flex;"><span>$ sysctl -p /etc/sysctl.d/99-kubernetes-cri.conf
 </span></span></code></pre></div><h2 id="2-配置-container-runtime所有节点">2. 配置 Container Runtime（所有节点）</h2>
 <ol>
-<li>参考 教程 里的 Option1，下载 cni-plugins-linux-amd64-v1.5.1.tgz  containerd-1.6.35-linux-amd64.tar.gz  runc.amd64 三个安装包</li>
+<li>参考<a href="https://github.com/containerd/containerd/blob/main/docs/getting-started.md">教程</a> 里的 Option1，下载 cni-plugins-linux-amd64-v1.5.1.tgz  containerd-1.6.35-linux-amd64.tar.gz  runc.amd64 三个安装包</li>
 <li>containerd-1.6.35-linux-amd64.tar.gz 解压到 /usr/local</li>
 </ol>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>tar Cxzvf /usr/local containerd-1.6.35-linux-amd64.tar.gz
@@ -229,15 +229,8 @@ $ systemctl status containerd.service
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># kubelet 现在每隔几秒就会重启，因为它陷入了一个等待 kubeadm 指令的死循环。</span>
 </span></span></code></pre></div><h2 id="4-启动集群">4. 启动集群</h2>
 <ol>
-<li>申请 VIP
-创建一个 VIP，代理端口为 6443，代理机器为 Master 节点的三台机器：</li>
-</ol>
-<ul>
-<li>sever-01</li>
-<li>sever-02</li>
-<li>sever-03</li>
-</ul>
-<ol start="2">
+<li>申请 VIP<br>
+创建一个 VIP，代理端口为 6443，代理机器为 Master 节点的三台机器：sever-01 sever-02 sever-03</li>
 <li>启动 Master01 节点（sever-01 ）<br>
 kubeadm init 配置文件</li>
 </ol>

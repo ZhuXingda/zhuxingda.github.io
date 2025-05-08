@@ -385,7 +385,7 @@ select {
 }
 
 .logo {
-	padding: 50px;
+	padding: 30px;
     background-size: cover;
     background-position: center;
     background-image: url(/img/background.JPG);
@@ -406,6 +406,8 @@ select {
 
 .logo__text {
 	text-transform: uppercase;
+    text-shadow: #000 1px 0 4px;
+    font-family: 'LXGW Bright SemiLight';
 }
 
 .logo--mixed .logo__item {
@@ -426,7 +428,7 @@ select {
 	font-size: 2rem;
 	font-weight: 700;
 	line-height: 1;
-	color: #000;
+	color: #fff;
 }
 
 .logo__tagline {
@@ -437,8 +439,9 @@ select {
 	font-size: .875rem;
 	font-weight: 700;
 	line-height: 1;
-	color: #0a55a7;
-	border-top: 1px solid #ebebeb;
+	/* color: #0a55a7; */
+    color: #fff;
+	border-top: 3px solid #fff;
 }
 
 .divider {

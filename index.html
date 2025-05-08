@@ -26,10 +26,10 @@
 	<div class="container header__container">
 		
 	<div class="logo">
-		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
 			<div class="logo__item logo__text">
-					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
-					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
 				</div>
 		</a>
 	</div>
@@ -42,35 +42,35 @@
 		<li class="menu__item menu__item--active">
 			<a class="menu__link" href="/">
 				
-				<span class="menu__text">主页-Index</span>
+				<span class="menu__text">主页</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="/tech/">
 				
-				<span class="menu__text">技术-Tech</span>
+				<span class="menu__text">技术</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="/note/">
 				
-				<span class="menu__text">笔记本-NoteBook</span>
+				<span class="menu__text">笔记本</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="">
 				
-				<span class="menu__text">生活-Life</span>
+				<span class="menu__text">生活</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
-			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
 				
-				<span class="menu__text">关于我-About Me</span>
+				<span class="menu__text">关于我</span>
 				
 			</a>
 		</li>
@@ -121,23 +121,6 @@
 	
 	<header class="list__header">
 		<h2 class="list__title post__title">
-			<a href="/tech/data_index_structure/" rel="bookmark">
-			Bloom Filter、 Bitmap、 Skip List 
-			</a>
-		</h2>
-		<div class="list__meta meta">
-<div class="meta__item-datetime meta__item">
-	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-24T17:01:03&#43;08:00">2025-04-24</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/" rel="category">Categories</a>
-	</span>
-</div></div>
-	</header>
-	<div class="content list__excerpt post__content clearfix">
-		
-	</div>
-</article><article class="list__item post">
-	
-	<header class="list__header">
-		<h2 class="list__title post__title">
 			<a href="/tech/data_storage_file_format/" rel="bookmark">
 			ORC 和 Parquet 文件格式
 			</a>
@@ -150,6 +133,25 @@
 	</header>
 	<div class="content list__excerpt post__content clearfix">
 		<p>ORC 和 Parquet 是两种常用的列式存储格式，都支持 schema 定义、索引、压缩等特性，本文分别分析两种文件的格式和实现原理</p>
+	</div>
+</article><article class="list__item post">
+	
+	<header class="list__header">
+		<h2 class="list__title post__title">
+			<a href="/tech/golang_java_compare/" rel="bookmark">
+			Go 和 Java 在多线程、内存模型、垃圾回收上的对比
+			</a>
+		</h2>
+		<div class="list__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-10T17:14:15&#43;08:00">2025-04-10</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" rel="category">编程语言</a>
+	</span>
+</div></div>
+	</header>
+	<div class="content list__excerpt post__content clearfix">
+		线程模型 1. JDK 19 以下 版本（排除最早的 Green Threads 老版本） 采用 1 ：1 的线程模型，即每个用户线程对应一个内核线程
+线程的创建、销毁、切换都由操作系统的调度器完成，JVM 不参与 目前主流操作系统使用抢占式线程调度策略，当 JVM 线程阻塞时，比如 Object.wait()、Thread.sleep()、Thread.join()、LockSupport.park() 等导致线程进入 WAITING 或 TIMED_WAITING 状态，或者抢占 synchronized 锁时进入 BLOCKED 状态，线程都会释放 CPU，只有回到 RUNNABLE 状态后线程才能被系统调度器重新调度进入 RUNNING 状态 JVM 线程在遇到 I/O 阻塞时仍然保持 RUNNABLE 状态，但其对应的内核态线程会被操作系统挂起直到 I/O 操作完成 JVM 的最大线程数出了自身的配置外，还受限于 Linux Kernel 的线程数限制 JVM 的线程创和切换涉及用户态和内核态的切换、CPU 上下文切换，开销较大，通常采用线程池来减少线程创建的开销 2. JDK 19 及以上版本 参考资料 JDK 19 引入了 virtual thread 虚拟线程，采用 M：N 的线程模型，一个内核线程对应一个用户态的平台线程，一个平台线程对应多个虚拟线程
+虚拟线程的调度、销毁、切换都由 JVM 完成，不需要操作系统调度器参与 JVM 对虚拟线程采用协作式线程调度策略，当线程阻塞时会主动从平台线程上卸载，让调度器调度其他线程运行 虚拟线程的最大线程数不受 Linux Kernel 的线程数限制，只受限于 JVM 的配置和系统内存，可以创建大量虚拟线程用以处理 I/O 密集型任务 虚拟线程的创建和切换都在用户态完成，避免了用户态和内核态的切换、CPU 上下文切换的开销 3.
 	</div>
 </article><article class="list__item post">
 	
@@ -277,6 +279,8 @@
 				<a class="widget__link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a></li>
 			<li class="widget__item">
 				<a class="widget__link" href="/categories/%E6%94%B6%E8%97%8F/">收藏</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a></li>
 		</ul>
 	</div>
 </div>
@@ -285,6 +289,8 @@
 	<div class="widget__content">
 		<a class="widget-taglist__link widget__link btn" href="/tags/algorithm/" title="Algorithm">Algorithm</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/flink/" title="Flink">Flink</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/go/" title="Go">Go</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/java/" title="Java">Java</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/kubernetes/" title="Kubernetes">Kubernetes</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/leetcode/" title="Leetcode">Leetcode</a>
 		<a class="widget-taglist__link widget__link btn" href="/tags/network/" title="Network">Network</a>
@@ -300,8 +306,8 @@
 		<ul class="widget__list">
 			<li class="widget__item"><a class="widget__link" href="/tech/tcpdump_usage_notebook/">【Linux】Linux 服务器抓包记录</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_job_execute_deployment/">【Flink】Flink 任务执行和部署原理</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/data_index_structure/">Bloom Filter、 Bitmap、 Skip List </a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/data_storage_file_format/">ORC 和 Parquet 文件格式</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/golang_java_compare/">Go 和 Java 在多线程、内存模型、垃圾回收上的对比</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/distribute_system_protocal/">分布式协议总结</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_watermark_source_code/">【Flink】Flink Watermark 产生和传递原理</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_task_inside_source_code/">【Flink】Flink Task 和 OperatorChain 源码</a></li>

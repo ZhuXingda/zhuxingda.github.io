@@ -24,10 +24,10 @@
 	<div class="container header__container">
 		
 	<div class="logo">
-		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
 			<div class="logo__item logo__text">
-					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
-					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
 				</div>
 		</a>
 	</div>
@@ -40,35 +40,35 @@
 		<li class="menu__item">
 			<a class="menu__link" href="/">
 				
-				<span class="menu__text">主页-Index</span>
+				<span class="menu__text">主页</span>
 				
 			</a>
 		</li>
 		<li class="menu__item menu__item--active">
 			<a class="menu__link" href="/tech/">
 				
-				<span class="menu__text">技术-Tech</span>
+				<span class="menu__text">技术</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="/note/">
 				
-				<span class="menu__text">笔记本-NoteBook</span>
+				<span class="menu__text">笔记本</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="">
 				
-				<span class="menu__text">生活-Life</span>
+				<span class="menu__text">生活</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
-			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
 				
-				<span class="menu__text">关于我-About Me</span>
+				<span class="menu__text">关于我</span>
 				
 			</a>
 		</li>
@@ -169,7 +169,7 @@ CAP 理论指一个分布式系统不能同时满足 C A P 这三个特性。</l
 Leader 接收客户端请求后，会将请求对应的操作日志追加到日志中，然后向其他 Followers 并行发送 AppendEntries RPC 请求来同步日志，当日志都同步成功后 Leader 执行请求返回结果。<br>
 如图，每条日志包含了请求的操作、被创建时的 term、在日志中的索引。<br>
 如果 Leader 成功将日志同步到了大多数节点上，就认为执行日志中的操作是安全的可以被执行，被称为 committed，Leader 会记录最新 committed 的日志的索引，并将其放入后面的 AppendEntries RPC 请求中，Follower 在接收到后会执行被 committed 的日志对应的操作。 <br>
-<img src="https://qqadapt.qpic.cn/txdocpic/0/17ad6a18d9c67d1362166afa6c159920/0?w=1928&h=1236" width="500px"/></li>
+<img src="/images/raft_figure_3.5.png" width="500px"/></li>
 <li><strong>一致性检查和修复不一致</strong><br>
 Raft 利用 index 和 term 标识唯一的一条日志，不同节点上同一条日志之前的所有日志保证完全相同。通过一致性检查发现并修复不同的情况：
 <ol>
@@ -186,12 +186,36 @@ Raft 利用 index 和 term 标识唯一的一条日志，不同节点上同一�
 <strong>Candidate 在拉选票时，Follower 只会在这位 Candidate 拥有 Follower 处全部 committed 日志记录的情况下，才会投票给它</strong>。当 Candidate 赢下大多数选票胜选时，既表明新的 Leader 拥有和绝大多数节点相同的 committed 日志记录，又因为 Leader committed 日志的前提是日志成功同步到大多数节点，因此可以认为新 Leader 拥有全部已经 committed 的日志记录。这样就避免了需要从 Follower 同步日志到新的 Leader，使日志的同步只存在于 Leader 到 Follower</li>
 <li><strong>对以前 term 日志的 commit</strong> <br>
 对于前任 term 已同步但未 commit 的日志记录，新任 Leader 不能根据这条记录是否被同步到多数节点，来判断其是否可以被 commit。<strong>每任 Leader 只能 commit 属于现任 term 的日志记录</strong>。  <br>
-<img src="https://qqadapt.qpic.cn/txdocpic/0/0d10ed6c377a446005e21e9638f9a30b/0?w=1626&h=1724" width="500px"/>   <br>
-当出现如上图所示的 Leader 交替 Crash 和 Recover 情况，可能会前一位 Leader 同步到多数节点的日志还未 committed， 后一位 Leader 开始同步下一条日志时会覆盖掉前任 term 同步后未 committed 的日志，因此前任 term 日志同步的份数不能作为 commit 的依据。只能通过在 commit 本任 term 的日志记录时利用一致性修复来将前任 term 的日志同步和 commit 到其他节点</li>
+当出现如图所示的 Leader 交替 Crash 和 Recover 情况，可能会前一任 Leader 同步到多数节点的日志还未 committed， 后一任 Leader 开始同步下一条日志时会覆盖掉这些前任未 committed 的日志，因此前任 term 日志同步的份数不能作为 commit 的依据，只能通过在 commit 本任 term 的日志记录时利用一致性修复来将前任 term 的日志同步和 commit 到其他节点 <br>
+<img src="/images/raft_figure_3.7.png" width="500px"/></li>
 </ol>
 <h5 id="615-follower-和-candidate-crash">6.1.5 Follower 和 Candidate Crash</h5>
-<h4 id="62">6.2</h4>
+<h4 id="62-集群成员变更">6.2 集群成员变更</h4>
+<h4 id="63-日志压缩">6.3 日志压缩</h4>
+<h4 id="64-客户端交互">6.4 客户端交互</h4>
 <h2 id="zab-协议">Zab 协议</h2>
+<p>Zab (Zookeeper Atomic Broadcast) 协议是 Zookeeper 用来保证数据一致性的协议，遵循该协议的分布式集群也采取主从结构。</p>
+<h4 id="集群基础信息">集群基础信息</h4>
+<ol>
+<li><strong>集群角色</strong></li>
+</ol>
+<ul>
+<li>Leader：负责处理客户端请求，并向其他 Follower 同步请求对应的数据，任意时刻集群内最多只有一个 Leader</li>
+<li>Follower：接收并持久化 Leader 同步的请求数据，在 Leader 触发下提交数据，接收并处理客户端读请求，接收客户端写请求并转发给 Leader，当 Leader 失效时发起 Leader 选举</li>
+<li>Observer：不参与集群的 Leader 选举，其余行为和 Follower 相同</li>
+</ul>
+<ol start="2">
+<li><strong>集群状态</strong></li>
+</ol>
+<ul>
+<li>广播模式：集群中存在 Leader 处于正常工作状态，客户端写请求被转发给 Leader 处理，Leader 同步数据到其他 Follower，如果超过半数 Follower 同步成功则提交数据，否则回滚数据</li>
+<li>恢复模式：集群中不存在 Leader 不能对外提供服务，集群内会进行 Leader 选举，当选 Leader 的节点需要有最新的数据并获得超过半数 Follower 的投票，选举成功后 Leader 将数据同步到其他 Follower ，超过半数 Follower 同步成功后集群进入广播模式</li>
+</ul>
+<ol start="3">
+<li><strong>zxid</strong><br>
+zxid 是 long 类型的全局事物 ID，由 epoch 和 计数器组成，epoch 表示 Leader 的任期，计数器表示该任期内的命令计数，zxid 全局单调递增</li>
+</ol>
+<h4 id="选举">选举</h4>
 <h2 id="gossip-协议">Gossip 协议</h2>
 <h2 id="craq-协议">CRAQ 协议</h2>
 <p><a href="https://pdos.csail.mit.edu/6.824/papers/craq.pdf">论文原文</a></p>
@@ -240,9 +264,9 @@ Raft 利用 index 和 term 标识唯一的一条日志，不同节点上同一�
 		</a>
 	</div>
 	<div class="pager__item pager__item--next">
-		<a class="pager__link" href="/tech/data_storage_file_format/" rel="next">
+		<a class="pager__link" href="/tech/golang_java_compare/" rel="next">
 			<span class="pager__subtitle">下一篇&thinsp;»</span>
-			<p class="pager__title">ORC 和 Parquet 文件格式</p>
+			<p class="pager__title">Go 和 Java 在多线程、内存模型、垃圾回收上的对比</p>
 		</a>
 	</div>
 </nav>

@@ -23,13 +23,6 @@
       <description>&lt;p&gt;分析 Flink 任务完整的提交过程，主要关注在这个过程中任务的格式变化和调度执行。&lt;/p&gt;</description>
     </item>
     <item>
-      <title>Bloom Filter、 Bitmap、 Skip List </title>
-      <link>https://blog.xingda.space/tech/data_index_structure/</link>
-      <pubDate>Thu, 24 Apr 2025 17:01:03 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/data_index_structure/</guid>
-      <description></description>
-    </item>
-    <item>
       <title>ORC 和 Parquet 文件格式</title>
       <link>https://blog.xingda.space/tech/data_storage_file_format/</link>
       <pubDate>Mon, 21 Apr 2025 10:43:15 +0800</pubDate>
@@ -37,18 +30,18 @@
       <description>&lt;p&gt;ORC 和 Parquet 是两种常用的列式存储格式，都支持 schema 定义、索引、压缩等特性，本文分别分析两种文件的格式和实现原理&lt;/p&gt;</description>
     </item>
     <item>
+      <title>Go 和 Java 在多线程、内存模型、垃圾回收上的对比</title>
+      <link>https://blog.xingda.space/tech/golang_java_compare/</link>
+      <pubDate>Thu, 10 Apr 2025 17:14:15 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/golang_java_compare/</guid>
+      <description>线程模型 1. JDK 19 以下 版本（排除最早的 Green Threads 老版本） 采用 1 ：1 的线程模型，即每个用户线程对应一个内核线程&#xA;线程的创建、销毁、切换都由操作系统的调度器完成，JVM 不参与 目前主流操作系统使用抢占式线程调度策略，当 JVM 线程阻塞时，比如 Object.wait()、Thread.sleep()、Thread.join()、LockSupport.park() 等导致线程进入 WAITING 或 TIMED_WAITING 状态，或者抢占 synchronized 锁时进入 BLOCKED 状态，线程都会释放 CPU，只有回到 RUNNABLE 状态后线程才能被系统调度器重新调度进入 RUNNING 状态 JVM 线程在遇到 I/O 阻塞时仍然保持 RUNNABLE 状态，但其对应的内核态线程会被操作系统挂起直到 I/O 操作完成 JVM 的最大线程数出了自身的配置外，还受限于 Linux Kernel 的线程数限制 JVM 的线程创和切换涉及用户态和内核态的切换、CPU 上下文切换，开销较大，通常采用线程池来减少线程创建的开销 2. JDK 19 及以上版本 参考资料 JDK 19 引入了 virtual thread 虚拟线程，采用 M：N 的线程模型，一个内核线程对应一个用户态的平台线程，一个平台线程对应多个虚拟线程&#xA;虚拟线程的调度、销毁、切换都由 JVM 完成，不需要操作系统调度器参与 JVM 对虚拟线程采用协作式线程调度策略，当线程阻塞时会主动从平台线程上卸载，让调度器调度其他线程运行 虚拟线程的最大线程数不受 Linux Kernel 的线程数限制，只受限于 JVM 的配置和系统内存，可以创建大量虚拟线程用以处理 I/O 密集型任务 虚拟线程的创建和切换都在用户态完成，避免了用户态和内核态的切换、CPU 上下文切换的开销 3.</description>
+    </item>
+    <item>
       <title>分布式协议总结</title>
       <link>https://blog.xingda.space/tech/distribute_system_protocal/</link>
       <pubDate>Sun, 30 Mar 2025 22:29:20 +0800</pubDate>
       <guid>https://blog.xingda.space/tech/distribute_system_protocal/</guid>
       <description>&lt;p&gt;总结多种分布式协议的实现原理&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>面试准备 checklist</title>
-      <link>https://blog.xingda.space/note/interview_prepare/</link>
-      <pubDate>Thu, 27 Mar 2025 16:48:23 +0800</pubDate>
-      <guid>https://blog.xingda.space/note/interview_prepare/</guid>
-      <description>1. 算法 2. 编程语言 2.1 Java JVM 内存模型 内存回收 G1 多线程 Volatile CompletableFuture StampedLock ForkJoinPool BlockingQueue 问题排查 线程堆栈 对象内存 2.2 Golang 调度器 d 内存回收 逃逸分析 2.3 C++ 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 d 4.3 ORC 协议 d 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析 Paxos 协议 Paxos协议详解 Raft 协议 Raft协议详解 Raft论文 ZAP 协议 Gossip 协议 CRAQ 协议 5.</description>
     </item>
     <item>
       <title>【Flink】Flink Watermark 产生和传递原理</title>
@@ -142,10 +135,10 @@
       <description>&lt;p&gt;Flink Taskmanager 的内存划分和调整策略。&lt;/p&gt;</description>
     </item>
     <item>
-      <title>关于我-About Me</title>
-      <link>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/</link>
+      <title>关于我</title>
+      <link>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91/</link>
       <pubDate>Tue, 25 Jan 2022 14:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/</guid>
+      <guid>https://blog.xingda.space/%E5%85%B3%E4%BA%8E%E6%88%91/</guid>
       <description>⬆️ 这是嘟嘟&#xA;⬇️ 这是我&#xA;性别男&#xA;出生于1996年&#xA;家在重庆市黔江区&#xA;现在上海做软件开发工作&#xA;对各种事物都充满兴趣</description>
     </item>
   </channel>

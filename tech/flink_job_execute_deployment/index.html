@@ -24,10 +24,10 @@
 	<div class="container header__container">
 		
 	<div class="logo">
-		<a class="logo__link" href="/" title="欢迎来到朱兴达的个人博客" rel="home">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
 			<div class="logo__item logo__text">
-					<div class="logo__title">欢迎来到朱兴达的个人博客</div>
-					<div class="logo__tagline">Welcome to Zhu Xingda&#39;s Personal Blog</div>
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
 				</div>
 		</a>
 	</div>
@@ -40,35 +40,35 @@
 		<li class="menu__item">
 			<a class="menu__link" href="/">
 				
-				<span class="menu__text">主页-Index</span>
+				<span class="menu__text">主页</span>
 				
 			</a>
 		</li>
 		<li class="menu__item menu__item--active">
 			<a class="menu__link" href="/tech/">
 				
-				<span class="menu__text">技术-Tech</span>
+				<span class="menu__text">技术</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="/note/">
 				
-				<span class="menu__text">笔记本-NoteBook</span>
+				<span class="menu__text">笔记本</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
 			<a class="menu__link" href="">
 				
-				<span class="menu__text">生活-Life</span>
+				<span class="menu__text">生活</span>
 				
 			</a>
 		</li>
 		<li class="menu__item">
-			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91-about-me/">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
 				
-				<span class="menu__text">关于我-About Me</span>
+				<span class="menu__text">关于我</span>
 				
 			</a>
 		</li>
@@ -134,7 +134,7 @@
 <li>JobMasterServiceLeadershipRunner#createNewJobMasterServiceProcess 选主之后创建 JobMasterService</li>
 <li>DefaultJobMasterServiceFactory#internalCreateJobMasterService 创建 JobMaster，JobGraph 作为参数</li>
 <li>SchedulerNGFactory#createInstance 创建 SchedulerNG -&gt; SchedulerBase -&gt; DefaultScheduler</li>
-<li>SchedulerBase#createAndRestoreExecutionGraph：JobGrap -&gt; ExecutionGraph</li>
+<li>SchedulerBase#createAndRestoreExecutionGraph：JobGraph -&gt; ExecutionGraph</li>
 <li>SchedulingStrategyFactory#createInstance 创建 SchedulingStrategy，参数有 ExecutionGraph 的 SchedulingTopology 和 DefaultScheduler 本身</li>
 </ol>
 <h6 id="32-jobmaster-调度和执行">3.2 JobMaster 调度和执行</h6>
@@ -164,15 +164,56 @@
 </ol>
 </li>
 </ol>
+<h4 id="4-任务格式转换">4. 任务格式转换</h4>
+<h6 id="41-transformation---streamgraph">4.1 Transformation -&gt; StreamGraph</h6>
+<ol>
+<li>org.apache.flink.streaming.api.graph.StreamGraphGenerator#generate<br>
+生成 StreamGraph，遍历 Transformation List，将每个 Transformation 转换为 StreamNode 并添加到 StreamGraph</li>
+<li>org.apache.flink.streaming.api.graph.StreamGraphGenerator#transform<br>
+如果有调用 SingleOutputStreamOperator#slotSharingGroup / org.apache.flink.streaming.api.datastream.DataStreamSink#slotSharingGroup 接口为 Transformation 设置 SlotSharingGroup，则将该 SlotSharingGroup 的 name 和 ResourceProfile 添加到 slotSharingGroupResources 集合中</li>
+<li>org.apache.flink.streaming.api.graph.StreamGraphGenerator#translate<br>
+由 TransformationTranslator 将 Transformation 转换为 StreamNode，并添加到 StreamGraph</li>
+<li>org.apache.flink.streaming.api.graph.StreamGraph#addOperator
+添加 StreamNode 到 StreamGraph，添加时的参数有：</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span><span style="color:#66d9ef">private</span> <span style="color:#f92672">&lt;</span>IN, OUT<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">addOperator</span>(
+</span></span><span style="display:flex;"><span>            Integer vertexID,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">@Nullable</span> String slotSharingGroup,
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">@Nullable</span> String coLocationGroup,
+</span></span><span style="display:flex;"><span>            StreamOperatorFactory<span style="color:#f92672">&lt;</span>OUT<span style="color:#f92672">&gt;</span> operatorFactory,
+</span></span><span style="display:flex;"><span>            TypeInformation<span style="color:#f92672">&lt;</span>IN<span style="color:#f92672">&gt;</span> inTypeInfo,
+</span></span><span style="display:flex;"><span>            TypeInformation<span style="color:#f92672">&lt;</span>OUT<span style="color:#f92672">&gt;</span> outTypeInfo,
+</span></span><span style="display:flex;"><span>            String operatorName,
+</span></span><span style="display:flex;"><span>            Class<span style="color:#f92672">&lt;?</span> <span style="color:#66d9ef">extends</span> TaskInvokable<span style="color:#f92672">&gt;</span> invokableClass) {
+</span></span><span style="display:flex;"><span>                ...
+</span></span><span style="display:flex;"><span>            }
+</span></span></code></pre></div><h6 id="42-streamgraph---jobgraph">4.2 StreamGraph -&gt; JobGraph</h6>
+<ol>
+<li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobGraph<br>
+根据 StreamGraph 创建 JobGraph</li>
+<li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#setChaining<br>
+从 StreamGraph 中的 SourceNode 开始递归地创建 JobGraph 中的全部 JobVertex</li>
+<li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createChain<br>
+这一步将可以组成一个 Chain 的 StreamNode 合并为 OperatorChainInfo 并创建 JobVertex</li>
+<li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobVertex<br>
+根据 OperatorChainInfo 创建 JobVertex，并添加到 JobGraph</li>
+</ol>
+<h6 id="43-jobgraph---executiongraph">4.3 JobGraph -&gt; ExecutionGraph</h6>
+<ol>
+<li>org.apache.flink.runtime.executiongraph.DefaultExecutionGraphBuilder#buildGraph<br>
+根据 JobGraph 创建 ExecutionGraph<br>
+<img src="https://nightlies.apache.org/flink/flink-docs-master/fig/job_and_execution_graph.svg"></li>
+</ol>
 <h2 id="总结">总结</h2>
-<h4 id="任务格式变化">任务格式变化</h4>
+<h4 id="任务格式">任务格式</h4>
+<h6 id="任务格式演变">任务格式演变</h6>
 <ol>
 <li>SQL 任务：<br>
 SQL -&gt; SqlNode -&gt; Operation -&gt; RelNode -&gt; ExecNode -&gt; ExecNodeGraph -&gt; Transformation -&gt; StreamGraph -&gt; JobGraph -&gt; ExecutionGraph</li>
 <li>Streaming 任务：<br>
 Transformation -&gt; StreamGraph -&gt; JobGraph -&gt; ExecutionGraph</li>
 </ol>
-<h4 id="任务格式结构">任务格式结构</h4>
+<h6 id="任务格式结构">任务格式结构</h6>
 <ol>
 <li>StreamGraph
 StreamGraph 由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator</li>
@@ -181,7 +222,26 @@ JobGraph 由 JobVertex 组成</li>
 <li>ExecutionGraph
 ExecutionGraph 由 ExecutionJobVertex 组成</li>
 </ol>
-<img src="https://nightlies.apache.org/flink/flink-docs-master/fig/job_and_execution_graph.svg"><h4 id="任务调度执行">任务调度执行</h4>
+<h4 id="任务调度执行">任务调度执行</h4>
+<h6 id="注册-slotsharinggroup">注册 SlotSharingGroup</h6>
+<p>Flink 提供了</p>
+<ol>
+<li>StreamExecutionEnvironment#registerSlotSharingGroup 接口用于注册 SlotSharingGroup</li>
+<li>SingleOutputStreamOperator#slotSharingGroup / org.apache.flink.streaming.api.datastream.DataStreamSink#slotSharingGroup 接口用于设置 Operator 所属的 SlotSharingGroup<br>
+官方提供的示例：https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/finegrained_resource/#usage</li>
+</ol>
+<h6 id="构建-streamgraph-时设置-slotsharinggroup-和-colocationgroup">构建 StreamGraph 时设置 SlotSharingGroup 和 CoLocationGroup</h6>
+<p>StreamGraph 中的 StreamNode 在 StreamGraph#addOperator 方法中被创建和添加到 StreamGraph，添加时会设置 SlotSharingGroup 和 CoLocationGroup：</p>
+<ul>
+<li>SlotSharingGroup 来自 StreamGraphGenerator#translate 执行时传入 TransformationTranslator.Context 中的 SlotSharingGroup，具体用哪个 SlotSharingGroup 由 <code>StreamGraphGenerator#determineSlotSharingGroup</code> 决定</li>
+<li>CoLocationGroup 由 <code>Transformation 的 coLocationGroupKey</code> 决定，目前（Flink V2.0）该功能还没有支持</li>
+</ul>
+<h6 id="构建-jobgraph-时设置-slotsharinggroup">构建 JobGraph 时设置 SlotSharingGroup</h6>
+<ol>
+<li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobGraph<br>
+根据 StreamGraph 创建 JobGraph，创建过程中会设置 SlotSharingGroup 和 CoLocationGroup</li>
+<li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#setSlotSharing</li>
+</ol>
 		</div>
 		<footer class="post__footer">
 			
@@ -221,9 +281,9 @@ ExecutionGraph 由 ExecutionJobVertex 组成</li>
 
 <nav class="pager flex">
 	<div class="pager__item pager__item--prev">
-		<a class="pager__link" href="/tech/data_index_structure/" rel="prev">
+		<a class="pager__link" href="/tech/data_storage_file_format/" rel="prev">
 			<span class="pager__subtitle">«&thinsp;上一篇</span>
-			<p class="pager__title">Bloom Filter、 Bitmap、 Skip List </p>
+			<p class="pager__title">ORC 和 Parquet 文件格式</p>
 		</a>
 	</div>
 	<div class="pager__item pager__item--next">

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Go 和 Java 在多线程、内存模型、垃圾回收上的对比 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
+				
+				<span class="menu__text">关于我</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">Go 和 Java 在多线程、内存模型、垃圾回收上的对比</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-10T17:14:15&#43;08:00">2025-04-10</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" rel="category">编程语言</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<h2 id="线程模型">线程模型</h2>
+<h4 id="1-jdk-19-以下-版本排除最早的-green-threads-老版本">1. JDK 19 以下 版本（排除最早的 Green Threads 老版本）</h4>
+<p><img alt="aaaa" src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*dn9UGdqLAiqAinaz">
+采用 1 ：1 的线程模型，即每个用户线程对应一个内核线程</p>
+<ul>
+<li>线程的创建、销毁、切换都由操作系统的调度器完成，JVM 不参与</li>
+<li>目前主流操作系统使用<code>抢占式线程调度策略</code>，当 JVM 线程阻塞时，比如 Object.wait()、Thread.sleep()、Thread.join()、LockSupport.park() 等导致线程进入 WAITING 或 TIMED_WAITING 状态，或者抢占 synchronized 锁时进入 BLOCKED 状态，线程都会释放 CPU，只有回到 RUNNABLE 状态后线程才能被系统调度器重新调度进入 RUNNING 状态</li>
+<li>JVM 线程在遇到 I/O 阻塞时仍然保持 RUNNABLE 状态，但其对应的内核态线程会被操作系统挂起直到 I/O 操作完成</li>
+<li>JVM 的最大线程数出了自身的配置外，还受限于 Linux Kernel 的线程数限制</li>
+<li>JVM 的线程创和切换涉及用户态和内核态的切换、CPU 上下文切换，开销较大，通常采用线程池来减少线程创建的开销</li>
+</ul>
+<h4 id="2-jdk-19-及以上版本">2. JDK 19 及以上版本</h4>
+<p><a href="https://www.topgoer.com/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/GMP%E5%8E%9F%E7%90%86%E4%B8%8E%E8%B0%83%E5%BA%A6.html">参考资料</a>
+<img alt="aaa" src="https://miro.medium.com/v2/resize:fit:1400/format:webp/0*HwHaRnlYGS1ISYd_">
+JDK 19 引入了 <code>virtual thread</code> 虚拟线程，采用 M：N 的线程模型，一个内核线程对应一个用户态的平台线程，一个平台线程对应多个虚拟线程</p>
+<ul>
+<li>虚拟线程的调度、销毁、切换都由 JVM 完成，不需要操作系统调度器参与</li>
+<li>JVM 对虚拟线程采用<code>协作式线程调度策略</code>，当线程阻塞时会主动从平台线程上卸载，让调度器调度其他线程运行</li>
+<li>虚拟线程的最大线程数不受 Linux Kernel 的线程数限制，只受限于 JVM 的配置和系统内存，可以创建大量虚拟线程用以处理 I/O 密集型任务</li>
+<li>虚拟线程的创建和切换都在用户态完成，避免了用户态和内核态的切换、CPU 上下文切换的开销</li>
+</ul>
+<h4 id="3-go">3. Go</h4>
+<p>Go （1.1 版本以后）也采用 M：N 的线程模型，同时还采用了 GMP 调度器来调度协程的执行
+<img alt="aaa" src="https://www.topgoer.com/static/7.1/gmp/12.jpg"></p>
+<ul>
+<li><strong>G</strong> 代表协程，是最小的调度单位</li>
+<li><strong>M</strong> 代表内核线程</li>
+<li><strong>P</strong> 代表逻辑处理器，每个 P 和 M 一对一绑定，每个 P 维护一个本地队列用于存放待执行的 G
+运行过程：</li>
+</ul>
+<ol>
+<li>goroutine 创建时，如果有 P 的本地队列未满，则直接放入本地队列，如果全部 P 的本地队列已满，则将 G 放入全局队列</li>
+<li>M 从 绑定的 P 的本地队列获取 G 执行，如果本地队列为空，则从全局队列中获取 G 执行</li>
+<li><strong>Work Stealing</strong> 机制：当 M 绑定的 P 本地队列为空且全局队列也为空时，M 可以从其他 P 的本地队列中窃取 G 来执行，以避免空闲的 M 被销毁</li>
+<li><strong>Handoff</strong> 机制：当 M 因系统调用阻塞时，P 和 M 解绑并寻找其他空闲的 M 绑定，如果没有空闲的 M 则创建新的 M</li>
+<li>当 G 因用户态阻塞时，G 会被 M 放回队列状态从 _Gruning 变为 _Gwaiting，M 会继续执行其他 G</li>
+<li><strong>基于协作的抢占调度</strong>（1.2 以前）：Go 运行时会启动一个名为 sysmon 的 M 来监控 runtime 的 GC 情况，向长时间运行的 G （超过 10ms）发出抢占调度，将其 <code>stackguard0</code> 设置为 <code>StackPreempt</code>，当 G 下一次执行函数时会被 runtime 强制调度，被移入队列中。但因为只有在执行函数时才会检查 <code>stackguard0</code>，所以对执行 for 循环对这种 G 无效</li>
+<li><strong>基于信号的抢占调度</strong>（1.2 以后）：将被抢占的 G 标记为可抢占状态，同时向 M 发送抢占信号 <code>SIGURG</code>，操作系统会中断 M 的执行并执行信号处理函数，信号处理函数会将 G 的状态切换到 <code>_Gpreempted</code> 并移入队列中</li>
+</ol>
+<h2 id="内存管理">内存管理</h2>
+<h2 id="go">GO</h2>
+<h4 id="go-内存分配">Go 内存分配</h4>
+<p>Go 向操作系统申请的连续虚拟内存在物理上分为三个区域：</p>
+<ul>
+<li><code>spans</code> 存储指向内存管理单元 mspan 的指针，每个 mspan 包含 N 个 page</li>
+<li><code>bitmap</code> 标识 <code>arena</code> 中的 page 是否包含对象及是否被 GC 标记，bitmap 中两个 bit 对应 arena 中一个 byte</li>
+<li><code>arena</code> 实时上的堆，每 8KB 划分为一个最小的内存申请单位 page
+在逻辑管理上进一步划分：</li>
+<li><code>mspan</code>：对应 n 个 连续的page，在逻辑上 mspan 被划分为更小的 object，每个 object 的大小由 <code>spanclass</code> 决定。Go 划分了从小到大 67 种 mspan 用来保存不同大小的对象</li>
+<li><code>heapArena</code>：64 位的 X86 架构下每个 heapArena 对应 64MB 的内存，对应多个 mspan</li>
+<li><code>mheap</code>：由一个 heapArena 二维数组构成，对应物理上的整个 <code>arena</code></li>
+<li><code>mcache</code>：Go 为每个 P 维护一个 mcache 用来缓存 mspan，其中将 mspan 按是否被 GC scan 分为两类，每类按 spanclass 进一步划分为多个 mspan 列表。mcache 动态地从 <code>mcentral</code> 中获取 mspan 并缓存。</li>
+<li><code>mcentral</code>：每个 mcentral 负责缓存一类 <code>spanclass</code> 的全部 mspan，负责向 <code>mcache</code> 分配 mspan，当 mcentral 缓存的 mspan 不足时，向 <code>mheap</code> 申请新的 mspan，如果 mheap 也不足则向 OS 申请一组新的 page。mcentral 带有全局锁，并发访问时需要加锁。</li>
+</ul>
+<h4 id="垃圾回收">垃圾回收</h4>
+<p>Go 采用 <code>Mark &amp; Sweep 标记清理</code> 的垃圾回收方法，不对内存做整理，不对内存里的对象做分代。<br>
+运行过程包含五个阶段：
+1.</p>
+<h6 id="三色标记法">三色标记法</h6>
+<p>三色标记法用三种颜色表示三种类型的对象：</p>
+<ul>
+<li><code>白色</code> GC scan 未访问过的对象</li>
+<li><code>灰色</code> GC scan 访问过的对象，但其引用的一个或多个对象还未被 scan</li>
+<li><code>黑色</code> GC scan 访问过的对象，且其引用的所有对象都已被 scan
+堆内的对象随时间和 GC scan 的推进会不断从白色变为灰色，再变为黑色，就像一条波浪从黑色向白色推进，其中灰色就是黑白交界的波面 <code>wavefront</code>，当波面随着推进消失时只剩下黑色和白色的对象，其中白色就是需要回收的不可达对象。</li>
+</ul>
+<h6 id="并发标记回收引入的问题">并发标记回收引入的问题</h6>
+<p>如果在标记和清理的过程中没有 STW，用户态代码可能会改变对象引用关系，导致在标记回收过程中出现：1. 被标记为<code>白色</code>的对象被<code>黑色</code>对象引用；2. 同时对该<code>白色</code>对象在其他<code>灰色</code>对象处的引用被移除。这样的情况下<code>白色</code>对象会被错误回收。<br>
+只要能够避免上述两个情况的任意一个，这一问题就不会发生：</p>
+<ol>
+<li>如果<code>情况 1</code> 被避免，则所有<code>白色</code>对象只会被<code>灰色</code>对象引用，这样的情况下如果发生情况 2 则<code>白色</code>对象不会被scan到，被回收；</li>
+<li>如果<code>情况 2</code> 被避免，则至少有一个<code>灰色</code>对象引用<code>白色</code>对象，这样的情况下如果发生情况 1 则<code>白色</code>对象会被scan到，不会被回收。</li>
+</ol>
+<h6 id="强三色不变性和弱三色不变性">强三色不变性和弱三色不变性</h6>
+<p>根据上述的情况，将三色不变性进一步细化：</p>
+<ul>
+<li>强三色不变性：在原三色不变性基础上，不允许存在<code>黑色</code>对象引用<code>白色</code>对象的情况</li>
+<li>弱三色不变性：在原三色不变性基础上，允许存在<code>黑色</code>对象引用<code>白色</code>对象的情况，但要求<code>白色</code>对象必须被其他<code>灰色</code>对象引用</li>
+</ul>
+<h6 id="写屏障">写屏障</h6>
+<p>赋值器：指的是用户态代码<br>
+回收器：指 GC 线程<br>
+Go 引入了赋值器的写屏障，使赋值器在进行指针操作时，能够“通知”回收器，进而不会破坏三色不变性。</p>
+<ol>
+<li><strong>插入屏障</strong></li>
+</ol>
+<ul>
+<li>赋值器在新增一个从<code>黑色</code>对象到<code>白色</code>对象的引用时，会通过写屏障将<code>白色</code>对象标记为<code>灰色</code>，从而实现强三色不变性</li>
+<li>为降低引入插入屏障的性能开销，Go 在栈上对象插入引用时不开启插入屏障，而是标记这个栈，最后回收前再 STW 扫描被标记的栈<br>
+<a href="https://liqingqiya.github.io/golang/gc/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/2020/06/03/gc3.html">参考</a></li>
+</ul>
+<ol start="2">
+<li><strong>删除屏障</strong><br>
+赋值器从<code>灰色</code>或<code>白色</code>对象中删除对<code>白色</code>对象的引用时，将被删除对象从<code>白色</code>标记为<code>灰色</code>，从而实现弱三色不变性</li>
+<li><strong>混合写屏障</strong></li>
+</ol>
+<ul>
+<li>GC 开始时将所有栈上可达的对象标记为<code>黑色</code></li>
+<li>GC 期间栈上新建的对象标记为<code>黑色</code></li>
+<li>堆上新建的对象标记为<code>灰色</code></li>
+<li>堆上被删除的对象标记为<code>灰色</code></li>
+</ul>
+<h2 id="参考">参考</h2>
+<p><a href="https://draven.co/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/#%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6%E5%99%A8">https://draven.co/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/#%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6%E5%99%A8</a></p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/go/" rel="tag">Go</a>
+		</li>
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags/java/" rel="tag">Java</a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/distribute_system_protocal/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">分布式协议总结</p>
+		</a>
+	</div>
+	<div class="pager__item pager__item--next">
+		<a class="pager__link" href="/tech/data_storage_file_format/" rel="next">
+			<span class="pager__subtitle">下一篇&thinsp;»</span>
+			<p class="pager__title">ORC 和 Parquet 文件格式</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

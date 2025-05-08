@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>编程语言 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+	<link rel="alternate" type="application/rss+xml" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/index.xml" title="Zhu Xingda">
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
+				
+				<span class="menu__text">关于我</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main list" role="main">
+	<article class="list__item post">
+	
+	<header class="list__header">
+		<h2 class="list__title post__title">
+			<a href="/tech/golang_java_compare/" rel="bookmark">
+			Go 和 Java 在多线程、内存模型、垃圾回收上的对比
+			</a>
+		</h2>
+		<div class="list__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-04-10T17:14:15&#43;08:00">2025-04-10</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" rel="category">编程语言</a>
+	</span>
+</div></div>
+	</header>
+	<div class="content list__excerpt post__content clearfix">
+		线程模型 1. JDK 19 以下 版本（排除最早的 Green Threads 老版本） 采用 1 ：1 的线程模型，即每个用户线程对应一个内核线程
+线程的创建、销毁、切换都由操作系统的调度器完成，JVM 不参与 目前主流操作系统使用抢占式线程调度策略，当 JVM 线程阻塞时，比如 Object.wait()、Thread.sleep()、Thread.join()、LockSupport.park() 等导致线程进入 WAITING 或 TIMED_WAITING 状态，或者抢占 synchronized 锁时进入 BLOCKED 状态，线程都会释放 CPU，只有回到 RUNNABLE 状态后线程才能被系统调度器重新调度进入 RUNNING 状态 JVM 线程在遇到 I/O 阻塞时仍然保持 RUNNABLE 状态，但其对应的内核态线程会被操作系统挂起直到 I/O 操作完成 JVM 的最大线程数出了自身的配置外，还受限于 Linux Kernel 的线程数限制 JVM 的线程创和切换涉及用户态和内核态的切换、CPU 上下文切换，开销较大，通常采用线程池来减少线程创建的开销 2. JDK 19 及以上版本 参考资料 JDK 19 引入了 virtual thread 虚拟线程，采用 M：N 的线程模型，一个内核线程对应一个用户态的平台线程，一个平台线程对应多个虚拟线程
+虚拟线程的调度、销毁、切换都由 JVM 完成，不需要操作系统调度器参与 JVM 对虚拟线程采用协作式线程调度策略，当线程阻塞时会主动从平台线程上卸载，让调度器调度其他线程运行 虚拟线程的最大线程数不受 Linux Kernel 的线程数限制，只受限于 JVM 的配置和系统内存，可以创建大量虚拟线程用以处理 I/O 密集型任务 虚拟线程的创建和切换都在用户态完成，避免了用户态和内核态的切换、CPU 上下文切换的开销 3.
+	</div>
+</article>
+</main>
+
+
+			</div>
+			
+<aside class="sidebar">
+<div class="widget-categories widget">
+	<h4 class="widget__title">分类</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/algorithem/">Algorithem</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/">分布式系统</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E5%A4%A7%E6%95%B0%E6%8D%AE/">大数据</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E6%94%B6%E8%97%8F/">收藏</a></li>
+			<li class="widget__item">
+				<a class="widget__link" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-taglist widget">
+	<h4 class="widget__title">标签</h4>
+	<div class="widget__content">
+		<a class="widget-taglist__link widget__link btn" href="/tags/algorithm/" title="Algorithm">Algorithm</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/flink/" title="Flink">Flink</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/go/" title="Go">Go</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/java/" title="Java">Java</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/kubernetes/" title="Kubernetes">Kubernetes</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/leetcode/" title="Leetcode">Leetcode</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/network/" title="Network">Network</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/paimon/" title="Paimon">Paimon</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/ray/" title="Ray">Ray</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E5%8D%8F%E8%AE%AE/" title="分布式协议">分布式协议</a>
+		<a class="widget-taglist__link widget__link btn" href="/tags/%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F/" title="文件格式">文件格式</a>
+	</div>
+</div>
+<div class="widget-recent widget">
+	<h4 class="widget__title">近期文章</h4>
+	<div class="widget__content">
+		<ul class="widget__list">
+			<li class="widget__item"><a class="widget__link" href="/tech/tcpdump_usage_notebook/">【Linux】Linux 服务器抓包记录</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_job_execute_deployment/">【Flink】Flink 任务执行和部署原理</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/data_storage_file_format/">ORC 和 Parquet 文件格式</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/golang_java_compare/">Go 和 Java 在多线程、内存模型、垃圾回收上的对比</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/distribute_system_protocal/">分布式协议总结</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_watermark_source_code/">【Flink】Flink Watermark 产生和传递原理</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_task_inside_source_code/">【Flink】Flink Task 和 OperatorChain 源码</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/kubernetes_deploy_nodebook/">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/paimon_sink_clustring/">【Paimon】Paimon 表排序</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/flink_sink_api/">【Flink】Flink Data Sink API</a></li>
+		</ul>
+	</div>
+</div>
+<div class="widget-social widget">
+	<h4 class="widget-social__title widget__title">社交</h4>
+	<div class="widget-social__content widget__content">
+		<div class="widget-social__item widget__item">
+			<a class="widget-social__link widget__link btn" title="GitHub" rel="noopener noreferrer" href="https://github.com/ZhuXingda" target="_blank">
+				<svg class="widget-social__link-icon icon icon-github" width="24" height="24" viewBox="0 0 384 374"><path d="m192 0c-106.1 0-192 85.8-192 191.7 0 84.7 55 156.6 131.3 181.9 9.6 1.8 13.1-4.2 13.1-9.2 0-4.6-.2-16.6-.3-32.6-53.4 11.6-64.7-25.7-64.7-25.7-8.7-22.1-21.3-28-21.3-28-17.4-11.9 1.3-11.6 1.3-11.6 19.3 1.4 29.4 19.8 29.4 19.8 17.1 29.3 44.9 20.8 55.9 15.9 1.7-12.4 6.7-20.8 12.2-25.6-42.6-4.8-87.5-21.3-87.5-94.8 0-20.9 7.5-38 19.8-51.4-2-4.9-8.6-24.3 1.9-50.7 0 0 16.1-5.2 52.8 19.7 15.3-4.2 31.7-6.4 48.1-6.5 16.3.1 32.7 2.2 48.1 6.5 36.7-24.8 52.8-19.7 52.8-19.7 10.5 26.4 3.9 45.9 1.9 50.7 12.3 13.4 19.7 30.5 19.7 51.4 0 73.7-44.9 89.9-87.7 94.6 6.9 5.9 13 17.6 13 35.5 0 25.6-.2 46.3-.2 52.6 0 5.1 3.5 11.1 13.2 9.2 76.2-25.5 131.2-97.3 131.2-182 0-105.9-86-191.7-192-191.7z"/></svg>
+				<span>GitHub</span>
+			</a>
+		</div>
+		<div class="widget-social__item widget__item">
+			<a class="widget-social__link widget__link btn" title="Email" href="mailto:zhuxingda.official@gmail.com">
+				<svg class="widget-social__link-icon icon icon-mail" width="24" height="24" viewBox="0 0 24 24"><path d="M0 3h24v18H0zm2 16h20V7l-10 6L2 7zM22 5H2l10 6z"/></svg>
+				<span>Email</span>
+			</a>
+		</div>
+
+		
+		<div class="widget-social__item widget__item">
+			<a class="widget-social__link widget__link btn" title="Youtube"  rel="noopener noreferrer" href="https://youtube.com/user/username" target="_blank">
+					
+<svg class="widget-social__link-icon icon icon-mail" fill="#000000" width="24" height="24" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+<title>youtube</title>
+<path d="M12.932 20.459v-8.917l7.839 4.459zM30.368 8.735c-0.354-1.301-1.354-2.307-2.625-2.663l-0.027-0.006c-3.193-0.406-6.886-0.638-10.634-0.638-0.381 0-0.761 0.002-1.14 0.007l0.058-0.001c-0.322-0.004-0.701-0.007-1.082-0.007-3.748 0-7.443 0.232-11.070 0.681l0.434-0.044c-1.297 0.363-2.297 1.368-2.644 2.643l-0.006 0.026c-0.4 2.109-0.628 4.536-0.628 7.016 0 0.088 0 0.176 0.001 0.263l-0-0.014c-0 0.074-0.001 0.162-0.001 0.25 0 2.48 0.229 4.906 0.666 7.259l-0.038-0.244c0.354 1.301 1.354 2.307 2.625 2.663l0.027 0.006c3.193 0.406 6.886 0.638 10.634 0.638 0.38 0 0.76-0.002 1.14-0.007l-0.058 0.001c0.322 0.004 0.702 0.007 1.082 0.007 3.749 0 7.443-0.232 11.070-0.681l-0.434 0.044c1.298-0.362 2.298-1.368 2.646-2.643l0.006-0.026c0.399-2.109 0.627-4.536 0.627-7.015 0-0.088-0-0.176-0.001-0.263l0 0.013c0-0.074 0.001-0.162 0.001-0.25 0-2.48-0.229-4.906-0.666-7.259l0.038 0.244z"></path>
+</svg>
+				<span>Youtube</span>
+			</a>
+		</div>
+		
+		<div class="widget-social__item widget__item">
+			<a class="widget-social__link widget__link btn" title="Bilibili"  rel="noopener noreferrer" href="https://space.bilibili.com/44425167" target="_blank">
+					
+<svg class="widget-social__link-icon icon icon-mail" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <g>
+        <path fill="none" d="M0 0h24v24H0z"/>
+        <path d="M7.172 2.757L10.414 6h3.171l3.243-3.242a1 1 0 0 1 1.415 1.415l-1.829 1.827L18.5 6A3.5 3.5 0 0 1 22 9.5v8a3.5 3.5 0 0 1-3.5 3.5h-13A3.5 3.5 0 0 1 2 17.5v-8A3.5 3.5 0 0 1 5.5 6h2.085L5.757 4.171a1 1 0 0 1 1.415-1.415zM18.5 8h-13a1.5 1.5 0 0 0-1.493 1.356L4 9.5v8a1.5 1.5 0 0 0 1.356 1.493L5.5 19h13a1.5 1.5 0 0 0 1.493-1.356L20 17.5v-8A1.5 1.5 0 0 0 18.5 8zM8 11a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1zm8 0a1 1 0 0 1 1 1v2a1 1 0 0 1-2 0v-2a1 1 0 0 1 1-1z"/>
+    </g>
+</svg>
+				<span>Bilibili</span>
+			</a>
+		</div>
+		
+	</div>
+</div>
+
+
+</aside>
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+</body>
+</html>

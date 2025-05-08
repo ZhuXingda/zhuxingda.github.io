@@ -6,15 +6,8 @@
     <description>Recent content in Notes on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 27 Mar 2025 16:48:23 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 12 Feb 2025 14:26:20 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/note/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>面试准备 checklist</title>
-      <link>https://blog.xingda.space/note/interview_prepare/</link>
-      <pubDate>Thu, 27 Mar 2025 16:48:23 +0800</pubDate>
-      <guid>https://blog.xingda.space/note/interview_prepare/</guid>
-      <description>1. 算法 2. 编程语言 2.1 Java JVM 内存模型 内存回收 G1 多线程 Volatile CompletableFuture StampedLock ForkJoinPool BlockingQueue 问题排查 线程堆栈 对象内存 2.2 Golang 调度器 d 内存回收 逃逸分析 2.3 C++ 4. 数据库 4.1 RocksDB 4.2 Parquet 协议 d 4.3 ORC 协议 d 4.4 Paimon LSM Tree 文件结构 文件索引 异步 Compaction 4.5 Iceberg 和 Paimon 的异同 5. 分布式系统 5.1 分布式协议 CAP一致性协议 CAP一致性协议及应用分析 Paxos 协议 Paxos协议详解 Raft 协议 Raft协议详解 Raft论文 ZAP 协议 Gossip 协议 CRAQ 协议 5.</description>
-    </item>
     <item>
       <title>【收藏夹】技术类文章</title>
       <link>https://blog.xingda.space/note/interesting_posts/</link>
