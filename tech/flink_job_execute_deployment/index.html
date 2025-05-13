@@ -99,13 +99,19 @@
 <h6 id="11-sql-解析">1.1 SQL 解析</h6>
 <ol>
 <li>ParserImpl#parse</li>
-<li>alciteParser#parseSqlList： SQL -&gt; SqlNode</li>
-<li>SqlNodeConverters#convertSqlNode：SqlNode -&gt; Operation</li>
+<li>CalciteParser#parseSqlList： SQL -&gt; SqlNode<br>
+将 SQL 转换成 calcite 的 AST 抽象语法树</li>
+<li>SqlNodeConverters#convertSqlNode：SqlNode -&gt; Operation
+将 SqlNode 组成的抽象语法树转换成 Flink 的 Operation</li>
 <li>Planner#translate： Operation -&gt; Transformation<br>
 4.1. PlannerBase#translateToRel：ModifyOperation -&gt; RelNode<br>
+将 ModifyOperation 再次转换回 calcite 的查询表达式<br>
 4.2. Optimizer#optimize：RelNode -&gt; RelNode<br>
+利用优化器对查询表达式做优化<br>
 4.3. ExecNodeGraphGenerator#generate：FlinkPhysicalRel -&gt; ExecNode -&gt; ExecNodeGraph<br>
-4.4. PlannerBase#translateToPlan：ExecNodeGraph -&gt; List&lt;Transformation<?>&gt;</li>
+将 RelNode 组成的查询表达式转换成 ExecNode 组成的 ExecNodeGraph<br>
+4.4. PlannerBase#translateToPlan：ExecNodeGraph -&gt; List&lt;Transformation<?>&gt;<br>
+将 ExecNodeGraph 转换成 Transformation</li>
 <li>Executor#createPipeline：List&lt;Transformation<?>&gt; -&gt; Pipeline<br>
 5.1 StreamGraphGenerator#generate：List&lt;Transformation<?>&gt; -&gt; StreamGraph</li>
 </ol>

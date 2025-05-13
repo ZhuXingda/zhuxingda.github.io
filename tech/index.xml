@@ -65,6 +65,13 @@
       <description>&lt;p&gt;记录一些在使用 Kubernetes 时遇到的问题和概念。&lt;/p&gt;</description>
     </item>
     <item>
+      <title>Paimon_table_with_key_and_lsm_tree</title>
+      <link>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</link>
+      <pubDate>Wed, 19 Feb 2025 14:37:57 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</guid>
+      <description>&lt;p&gt;Paimon 以数据表是否有主键，将表分为 &lt;code&gt;Append Only Table&lt;/code&gt; 和 &lt;code&gt;Primary Key Table&lt;/code&gt;，对数据的操作前者只支持 Insert，后者还支持 Update 和 Delete，本文简单分析 Paimon 主键表的原理和格式&lt;/p&gt;</description>
+    </item>
+    <item>
       <title>【Paimon】Paimon 表排序</title>
       <link>https://blog.xingda.space/tech/paimon_sink_clustring/</link>
       <pubDate>Wed, 19 Feb 2025 11:14:58 +0800</pubDate>

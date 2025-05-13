@@ -74,10 +74,13 @@
     <loc>https://blog.xingda.space/tags/kubernetes/</loc>
     <lastmod>2025-02-25T16:57:16+08:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/tech/paimon_sink_clustring/</loc>
-    <lastmod>2025-02-19T11:14:58+08:00</lastmod>
-  </url><url>
     <loc>https://blog.xingda.space/tags/paimon/</loc>
+    <lastmod>2025-02-19T14:37:57+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</loc>
+    <lastmod>2025-02-19T14:37:57+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/paimon_sink_clustring/</loc>
     <lastmod>2025-02-19T11:14:58+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/note/interesting_posts/</loc>
