@@ -14,13 +14,19 @@ tags:
 #### 1. SQL 任务解析提交
 ###### 1.1 SQL 解析
 1. ParserImpl#parse
-2. alciteParser#parseSqlList： SQL -> SqlNode   
+2. CalciteParser#parseSqlList： SQL -> SqlNode   
+将 SQL 转换成 calcite 的 AST 抽象语法树   
 3. SqlNodeConverters#convertSqlNode：SqlNode -> Operation
+将 SqlNode 组成的抽象语法树转换成 Flink 的 Operation   
 4. Planner#translate： Operation -> Transformation   
     4.1. PlannerBase#translateToRel：ModifyOperation -> RelNode   
+    将 ModifyOperation 再次转换回 calcite 的查询表达式   
     4.2. Optimizer#optimize：RelNode -> RelNode   
+    利用优化器对查询表达式做优化   
     4.3. ExecNodeGraphGenerator#generate：FlinkPhysicalRel -> ExecNode -> ExecNodeGraph   
+    将 RelNode 组成的查询表达式转换成 ExecNode 组成的 ExecNodeGraph   
     4.4. PlannerBase#translateToPlan：ExecNodeGraph -> List<Transformation<?>>   
+    将 ExecNodeGraph 转换成 Transformation
 5. Executor#createPipeline：List<Transformation<?>> -> Pipeline   
     5.1 StreamGraphGenerator#generate：List<Transformation<?>> -> StreamGraph   
 ###### 1.2 任务提交

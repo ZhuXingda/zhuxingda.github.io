@@ -39,7 +39,7 @@ snapshotState 和 initializeState 接口由 `StreamingFunctionUtils` 实现，�
 如果 UDF 是 `WrappingFunction` 则递归地对其内部 Function 做状态持久化，如果 UDF 实现了 `CheckpointedFunction` 接口调用其 snapshotState 方法
 - **restoreFunctionState**
 如果 UDF 是 `WrappingFunction` 则递归地对其内部 Function 做状态恢复，如果 UDF 实现了 `CheckpointedFunction` 接口调用其 initializeState 方法
-## stateBackend 的创建和传递
+## stateBackend 的创建和使用
 AbstractStreamOperator#initializeState 从 state 初始化时调用 StreamTaskStateInitializer#streamOperatorStateContext 创建 `StreamOperatorStateContext`，并用 StreamOperatorStateContext 初始化 `StreamOperatorStateHandler`
 ###### StreamOperatorStateContextImpl
 - **isRestored** 是否为从 checkpoint / savepoint 恢复
@@ -85,4 +85,10 @@ KeyedStateStore 的基础实现，内部包含一个 KeyedStateBackend 来实际
 将 StateBackend 维护的 State 持久化到系统外部的存储系统
 1. SnapshotStrategyRunner.snapshot    
 DefaultKeyedStateStore HeapKeyedStateBackend RocksDBKeyedStateBackend 都调用这个方法    
-2. SnapshotStrategy#asyncSnapshot
+2. SnapshotStrategy#asyncSnapshot   
+接口有三个实现：
+    - DefaultOperatorStateBackendSnapshotStrategy 对应 DefaultOperatorStateBackend
+    - HeapSnapshotStrategy 对应 HeapKeyedStateBackend
+    - SavepointSnapshotStrategy 对应 keyStateBackend 执行 savepoint 
+    - RocksNativeFullSnapshotStrategy 对应 RocksDBKeyedStateBackend 的全量 snapshot
+    - RocksIncrementalSnapshotStrategy 对应 RocksDBKeyedStateBackend 的增量 snapshot
