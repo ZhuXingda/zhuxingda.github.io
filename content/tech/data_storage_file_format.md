@@ -237,14 +237,14 @@ Page 是 Parquet 文件中最小的数据存储单元
 - **DataPageV2**   
 新的 DataPage 类型，其 definition levels 和 repetition levels 都是非压缩可以直接读
 #### 2.1.2 Index
-1. **Page Index**
+1. **Page Index**   
 在旧版本中 ColumnChunk 的列统计信息保存在 ColumnMetaData 中，DataPage 的列统计信息保存在 DataPageHeader 中，这导致在从 DataPages 读取数据时需要扫描每一个 DataPageHeader 来决定是否跳过这个 page，效率很低。因此在 RowGroup Metadata 增加两个列维度的数据结构：
     - ColumnIndex：记录 page 和 page 的列统计信息
     - OffsetIndex：记录 page 在文件中的 offset、压缩后的大小、以及 page 里最小的行号   
 这两个结构保存在 RowGroup 之后靠近 Footer 的地方，这样如果查询不需要用索引过滤，就可以直接读取 RowGroup 的数据，减少 IO 开销。   
 利用这两个 Index 可以实现：
     - 如果查询的过滤条件包含有序的列，可以通过 ColumnIndex 二分查找找到该列满足条件的 page，然后根据 OffsetIndex 中 page 对应的 row index range 过滤其他列的 page，最后只读取满足条件的行。
-    - 如果查询的过滤条件是无序的列，也可以用 ColumnIndex 过滤掉不满足条件的 page 及这些 page 对应其他列的 page，减少读取的行数。
+    - 如果查询的过滤条件是无序的列，也可以用 ColumnIndex 过滤掉不满足条件的 page 及这些 page 对应其他列的 page，减少读取的行数。   
 以一列时间戳和一列 value 为例：
 ```csv
 column index for column ts:
