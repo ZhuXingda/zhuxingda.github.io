@@ -97,9 +97,7 @@
 </div></div>
 	</header>
 	<div class="content list__excerpt post__content clearfix">
-		线程模型 1. JDK 19 以下 版本（排除最早的 Green Threads 老版本） 采用 1 ：1 的线程模型，即每个用户线程对应一个内核线程
-线程的创建、销毁、切换都由操作系统的调度器完成，JVM 不参与 目前主流操作系统使用抢占式线程调度策略，当 JVM 线程阻塞时，比如 Object.wait()、Thread.sleep()、Thread.join()、LockSupport.park() 等导致线程进入 WAITING 或 TIMED_WAITING 状态，或者抢占 synchronized 锁时进入 BLOCKED 状态，线程都会释放 CPU，只有回到 RUNNABLE 状态后线程才能被系统调度器重新调度进入 RUNNING 状态 JVM 线程在遇到 I/O 阻塞时仍然保持 RUNNABLE 状态，但其对应的内核态线程会被操作系统挂起直到 I/O 操作完成 JVM 的最大线程数出了自身的配置外，还受限于 Linux Kernel 的线程数限制 JVM 的线程创和切换涉及用户态和内核态的切换、CPU 上下文切换，开销较大，通常采用线程池来减少线程创建的开销 2. JDK 19 及以上版本 参考资料 JDK 19 引入了 virtual thread 虚拟线程，采用 M：N 的线程模型，一个内核线程对应一个用户态的平台线程，一个平台线程对应多个虚拟线程
-虚拟线程的调度、销毁、切换都由 JVM 完成，不需要操作系统调度器参与 JVM 对虚拟线程采用协作式线程调度策略，当线程阻塞时会主动从平台线程上卸载，让调度器调度其他线程运行 虚拟线程的最大线程数不受 Linux Kernel 的线程数限制，只受限于 JVM 的配置和系统内存，可以创建大量虚拟线程用以处理 I/O 密集型任务 虚拟线程的创建和切换都在用户态完成，避免了用户态和内核态的切换、CPU 上下文切换的开销 3.
+		<p>对比 Go 和 Java 在多线程、内存模型、垃圾回收上各自是如何实现有何异同</p>
 	</div>
 </article>
 </main>
@@ -155,7 +153,7 @@
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_watermark_source_code/">【Flink】Flink Watermark 产生和传递原理</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/flink_task_inside_source_code/">【Flink】Flink Task 和 OperatorChain 源码</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/kubernetes_deploy_nodebook/">【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</a></li>
-			<li class="widget__item"><a class="widget__link" href="/tech/paimon_table_with_key_and_lsm_tree/">Paimon_table_with_key_and_lsm_tree</a></li>
+			<li class="widget__item"><a class="widget__link" href="/tech/paimon_table_with_key_and_lsm_tree/">【Paimon】Paimon 主键表和 LSM Tree</a></li>
 			<li class="widget__item"><a class="widget__link" href="/tech/paimon_sink_clustring/">【Paimon】Paimon 表排序</a></li>
 		</ul>
 	</div>

@@ -44,7 +44,7 @@
       <description>&lt;p&gt;记录一些在使用 Kubernetes 时遇到的问题和概念。&lt;/p&gt;</description>
     </item>
     <item>
-      <title>Paimon_table_with_key_and_lsm_tree</title>
+      <title>【Paimon】Paimon 主键表和 LSM Tree</title>
       <link>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</link>
       <pubDate>Wed, 19 Feb 2025 14:37:57 +0800</pubDate>
       <guid>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</guid>

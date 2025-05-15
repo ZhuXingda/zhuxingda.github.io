@@ -200,7 +200,102 @@
 <li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#setChaining<br>
 从 StreamGraph 中的 SourceNode 开始递归地创建 JobGraph 中的全部 JobVertex</li>
 <li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createChain<br>
-这一步将可以组成一个 Chain 的 StreamNode 合并为 OperatorChainInfo 并创建 JobVertex</li>
+这一步将可以组成一个 Chain 的 StreamNode 合并为 OperatorChainInfo 并创建 JobVertex，这一步调用 org.StreamingJobGraphGenerator#isChainable 判断上下游算子是否可以组成 Chain</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">isChainable</span>(StreamEdge edge, StreamGraph streamGraph) {
+</span></span><span style="display:flex;"><span>        StreamNode downStreamVertex <span style="color:#f92672">=</span> streamGraph.<span style="color:#a6e22e">getTargetVertex</span>(edge);
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 上游只有一个输入</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> downStreamVertex.<span style="color:#a6e22e">getInEdges</span>().<span style="color:#a6e22e">size</span>() <span style="color:#f92672">==</span> 1 <span style="color:#f92672">&amp;&amp;</span> isChainableInput(edge, streamGraph);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">isChainableInput</span>(StreamEdge edge, StreamGraph streamGraph) {
+</span></span><span style="display:flex;"><span>        StreamNode upStreamVertex <span style="color:#f92672">=</span> streamGraph.<span style="color:#a6e22e">getSourceVertex</span>(edge);
+</span></span><span style="display:flex;"><span>        StreamNode downStreamVertex <span style="color:#f92672">=</span> streamGraph.<span style="color:#a6e22e">getTargetVertex</span>(edge);
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 以下条件任一不满足则不能合并到一个 Chain</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>(<span style="color:#75715e">// 全局配置支持</span>
+</span></span><span style="display:flex;"><span>                streamGraph.<span style="color:#a6e22e">isChainingEnabled</span>()
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 上游与本节点在同一个 SlotSharingGroup</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&amp;&amp;</span> upStreamVertex.<span style="color:#a6e22e">isSameSlotSharingGroup</span>(downStreamVertex)
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// 节点自身支持 Chain</span>
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&amp;&amp;</span> areOperatorsChainable(upStreamVertex, downStreamVertex, streamGraph)
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&amp;&amp;</span> arePartitionerAndExchangeModeChainable(
+</span></span><span style="display:flex;"><span>                        edge.<span style="color:#a6e22e">getPartitioner</span>(), edge.<span style="color:#a6e22e">getExchangeMode</span>(), streamGraph.<span style="color:#a6e22e">isDynamic</span>()))) {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// check that we do not have a union operation, because unions currently only work</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// through the network/byte-channel stack.</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// we check that by testing that each &#34;type&#34; (which means input position) is used only once</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> (StreamEdge inEdge : downStreamVertex.<span style="color:#a6e22e">getInEdges</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">if</span> (inEdge <span style="color:#f92672">!=</span> edge <span style="color:#f92672">&amp;&amp;</span> inEdge.<span style="color:#a6e22e">getTypeNumber</span>() <span style="color:#f92672">==</span> edge.<span style="color:#a6e22e">getTypeNumber</span>()) {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">boolean</span> <span style="color:#a6e22e">areOperatorsChainable</span>(
+</span></span><span style="display:flex;"><span>            StreamNode upStreamVertex, StreamNode downStreamVertex, StreamGraph streamGraph) {
+</span></span><span style="display:flex;"><span>        StreamOperatorFactory<span style="color:#f92672">&lt;?&gt;</span> upStreamOperator <span style="color:#f92672">=</span> upStreamVertex.<span style="color:#a6e22e">getOperatorFactory</span>();
+</span></span><span style="display:flex;"><span>        StreamOperatorFactory<span style="color:#f92672">&lt;?&gt;</span> downStreamOperator <span style="color:#f92672">=</span> downStreamVertex.<span style="color:#a6e22e">getOperatorFactory</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 上下游算子都不为空</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (downStreamOperator <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">||</span> upStreamOperator <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Yielding Operator 不能和 Legacy Source 合并到同一个 Chain</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (downStreamOperator <span style="color:#66d9ef">instanceof</span> YieldingOperatorFactory
+</span></span><span style="display:flex;"><span>                <span style="color:#f92672">&amp;&amp;</span> getHeadOperator(upStreamVertex, streamGraph).<span style="color:#a6e22e">isLegacySource</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">boolean</span> isChainable;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">switch</span> (upStreamOperator.<span style="color:#a6e22e">getChainingStrategy</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果上游算子不支持 Chain，则不能合并到同一个 Chain</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> NEVER:
+</span></span><span style="display:flex;"><span>                isChainable <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> ALWAYS:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> HEAD:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> HEAD_WITH_SOURCES:
+</span></span><span style="display:flex;"><span>                isChainable <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException(
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;Unknown chaining strategy: &#34;</span> <span style="color:#f92672">+</span> upStreamOperator.<span style="color:#a6e22e">getChainingStrategy</span>());
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">switch</span> (downStreamOperator.<span style="color:#a6e22e">getChainingStrategy</span>()) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果下游算子不支持 Chain，或者下游算子策略为 Head 则不能合并到同一个 Chain</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> NEVER:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> HEAD:
+</span></span><span style="display:flex;"><span>                isChainable <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span>;
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果下游算子策略为 ALWAYS，则取决于上游算子的 ChainingStrategy</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> ALWAYS:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 如果下游算子策略为 HEAD_WITH_SOURCES，则取决于上游算子是否为 Source</span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">case</span> HEAD_WITH_SOURCES:
+</span></span><span style="display:flex;"><span>                isChainable <span style="color:#f92672">&amp;=</span> (upStreamOperator <span style="color:#66d9ef">instanceof</span> SourceOperatorFactory);
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> RuntimeException(
+</span></span><span style="display:flex;"><span>                        <span style="color:#e6db74">&#34;Unknown chaining strategy: &#34;</span> <span style="color:#f92672">+</span> downStreamOperator.<span style="color:#a6e22e">getChainingStrategy</span>());
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 上下游算子并行度必须一致</span>
+</span></span><span style="display:flex;"><span>        isChainable <span style="color:#f92672">&amp;=</span> upStreamVertex.<span style="color:#a6e22e">getParallelism</span>() <span style="color:#f92672">==</span> downStreamVertex.<span style="color:#a6e22e">getParallelism</span>();
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// 如果全局配置不支持不同最大并行度的算子合并到同一个 Chain，则上下游算子最大并行度必须一致</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>streamGraph.<span style="color:#a6e22e">isChainingOfOperatorsWithDifferentMaxParallelismEnabled</span>()) {
+</span></span><span style="display:flex;"><span>            isChainable <span style="color:#f92672">&amp;=</span>
+</span></span><span style="display:flex;"><span>                    upStreamVertex.<span style="color:#a6e22e">getMaxParallelism</span>() <span style="color:#f92672">==</span> downStreamVertex.<span style="color:#a6e22e">getMaxParallelism</span>();
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> isChainable;
+</span></span><span style="display:flex;"><span>    }
+</span></span></code></pre></div><ol start="4">
 <li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobVertex<br>
 根据 OperatorChainInfo 创建 JobVertex，并添加到 JobGraph</li>
 </ol>
@@ -211,38 +306,38 @@
 <img src="https://nightlies.apache.org/flink/flink-docs-master/fig/job_and_execution_graph.svg"></li>
 </ol>
 <h2 id="总结">总结</h2>
-<h4 id="任务格式">任务格式</h4>
-<h6 id="任务格式演变">任务格式演变</h6>
+<h4 id="1-任务格式">1. 任务格式</h4>
+<h6 id="11-任务格式演变">1.1 任务格式演变</h6>
 <ol>
 <li>SQL 任务：<br>
 SQL -&gt; SqlNode -&gt; Operation -&gt; RelNode -&gt; ExecNode -&gt; ExecNodeGraph -&gt; Transformation -&gt; StreamGraph -&gt; JobGraph -&gt; ExecutionGraph</li>
 <li>Streaming 任务：<br>
 Transformation -&gt; StreamGraph -&gt; JobGraph -&gt; ExecutionGraph</li>
 </ol>
-<h6 id="任务格式结构">任务格式结构</h6>
+<h6 id="12-任务格式结构">1.2 任务格式结构</h6>
 <ol>
-<li>StreamGraph
-StreamGraph 由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator</li>
-<li>JobGraph
-JobGraph 由 JobVertex 组成</li>
-<li>ExecutionGraph
-ExecutionGraph 由 ExecutionJobVertex 组成</li>
+<li>StreamGraph<br>
+StreamGraph 是原始的逻辑执行计划，由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator</li>
+<li>JobGraph<br>
+JobGraph 是经过优化后的逻辑执行计划，由 JobVertex 组成</li>
+<li>ExecutionGraph<br>
+ExecutionGraph 是物理执行计划，由 ExecutionJobVertex 组成</li>
 </ol>
-<h4 id="任务调度执行">任务调度执行</h4>
-<h6 id="注册-slotsharinggroup">注册 SlotSharingGroup</h6>
+<h4 id="2-任务调度执行">2. 任务调度执行</h4>
+<h6 id="21-注册-slotsharinggroup">2.1 注册 SlotSharingGroup</h6>
 <p>Flink 提供了</p>
 <ol>
 <li>StreamExecutionEnvironment#registerSlotSharingGroup 接口用于注册 SlotSharingGroup</li>
 <li>SingleOutputStreamOperator#slotSharingGroup / org.apache.flink.streaming.api.datastream.DataStreamSink#slotSharingGroup 接口用于设置 Operator 所属的 SlotSharingGroup<br>
 官方提供的示例：https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/finegrained_resource/#usage</li>
 </ol>
-<h6 id="构建-streamgraph-时设置-slotsharinggroup-和-colocationgroup">构建 StreamGraph 时设置 SlotSharingGroup 和 CoLocationGroup</h6>
+<h6 id="22-构建-streamgraph-时设置-slotsharinggroup-和-colocationgroup">2.2 构建 StreamGraph 时设置 SlotSharingGroup 和 CoLocationGroup</h6>
 <p>StreamGraph 中的 StreamNode 在 StreamGraph#addOperator 方法中被创建和添加到 StreamGraph，添加时会设置 SlotSharingGroup 和 CoLocationGroup：</p>
 <ul>
 <li>SlotSharingGroup 来自 StreamGraphGenerator#translate 执行时传入 TransformationTranslator.Context 中的 SlotSharingGroup，具体用哪个 SlotSharingGroup 由 <code>StreamGraphGenerator#determineSlotSharingGroup</code> 决定</li>
 <li>CoLocationGroup 由 <code>Transformation 的 coLocationGroupKey</code> 决定，目前（Flink V2.0）该功能还没有支持</li>
 </ul>
-<h6 id="构建-jobgraph-时设置-slotsharinggroup">构建 JobGraph 时设置 SlotSharingGroup</h6>
+<h6 id="23-构建-jobgraph-时设置-slotsharinggroup">2.3 构建 JobGraph 时设置 SlotSharingGroup</h6>
 <ol>
 <li>org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobGraph<br>
 根据 StreamGraph 创建 JobGraph，创建过程中会设置 SlotSharingGroup 和 CoLocationGroup</li>
