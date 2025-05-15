@@ -99,7 +99,102 @@ private <IN, OUT> void addOperator(
 2. org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#setChaining   
 从 StreamGraph 中的 SourceNode 开始递归地创建 JobGraph 中的全部 JobVertex   
 3. org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createChain   
-这一步将可以组成一个 Chain 的 StreamNode 合并为 OperatorChainInfo 并创建 JobVertex   
+这一步将可以组成一个 Chain 的 StreamNode 合并为 OperatorChainInfo 并创建 JobVertex，这一步调用 org.StreamingJobGraphGenerator#isChainable 判断上下游算子是否可以组成 Chain    
+```java
+    public static boolean isChainable(StreamEdge edge, StreamGraph streamGraph) {
+        StreamNode downStreamVertex = streamGraph.getTargetVertex(edge);
+        // 上游只有一个输入
+        return downStreamVertex.getInEdges().size() == 1 && isChainableInput(edge, streamGraph);
+    }
+
+    private static boolean isChainableInput(StreamEdge edge, StreamGraph streamGraph) {
+        StreamNode upStreamVertex = streamGraph.getSourceVertex(edge);
+        StreamNode downStreamVertex = streamGraph.getTargetVertex(edge);
+        // 以下条件任一不满足则不能合并到一个 Chain
+        if (!(// 全局配置支持
+                streamGraph.isChainingEnabled()
+                // 上游与本节点在同一个 SlotSharingGroup
+                && upStreamVertex.isSameSlotSharingGroup(downStreamVertex)
+                // 节点自身支持 Chain
+                && areOperatorsChainable(upStreamVertex, downStreamVertex, streamGraph)
+                && arePartitionerAndExchangeModeChainable(
+                        edge.getPartitioner(), edge.getExchangeMode(), streamGraph.isDynamic()))) {
+
+            return false;
+        }
+
+        // check that we do not have a union operation, because unions currently only work
+        // through the network/byte-channel stack.
+        // we check that by testing that each "type" (which means input position) is used only once
+        for (StreamEdge inEdge : downStreamVertex.getInEdges()) {
+            if (inEdge != edge && inEdge.getTypeNumber() == edge.getTypeNumber()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static boolean areOperatorsChainable(
+            StreamNode upStreamVertex, StreamNode downStreamVertex, StreamGraph streamGraph) {
+        StreamOperatorFactory<?> upStreamOperator = upStreamVertex.getOperatorFactory();
+        StreamOperatorFactory<?> downStreamOperator = downStreamVertex.getOperatorFactory();
+        // 上下游算子都不为空
+        if (downStreamOperator == null || upStreamOperator == null) {
+            return false;
+        }
+
+        // Yielding Operator 不能和 Legacy Source 合并到同一个 Chain
+        if (downStreamOperator instanceof YieldingOperatorFactory
+                && getHeadOperator(upStreamVertex, streamGraph).isLegacySource()) {
+            return false;
+        }
+        
+        boolean isChainable;
+
+        switch (upStreamOperator.getChainingStrategy()) {
+            // 如果上游算子不支持 Chain，则不能合并到同一个 Chain
+            case NEVER:
+                isChainable = false;
+                break;
+            case ALWAYS:
+            case HEAD:
+            case HEAD_WITH_SOURCES:
+                isChainable = true;
+                break;
+            default:
+                throw new RuntimeException(
+                        "Unknown chaining strategy: " + upStreamOperator.getChainingStrategy());
+        }
+
+        switch (downStreamOperator.getChainingStrategy()) {
+            // 如果下游算子不支持 Chain，或者下游算子策略为 Head 则不能合并到同一个 Chain
+            case NEVER:
+            case HEAD:
+                isChainable = false;
+                break;
+            // 如果下游算子策略为 ALWAYS，则取决于上游算子的 ChainingStrategy
+            case ALWAYS:
+                break;
+            // 如果下游算子策略为 HEAD_WITH_SOURCES，则取决于上游算子是否为 Source
+            case HEAD_WITH_SOURCES:
+                isChainable &= (upStreamOperator instanceof SourceOperatorFactory);
+                break;
+            default:
+                throw new RuntimeException(
+                        "Unknown chaining strategy: " + downStreamOperator.getChainingStrategy());
+        }
+
+        // 上下游算子并行度必须一致
+        isChainable &= upStreamVertex.getParallelism() == downStreamVertex.getParallelism();
+        // 如果全局配置不支持不同最大并行度的算子合并到同一个 Chain，则上下游算子最大并行度必须一致
+        if (!streamGraph.isChainingOfOperatorsWithDifferentMaxParallelismEnabled()) {
+            isChainable &=
+                    upStreamVertex.getMaxParallelism() == downStreamVertex.getMaxParallelism();
+        }
+
+        return isChainable;
+    }
+```
 4. org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobVertex   
 根据 OperatorChainInfo 创建 JobVertex，并添加到 JobGraph
 ###### 4.3 JobGraph -> ExecutionGraph
@@ -107,31 +202,30 @@ private <IN, OUT> void addOperator(
 根据 JobGraph 创建 ExecutionGraph   
 ![](https://nightlies.apache.org/flink/flink-docs-master/fig/job_and_execution_graph.svg)
 ## 总结
-#### 任务格式
-###### 任务格式演变
+#### 1. 任务格式
+###### 1.1 任务格式演变
 1. SQL 任务：   
-SQL -> SqlNode -> Operation -> RelNode -> ExecNode -> ExecNodeGraph -> Transformation -> StreamGraph -> JobGraph -> ExecutionGraph
+SQL -> SqlNode -> Operation -> RelNode -> ExecNode -> ExecNodeGraph -> Transformation -> StreamGraph -> JobGraph -> ExecutionGraph   
 2. Streaming 任务：   
-Transformation -> StreamGraph -> JobGraph -> ExecutionGraph
-###### 任务格式结构
-1. StreamGraph
-StreamGraph 由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator 
-2. JobGraph
-JobGraph 由 JobVertex 组成
-3. ExecutionGraph
-ExecutionGraph 由 ExecutionJobVertex 组成
-
-#### 任务调度执行
-###### 注册 SlotSharingGroup
+Transformation -> StreamGraph -> JobGraph -> ExecutionGraph   
+###### 1.2 任务格式结构
+1. StreamGraph   
+StreamGraph 是原始的逻辑执行计划，由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator   
+2. JobGraph   
+JobGraph 是经过优化后的逻辑执行计划，由 JobVertex 组成   
+3. ExecutionGraph   
+ExecutionGraph 是物理执行计划，由 ExecutionJobVertex 组成   
+#### 2. 任务调度执行
+###### 2.1 注册 SlotSharingGroup
 Flink 提供了   
 1. StreamExecutionEnvironment#registerSlotSharingGroup 接口用于注册 SlotSharingGroup
 2. SingleOutputStreamOperator#slotSharingGroup / org.apache.flink.streaming.api.datastream.DataStreamSink#slotSharingGroup 接口用于设置 Operator 所属的 SlotSharingGroup   
 官方提供的示例：https://nightlies.apache.org/flink/flink-docs-master/docs/deployment/finegrained_resource/#usage
-###### 构建 StreamGraph 时设置 SlotSharingGroup 和 CoLocationGroup
+###### 2.2 构建 StreamGraph 时设置 SlotSharingGroup 和 CoLocationGroup
 StreamGraph 中的 StreamNode 在 StreamGraph#addOperator 方法中被创建和添加到 StreamGraph，添加时会设置 SlotSharingGroup 和 CoLocationGroup：
 - SlotSharingGroup 来自 StreamGraphGenerator#translate 执行时传入 TransformationTranslator.Context 中的 SlotSharingGroup，具体用哪个 SlotSharingGroup 由 `StreamGraphGenerator#determineSlotSharingGroup` 决定
 - CoLocationGroup 由 `Transformation 的 coLocationGroupKey` 决定，目前（Flink V2.0）该功能还没有支持
-###### 构建 JobGraph 时设置 SlotSharingGroup
+###### 2.3 构建 JobGraph 时设置 SlotSharingGroup
 1. org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#createJobGraph   
 根据 StreamGraph 创建 JobGraph，创建过程中会设置 SlotSharingGroup 和 CoLocationGroup
 2. org.apache.flink.streaming.api.graph.StreamingJobGraphGenerator#setSlotSharing   
