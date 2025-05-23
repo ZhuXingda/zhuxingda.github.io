@@ -210,11 +210,11 @@ SQL -> SqlNode -> Operation -> RelNode -> ExecNode -> ExecNodeGraph -> Transform
 Transformation -> StreamGraph -> JobGraph -> ExecutionGraph   
 ###### 1.2 任务格式结构
 1. StreamGraph   
-StreamGraph 是原始的逻辑执行计划，由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator   
+StreamGraph 是原始的逻辑计划，由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator   
 2. JobGraph   
-JobGraph 是经过优化后的逻辑执行计划，由 JobVertex 组成   
+JobGraph 是经过优化后的逻辑计划，由 JobVertex 组成   
 3. ExecutionGraph   
-ExecutionGraph 是物理执行计划，由 ExecutionJobVertex 组成   
+ExecutionGraph 是执行计划，由 ExecutionJobVertex 组成   
 #### 2. 任务调度执行
 ###### 2.1 注册 SlotSharingGroup
 Flink 提供了   

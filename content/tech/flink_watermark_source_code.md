@@ -124,12 +124,21 @@ TimestampsAndWatermarks 接口定义了时间戳提取和 watermark 生成
 9. DataOutput#emitWatermark
 
 ## 3. 总结
+#### 3.1 Flink 的时间类型
+###### Processing Time
+Processing Time 是指 Flink 系统的时间，是 Flink 默认的时间类型无需额外配置。Processing Time 对应的 Operator 无需 watermark 触发（比如 TumblingProcessingTimeWindows ），而是由系统的时间触发
+###### Ingestion Time
+Ingestion Time 指 record 进入 Flink 系统时的时间，可以由数据源的 SourceOutput 指定，也可以配置 IngestionTimeAssigner 由 SourceOutputWithWatermarks 调用将时间绑定到 record 并生成 watermark。
+###### Event Time
+Event Time 指 record 在外部系统产生时的时间，作为 record 的一部分一起传入 Flink，其产生逻辑和 watermark 产生方式和 Ingestion Time 相同，区别在于时间戳从 record 内提取或从外部系统中获取（如 Kafka）。
+#### 3.2 watermark 的形成过程
+watermark 是什么：当 Flink 的时间类型为 EventTime 时，Flink 系统为了评估数据流 EventTime 的进度引入 watermark，watermark 根据配置随 EventTime 的更新而更新，并定时作为特殊的 record 从数据源下发到整个数据流，下游基于 EventTime 的算子接收到 watermark 后触发相应的计算
+。   
 1. 数据源的 **SourceReader** 调用 **SourceOutput** 输出 record 或同时输出 rocord 和时间戳
-2. 如果是流式任务 **SourceOperator** 会用 **ProgressiveTimestampsAndWatermarks** 作为 eventTimeLogic，并周期性触发 **WatermarkGenerator** 的 `onPeriodicEmit` 方法；
+2. 如果是流式任务 **SourceOperator** 会用 **ProgressiveTimestampsAndWatermarks** 作为 TimestampsAndWatermarks，并周期性触发 **WatermarkGenerator** 的 `onPeriodicEmit` 方法；
 2. **SourceOutputWithWatermarks** 实现了 **SourceOutput** 接口，接收 record 后使用 **TimestampAssigner** 从 record 和传入时间戳中提取新的时间戳，并将提取的时间戳通过 **WatermarkGenerator** 的 `onEvent` 方法传递给 **WatermarkGenerator**；
 3. **WatermarkGenerator** 决定 watermark 的累积逻辑以及何时推送到下游
 4. watermark 被转换成 Record 并推送到下游
-
 ## 4. 关于空闲数据源和 Watermark 对齐
 #### 4.1 空闲数据源
 如果 Source 长时间没有数据输出，会导致 watermark 无法更新，下游依赖 watermark 更新的算子无法继续处理数据    

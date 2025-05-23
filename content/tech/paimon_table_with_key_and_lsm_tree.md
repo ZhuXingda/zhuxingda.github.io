@@ -58,9 +58,12 @@ L0 执行合并时直接将有序数据写入 L1 的一个新的 Block
 
 ## Paimon 主键表中的 LSM Tree 结构
 #### 原理
-1. 用 Flink 写 Paimon 表时首先将数据按指定的字段分到不同 bucket，在各 bucket 中维护一个 LSM Tree。
-2. 一个 bucket 的数据首先被分发到一个 Flink SubTask，被缓存在内存中并按主键排序和 Merge，结果写入文件作为 LSM Tree 的 L0。
-3. 
+1. 用 Flink 写 Paimon 表时首先将数据按指定的字段分到不同 partition 和 bucket。
+2. 每个 bucket 的数据首先被分发到 Flink SubTask，被缓存在内存 Buffer 中并按主键排序和 Merge。
+3. 内存 Buffer 写满后数据被写入文件，作为 LSM Tree 的 L0。
+4. Flink Checpoint 执行时 Buffer 中的所有数据都会被写入文件，然后发送 Commit Message 到下游算子。
+5. 下游的 Committer Operator 收到 Commit Message 后执行 commit 提交 Snapshot 文件、 Manifest List 文件和 Manifest 文件
+6. 如果开启了同步 Compact，Flink 的 Paimon Sink 算子中的 CompactManager 会将 Compact 后的文件状态发送给下游的 Committer Operator，由其创建新的 Snapshot 文件、 Manifest List 文件和 Manifest 文件
 #### 源码分析
 ###### 数据写入过程
 1. org.apache.paimon.flink.sink.FlinkSink#doWrite   
