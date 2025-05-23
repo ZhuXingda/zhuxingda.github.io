@@ -317,11 +317,11 @@ Transformation -&gt; StreamGraph -&gt; JobGraph -&gt; ExecutionGraph</li>
 <h6 id="12-任务格式结构">1.2 任务格式结构</h6>
 <ol>
 <li>StreamGraph<br>
-StreamGraph 是原始的逻辑执行计划，由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator</li>
+StreamGraph 是原始的逻辑计划，由 StreamNode 组成，每个 StreamNode 对应一个 StreamOperator</li>
 <li>JobGraph<br>
-JobGraph 是经过优化后的逻辑执行计划，由 JobVertex 组成</li>
+JobGraph 是经过优化后的逻辑计划，由 JobVertex 组成</li>
 <li>ExecutionGraph<br>
-ExecutionGraph 是物理执行计划，由 ExecutionJobVertex 组成</li>
+ExecutionGraph 是执行计划，由 ExecutionJobVertex 组成</li>
 </ol>
 <h4 id="2-任务调度执行">2. 任务调度执行</h4>
 <h6 id="21-注册-slotsharinggroup">2.1 注册 SlotSharingGroup</h6>

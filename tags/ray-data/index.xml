@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Ray on Zhu Xingda</title>
-    <link>https://blog.xingda.space/tags/ray/</link>
-    <description>Recent content in Ray on Zhu Xingda</description>
+    <title>Ray Data on Zhu Xingda</title>
+    <link>https://blog.xingda.space/tags/ray-data/</link>
+    <description>Recent content in Ray Data on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <lastBuildDate>Thu, 15 May 2025 15:39:42 +0800</lastBuildDate>
-    <atom:link href="https://blog.xingda.space/tags/ray/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blog.xingda.space/tags/ray-data/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>【Ray】Ray Data 模块入门</title>
       <link>https://blog.xingda.space/tech/ray_data_hello_world/</link>
       <pubDate>Thu, 15 May 2025 15:39:42 +0800</pubDate>
       <guid>https://blog.xingda.space/tech/ray_data_hello_world/</guid>
       <description>&lt;p&gt;Ray 框架提供 Ray Data 模块用于分布式数据处理、模型批量离线推理、模型训练数据摄入等场景。&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>【Ray】分布式计算框架 Ray 入门</title>
-      <link>https://blog.xingda.space/tech/ray_framework_init/</link>
-      <pubDate>Mon, 16 Sep 2024 00:00:00 +0000</pubDate>
-      <guid>https://blog.xingda.space/tech/ray_framework_init/</guid>
-      <description>&lt;p&gt;&lt;strong&gt;Ray&lt;/strong&gt; 是一个开源的分布式计算框架，当前主要被应用于机器学习领域。&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

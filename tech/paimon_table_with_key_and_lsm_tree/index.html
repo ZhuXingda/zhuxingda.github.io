@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>【Paimon】Paimon 主键表和 LSM Tree - Zhu Xingda</title>
 	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
-	<meta name="description" content="【Paimon】Paimon 主键表和 LSM Tree">
+	<meta name="description" content="">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link rel="dns-prefetch" href="//fonts.googleapis.com">
 	<link rel="dns-prefetch" href="//fonts.gstatic.com">
@@ -156,9 +156,12 @@ L0 执行合并时直接将有序数据写入 L1 的一个新的 Block</li>
 <h2 id="paimon-主键表中的-lsm-tree-结构">Paimon 主键表中的 LSM Tree 结构</h2>
 <h4 id="原理">原理</h4>
 <ol>
-<li>用 Flink 写 Paimon 表时首先将数据按指定的字段分到不同 bucket，在各 bucket 中维护一个 LSM Tree。</li>
-<li>一个 bucket 的数据首先被分发到一个 Flink SubTask，被缓存在内存中并按主键排序和 Merge，结果写入文件作为 LSM Tree 的 L0。</li>
-<li></li>
+<li>用 Flink 写 Paimon 表时首先将数据按指定的字段分到不同 partition 和 bucket。</li>
+<li>每个 bucket 的数据首先被分发到 Flink SubTask，被缓存在内存 Buffer 中并按主键排序和 Merge。</li>
+<li>内存 Buffer 写满后数据被写入文件，作为 LSM Tree 的 L0。</li>
+<li>Flink Checpoint 执行时 Buffer 中的所有数据都会被写入文件，然后发送 Commit Message 到下游算子。</li>
+<li>下游的 Committer Operator 收到 Commit Message 后执行 commit 提交 Snapshot 文件、 Manifest List 文件和 Manifest 文件</li>
+<li>如果开启了同步 Compact，Flink 的 Paimon Sink 算子中的 CompactManager 会将 Compact 后的文件状态发送给下游的 Committer Operator，由其创建新的 Snapshot 文件、 Manifest List 文件和 Manifest 文件</li>
 </ol>
 <h4 id="源码分析">源码分析</h4>
 <h6 id="数据写入过程">数据写入过程</h6>

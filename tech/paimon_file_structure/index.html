@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【Paimon】文件结构 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
+				
+				<span class="menu__text">关于我</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【Paimon】文件结构</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-05-20T14:35:22&#43;08:00">2025-05-20</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/" rel="category">Categories</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p><a href="https://paimon.apache.org/docs/1.1/concepts/basic-concepts/">官方文档</a> 介绍了 Paimon 的文件结构，通过文件结构能够更好理解如何实现数据更新等操作</p>
+<img alt="全局文件结构" src="https://paimon.apache.org/docs/1.1/img/file-layout.png"><h2 id="1-文件结构">1. 文件结构</h2>
+<h4 id="11-snapshot">1.1 Snapshot</h4>
+<p>每个 Snapshot 文件对应该 Paimon 表的一个版本，向 Paimon 表写数据的 Flink 任务每一次 Checkpoint 触发 Paimon 表的 commit，创建对应的 Snapshot 文件。<br>
+如果开启了同步 Compact 每次 commit 会产生<code>增量写入</code>和 <code>Compact</code> 两个 Snapshot，如果是异步 Compact 则只产生一个 Snapshot<br>
+Snapshot 文件中包含：</p>
+<ul>
+<li>这一版本数据表的 schema file，定义表的结构</li>
+<li>这一版本数据表的 manifest list，定义表的数据</li>
+</ul>
+<h4 id="12-manifest-list-和-manifest-file">1.2 Manifest List 和 Manifest File</h4>
+<p>Manifest List 文件包含一批 Manifest File 文件名，Manifest File 里表示新增和删除了哪些 Data File 和 Changelog</p>
+<h4 id="13-data-file">1.3 Data File</h4>
+<p>Data File 是数据实际保存数据的文件，按 Partition 和 Bucket 划分到不同目录中</p>
+<h4 id="14-schema">1.4 Schema</h4>
+<p>Schema 文件定义了数据表的结构</p>
+<h4 id="15-index">1.5 Index</h4>
+<p>Index 文件对应表的 Index，Dynamitc Bucket 的表有 Dynamic Bucket Index，详见<a href="https://paimon.apache.org/docs/1.1/concepts/spec/tableindex/">官方文档</a></p>
+<h2 id="2-文件操作">2. 文件操作</h2>
+<p>根据 <a href="https://paimon.apache.org/docs/1.1/learn-paimon/understand-files/#understand-files">官方文档</a> 执行 SQL 命令观察文件变化</p>
+<h4 id="21-创建表格">2.1 创建表格</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-SQL" data-lang="SQL"><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">CATALOG</span> paimon <span style="color:#66d9ef">WITH</span> (
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;type&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;paimon&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#e6db74">&#39;warehouse&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;file:///home/zhuxingda/tmp/paimon&#39;</span>
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>USE <span style="color:#66d9ef">CATALOG</span> paimon;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> T (
+</span></span><span style="display:flex;"><span>  id BIGINT,
+</span></span><span style="display:flex;"><span>  a INT,
+</span></span><span style="display:flex;"><span>  b STRING,
+</span></span><span style="display:flex;"><span>  dt STRING <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;timestamp string in format yyyyMMdd&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span>(id, dt) <span style="color:#66d9ef">NOT</span> ENFORCED
+</span></span><span style="display:flex;"><span>) PARTITIONED <span style="color:#66d9ef">BY</span> (dt);
+</span></span></code></pre></div><p>对应路径下创建了 Schema 文件 schema/schema-0</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;version&#34;</span> : <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span> : <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;fields&#34;</span> : [ {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span> : <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span> : <span style="color:#e6db74">&#34;id&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span> : <span style="color:#e6db74">&#34;BIGINT NOT NULL&#34;</span>
+</span></span><span style="display:flex;"><span>  }, {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span> : <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span> : <span style="color:#e6db74">&#34;a&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span> : <span style="color:#e6db74">&#34;INT&#34;</span>
+</span></span><span style="display:flex;"><span>  }, {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span> : <span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span> : <span style="color:#e6db74">&#34;b&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span> : <span style="color:#e6db74">&#34;STRING&#34;</span>
+</span></span><span style="display:flex;"><span>  }, {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;id&#34;</span> : <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;name&#34;</span> : <span style="color:#e6db74">&#34;dt&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;type&#34;</span> : <span style="color:#e6db74">&#34;STRING NOT NULL&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;description&#34;</span> : <span style="color:#e6db74">&#34;timestamp string in format yyyyMMdd&#34;</span>
+</span></span><span style="display:flex;"><span>  } ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;highestFieldId&#34;</span> : <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;partitionKeys&#34;</span> : [ <span style="color:#e6db74">&#34;dt&#34;</span> ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;primaryKeys&#34;</span> : [ <span style="color:#e6db74">&#34;id&#34;</span>, <span style="color:#e6db74">&#34;dt&#34;</span> ],
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;options&#34;</span> : { },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;comment&#34;</span> : <span style="color:#e6db74">&#34;&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;timeMillis&#34;</span> : <span style="color:#ae81ff">1747730863469</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h4 id="22-写入数据">2.2 写入数据</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-SQL" data-lang="SQL"><span style="display:flex;"><span><span style="color:#66d9ef">INSERT</span> <span style="color:#66d9ef">INTO</span> T <span style="color:#66d9ef">VALUES</span> (<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">10001</span>, <span style="color:#e6db74">&#39;varchar00001&#39;</span>, <span style="color:#e6db74">&#39;20230511&#39;</span>);
+</span></span></code></pre></div><p>写入之后文件变化：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ ls
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;dt=20230511&#39;</span>   index   manifest   schema   snapshot
+</span></span></code></pre></div><h6 id="snapshot">snapshot</h6>
+<p>snapshot 目录下有三个文件：</p>
+<ul>
+<li>EARLIEST 最旧的 Snapshot ID</li>
+<li>LATEST 最新的 Snapshot ID</li>
+<li>snapshot-1</li>
+</ul>
+<p><code>snapshot-1</code> 文件内容：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;version&#34;</span> : <span style="color:#ae81ff">3</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;id&#34;</span> : <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 对应前面 schema/schema-0 文件 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;schemaId&#34;</span> : <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 对应后面 manifest/manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-0 文件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;baseManifestList&#34;</span> : <span style="color:#e6db74">&#34;manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-0&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 对应后面 manifest/manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-1 文件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;baseManifestListSize&#34;</span> : <span style="color:#ae81ff">884</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;deltaManifestList&#34;</span> : <span style="color:#e6db74">&#34;manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-1&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;deltaManifestListSize&#34;</span> : <span style="color:#ae81ff">1004</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 没有开启 changelog 所以为空
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;changelogManifestList&#34;</span> : <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 对应后面 index/index-manifest-b0b72e67-cd38-403b-8329-3d40376199a6-0 文件
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;indexManifest&#34;</span> : <span style="color:#e6db74">&#34;index-manifest-b0b72e67-cd38-403b-8329-3d40376199a6-0&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;commitUser&#34;</span> : <span style="color:#e6db74">&#34;390abd21-7e45-4f16-a749-d0a02dfb49f4&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;commitIdentifier&#34;</span> : <span style="color:#ae81ff">9223372036854775807</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// commit 类型为 APPEND，区别于 COMPACT
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;commitKind&#34;</span> : <span style="color:#e6db74">&#34;APPEND&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;timeMillis&#34;</span> : <span style="color:#ae81ff">1747739233763</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;logOffsets&#34;</span> : { },
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;totalRecordCount&#34;</span> : <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;deltaRecordCount&#34;</span> : <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;changelogRecordCount&#34;</span> : <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 建表语句里没有配置 watermak 所以为 Long.MIN_VALUE
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#f92672">&#34;watermark&#34;</span> : <span style="color:#ae81ff">-9223372036854775808</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h6 id="manifest">manifest</h6>
+<p>manifest 目录下有四个文件：</p>
+<ul>
+<li>index-manifest-b0b72e67-cd38-403b-8329-3d40376199a6-0 记录 Index 文件的 manifest 文件</li>
+<li>manifest-7b05638a-9361-406c-afa5-bcf4ec005d8a-0 Manifest 文件</li>
+<li>manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-0 Base Manifest List 文件</li>
+<li>manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-1 Delta Manifest List 文件</li>
+</ul>
+<p><code>index-manifest-b0b72e67-cd38-403b-8329-3d40376199a6-0</code> 文件内容</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_VERSION&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_KIND&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_PARTITION&#34;</span>: <span style="color:#e6db74">&#34;\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0010\u0000\u0000\u000020230511&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_BUCKET&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_INDEX_TYPE&#34;</span>: <span style="color:#e6db74">&#34;HASH&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 对应的 index 文件 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;_FILE_NAME&#34;</span>: <span style="color:#e6db74">&#34;index-a5b79ea6-71b5-48f2-bad5-b13cc28e3efe-0&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_FILE_SIZE&#34;</span>: <span style="color:#ae81ff">4</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_ROW_COUNT&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_DELETIONS_VECTORS_RANGES&#34;</span>: <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>manifest-7b05638a-9361-406c-afa5-bcf4ec005d8a-0</code> 文件内容</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_VERSION&#34;</span>: <span style="color:#ae81ff">2</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_KIND&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_PARTITION&#34;</span>: <span style="color:#e6db74">&#34;\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\u0000\u0000\u0000\u0010\u0000\u0000\u000020230511&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;_BUCKET&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// -1 为 Dynamic Bucket Mode
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;_TOTAL_BUCKETS&#34;</span>: <span style="color:#ae81ff">-1</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 对应的 Data Files
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#f92672">&#34;_FILE&#34;</span>: {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_FILE_NAME&#34;</span>: <span style="color:#e6db74">&#34;data-07a031d4-5b2c-4710-8fad-ebea22b4efcf-0.parquet&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_FILE_SIZE&#34;</span>: <span style="color:#ae81ff">1514</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_ROW_COUNT&#34;</span>: <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_MIN_KEY&#34;</span>: <span style="color:#e6db74">&#34;\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_MAX_KEY&#34;</span>: <span style="color:#e6db74">&#34;\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000&#34;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Data File 中 Key 的统计信息
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#f92672">&#34;_KEY_STATS&#34;</span>: {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_VALUE_STATS&#34;</span>: {
+</span></span><span style="display:flex;"><span>           <span style="color:#75715e">// ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_MIN_SEQUENCE_NUMBER&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_MAX_SEQUENCE_NUMBER&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_SCHEMA_ID&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_LEVEL&#34;</span>: <span style="color:#ae81ff">0</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_EXTRA_FILES&#34;</span>: [
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        ],
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_CREATION_TIME&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&#34;long&#34;</span>: <span style="color:#ae81ff">1747768033648</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_DELETE_ROW_COUNT&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&#34;long&#34;</span>: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_EMBEDDED_FILE_INDEX&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_FILE_SOURCE&#34;</span>: {
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&#34;int&#34;</span>: <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>        },
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_VALUE_STATS_COLS&#34;</span>: <span style="color:#66d9ef">null</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&#34;_EXTERNAL_PATH&#34;</span>: <span style="color:#66d9ef">null</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-0</code> 文件为空，因为是初始 Base Manifest List 所以没有对应的 Manifest File<br>
+<code>manifest-list-44f32000-5ecd-43b9-b3f1-21982b56f31c-1</code> 文件内指定了 manifest-7b05638a-9361-406c-afa5-bcf4ec005d8a-0 作为新增的 Manifest File</p>
+<h6 id="data-file">Data File</h6>
+<p>dt=20230511/bucket-0/data-07a031d4-5b2c-4710-8fad-ebea22b4efcf-0.parquet</p>
+<h4 id="23-追加写入数据">2.3 追加写入数据</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-SQL" data-lang="SQL"><span style="display:flex;"><span><span style="color:#66d9ef">INSERT</span> <span style="color:#66d9ef">INTO</span> T <span style="color:#66d9ef">VALUES</span> 
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">10002</span>, <span style="color:#e6db74">&#39;varchar00002&#39;</span>, <span style="color:#e6db74">&#39;20230502&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">10003</span>, <span style="color:#e6db74">&#39;varchar00003&#39;</span>, <span style="color:#e6db74">&#39;20230503&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">4</span>, <span style="color:#ae81ff">10004</span>, <span style="color:#e6db74">&#39;varchar00004&#39;</span>, <span style="color:#e6db74">&#39;20230504&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">10005</span>, <span style="color:#e6db74">&#39;varchar00005&#39;</span>, <span style="color:#e6db74">&#39;20230505&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">6</span>, <span style="color:#ae81ff">10006</span>, <span style="color:#e6db74">&#39;varchar00006&#39;</span>, <span style="color:#e6db74">&#39;20230506&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">7</span>, <span style="color:#ae81ff">10007</span>, <span style="color:#e6db74">&#39;varchar00007&#39;</span>, <span style="color:#e6db74">&#39;20230507&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">10008</span>, <span style="color:#e6db74">&#39;varchar00008&#39;</span>, <span style="color:#e6db74">&#39;20230508&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">9</span>, <span style="color:#ae81ff">10009</span>, <span style="color:#e6db74">&#39;varchar00009&#39;</span>, <span style="color:#e6db74">&#39;20230509&#39;</span>),
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">10</span>, <span style="color:#ae81ff">10010</span>, <span style="color:#e6db74">&#39;varchar00010&#39;</span>, <span style="color:#e6db74">&#39;20230510&#39;</span>);
+</span></span></code></pre></div><ul>
+<li>snapshot 新增 snapshot-2，baseManifestList 变成 manifest-list-56aee536-859b-45ea-bef2-5d322ea0e0b2-0，deltaManifestList 变成 manifest-list-56aee536-859b-45ea-bef2-5d322ea0e0b2-1</li>
+<li>manifest 新增：
+<ul>
+<li>manifest-list-56aee536-859b-45ea-bef2-5d322ea0e0b2-0 内容包含 manifest-7b05638a-9361-406c-afa5-bcf4ec005d8a-0，即前一次写入时创建的 Manifest File</li>
+<li>manifest-list-56aee536-859b-45ea-bef2-5d322ea0e0b2-1 内容包含 manifest-e789f1bb-60d5-4b8e-aa55-52789ecd06f6-0，即新一次写入创建的 Manifest File</li>
+<li>manifest-e789f1bb-60d5-4b8e-aa55-52789ecd06f6-0 内容包含从 dt=20230502 到 dt=20230510 新增的所有 Data Files</li>
+<li>index-manifest-d18b2c00-420f-457d-b8d3-183613f3c80d-0 内容包含 index 目录下新增的 Index Files</li>
+</ul>
+</li>
+</ul>
+<h4 id="24-删除数据">2.4 删除数据</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-SQL" data-lang="SQL"><span style="display:flex;"><span><span style="color:#66d9ef">SET</span> <span style="color:#e6db74">&#39;execution.runtime-mode&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;batch&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">DELETE</span> <span style="color:#66d9ef">FROM</span> T <span style="color:#66d9ef">WHERE</span> dt <span style="color:#f92672">&gt;=</span> <span style="color:#e6db74">&#39;20230503&#39;</span>;
+</span></span></code></pre></div><ul>
+<li>snapshot 新增 snapshot-3，baseManifestList 为 manifest-list-c2a06170-533b-4df8-9510-e37daa4e8ff4-0，deltaManifestList 为 manifest-list-c2a06170-533b-4df8-9510-e37daa4e8ff4-1，commitKind 依然是 APPEND</li>
+<li>manifest 新增
+<ul>
+<li>manifest-list-c2a06170-533b-4df8-9510-e37daa4e8ff4-0 内容包含 manifest-7b05638a-9361-406c-afa5-bcf4ec005d8a-0 和 manifest-e789f1bb-60d5-4b8e-aa55-52789ecd06f6-0，对应前面两次写入创建的 Manifest File</li>
+<li>manifest-list-c2a06170-533b-4df8-9510-e37daa4e8ff4-1 内容为 manifest-7b96fb3e-74b3-46ee-ad21-ef76151d7e09-0，对应删除时创建的 Manifest File</li>
+<li>manifest-7b96fb3e-74b3-46ee-ad21-ef76151d7e09-0 内容为从 dt=20230503 到 dt=dt=20230510 新增的 Data Files（删除也是新增数据文件）</li>
+</ul>
+</li>
+<li>Data Files dt=20230503 到 dt=20230510 新增一个数据文件</li>
+</ul>
+<h4 id="25-compact">2.5 Compact</h4>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-SQL" data-lang="SQL"><span style="display:flex;"><span><span style="color:#66d9ef">CALL</span> sys.compact(<span style="color:#e6db74">&#39;default.T&#39;</span>);
+</span></span></code></pre></div><ul>
+<li>snapshot 新增 snapshot-4，baseManifestList 为 manifest-list-ebca7993-71a3-447f-930c-4f9b6412cb1a-0，deltaManifestList 为 manifest-list-ebca7993-71a3-447f-930c-4f9b6412cb1a-1，commitKind 为 COMPACT</li>
+<li>manifest 新增
+<ul>
+<li>manifest-list-ebca7993-71a3-447f-930c-4f9b6412cb1a-0 内容包含 manifest-7b05638a-9361-406c-afa5-bcf4ec005d8a-0、manifest-e789f1bb-60d5-4b8e-aa55-52789ecd06f6-0、manifest-7b96fb3e-74b3-46ee-ad21-ef76151d7e09-0，对应前三次操作新增的所有 DataFiles</li>
+<li>manifest-list-ebca7993-71a3-447f-930c-4f9b6412cb1a-1 内容包含 manifest-7fd62edf-7d04-46ec-bde1-339899ab6139-0，_NUM_ADDED_FILES 为 1，_NUM_DELETED_FILES 为 19</li>
+<li>manifest-7fd62edf-7d04-46ec-bde1-339899ab6139-0 中将 19 个 Data Files 标记为删除（&quot;_KIND&quot;:1），并将 dt=20230502 中的唯一一个 Data File 的 LEVEL 从 0 升到 5</li>
+</ul>
+</li>
+<li>Data File 中数据文件没有变化</li>
+</ul>
+<h4 id="26-清理过期-snapshot">2.6 清理过期 Snapshot</h4>
+<p>清理过期 Snapshot 时才会真正删除被标记为删除的数据文件</p>
+		</div>
+		<footer class="post__footer">
+			
+<div class="post__tags tags clearfix">
+	<svg class="tags__badge icon icon-tag" width="16" height="16" viewBox="0 0 32 32"><path d="M4 0h8s2 0 4 2l15 15s2 2 0 4L21 31s-2 2-4 0L2 16s-2-2-2-4V3s0-3 4-3m3 10a3 3 0 0 0 0-6 3 3 0 0 0 0 6"/></svg>
+	<ul class="tags__list">
+		<li class="tags__item">
+			<a class="tags__link btn" href="/tags//" rel="tag"></a>
+		</li>
+	</ul>
+</div>
+		</footer>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/ray_data_hello_world/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【Ray】Ray Data 模块入门</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

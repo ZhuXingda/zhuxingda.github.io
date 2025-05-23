@@ -6,8 +6,22 @@
     <description>Recent content in Teches on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 29 Apr 2025 16:40:40 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 20 May 2025 14:35:22 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tech/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【Paimon】文件结构</title>
+      <link>https://blog.xingda.space/tech/paimon_file_structure/</link>
+      <pubDate>Tue, 20 May 2025 14:35:22 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/paimon_file_structure/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://paimon.apache.org/docs/1.1/concepts/basic-concepts/&#34;&gt;官方文档&lt;/a&gt; 介绍了 Paimon 的文件结构，通过文件结构能够更好理解如何实现数据更新等操作&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>【Ray】Ray Data 模块入门</title>
+      <link>https://blog.xingda.space/tech/ray_data_hello_world/</link>
+      <pubDate>Thu, 15 May 2025 15:39:42 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/ray_data_hello_world/</guid>
+      <description>&lt;p&gt;Ray 框架提供 Ray Data 模块用于分布式数据处理、模型批量离线推理、模型训练数据摄入等场景。&lt;/p&gt;</description>
+    </item>
     <item>
       <title>【Linux】Linux 服务器抓包记录</title>
       <link>https://blog.xingda.space/tech/tcpdump_usage_notebook/</link>
