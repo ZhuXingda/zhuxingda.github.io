@@ -3,7 +3,7 @@ title: "【LLM】LLM 原理入门"
 description: ""
 date: "2025-05-14T16:12:49+08:00"
 categories:
-  - "大语言模型"
+  - "LLM"
 tags:
   - "Transformer"
 draft: true

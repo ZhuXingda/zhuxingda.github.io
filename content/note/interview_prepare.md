@@ -86,3 +86,10 @@ https://xie.infoq.cn/article/a34cf4d2c6556d6c81be17303
 #### TCP/IP
 #### 
 ## 8. AI
+
+## 20250605
+1. Flink 背压源码分析
+2. Flink Shuffle
+3. Flink
+4. K8S 模块组成
+5. K8S Operator

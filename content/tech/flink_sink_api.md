@@ -25,7 +25,7 @@ Sink 和 SinkWriter 接口是初级接口，保证 at-least-once
 StatefulSinkWriter 可以不用在 SinkWriter.flush 时保证将所有数据写出，而是将其存入状态中   
 - **snapshotState** 执行 checkpoint 时被调用，将当前状态存入 State ()
 ## SupportsCommitter、CommittingSinkWriter 和 Committer
-在 Sink 接口的基础上继承 SupportsCommitter 表示该 Sink 支持二段提交，保证 `exactly-once`。   
+在 Sink 接口的基础上继承 `SupportsCommitter` 表示该 Sink 支持二段提交，保证 `exactly-once`。   
 - CommittingSinkWriter 负责输出数据，逻辑上视为 preCommits；
 - Committer 在 CommittingSinkWriter 输出后确保这段输出完全成功，执行 actually commits
 #### SupportsCommitter

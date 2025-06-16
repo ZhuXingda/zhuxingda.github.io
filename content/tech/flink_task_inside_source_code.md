@@ -7,6 +7,7 @@ categories:
   - "分布式系统"
 tags:
   - "Flink"
+draft: true
 ---
 Flink Task 的部署过程   
 <!--more-->

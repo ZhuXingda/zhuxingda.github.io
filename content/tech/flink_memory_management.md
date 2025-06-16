@@ -10,8 +10,6 @@ categories:
 Flink Taskmanager 的内存划分和调整策略。
 <!--more-->
 ### Flink Taskmanager 内存模型
-<img src="https://nightlies.apache.org/flink/flink-docs-release-1.20/fig/detailed-mem-model.svg" alt="Flink Taskmanager 内存模型" width="50%">
-
 整个内存模型物理上分为 **JVM Heap** 和 **Off-Heap** 两部分，逻辑上可以分为 **Total Process Memory** 和 **Total Flink Memory** 两部分。     
 **Total Process Memory** 为整个 Flink JVM 进程使用的全部内存
 

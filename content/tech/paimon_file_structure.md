@@ -4,9 +4,9 @@ description: ""
 date: "2025-05-20T14:35:22+08:00"
 thumbnail: ""
 categories:
-  - ""
+  - "分布式系统"
 tags:
-  - ""
+  - "Paimon"
 ---
 [官方文档](https://paimon.apache.org/docs/1.1/concepts/basic-concepts/) 介绍了 Paimon 的文件结构，通过文件结构能够更好理解如何实现数据更新等操作
 <!--more-->
@@ -25,7 +25,7 @@ Data File 是数据实际保存数据的文件，按 Partition 和 Bucket 划分
 #### 1.4 Schema
 Schema 文件定义了数据表的结构
 #### 1.5 Index
-Index 文件对应表的 Index，Dynamitc Bucket 的表有 Dynamic Bucket Index，详见[官方文档](https://paimon.apache.org/docs/1.1/concepts/spec/tableindex/)
+Index 文件对应表的 Index，Dynamic Bucket 的表有 Dynamic Bucket Index，详见[官方文档](https://paimon.apache.org/docs/1.1/concepts/spec/tableindex/)
 ## 2. 文件操作
 根据 [官方文档](https://paimon.apache.org/docs/1.1/learn-paimon/understand-files/#understand-files) 执行 SQL 命令观察文件变化
 #### 2.1 创建表格
@@ -232,3 +232,8 @@ CALL sys.compact('default.T');
 - Data File 中数据文件没有变化
 #### 2.6 清理过期 Snapshot
 清理过期 Snapshot 时才会真正删除被标记为删除的数据文件
+#### 2.7 测试
+## 3. 总结
+#### 3.1 写数据
+写数据的过程可以概括为：
+1. 每次

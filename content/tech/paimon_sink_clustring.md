@@ -7,7 +7,6 @@ categories:
   - "分布式系统"
 tags:
   - "Paimon"
-  - "Flink"
 ---
 Paimon （1.0）对 Bucket Unaware 的 Append Only Table 支持写入时排序以提升查询效率，同时对分 Bucket 的 Append Only Table和 Dynamic Bucket 的 Primary Key Table ，提供了异步的 Sort Compact 支持。
 <!--more-->
