@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>数据仓库 on Zhu Xingda</title>
+    <link>https://blog.xingda.space/categories/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93/</link>
+    <description>Recent content in 数据仓库 on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Tue, 03 Jun 2025 12:07:16 +0800</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/categories/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【数据仓库】数仓建模理论</title>
+      <link>https://blog.xingda.space/tech/data_warehouse_model_theory/</link>
+      <pubDate>Tue, 03 Jun 2025 12:07:16 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/data_warehouse_model_theory/</guid>
+      <description>&lt;p&gt;数仓建模和分层是根据业务的需要去组织、管理、维护数据，在以往工作中对这块了解较少，现在重新梳理一次&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

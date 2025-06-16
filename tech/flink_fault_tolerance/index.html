@@ -98,14 +98,15 @@
 <h4 id="flink-容错机制的实现原理">Flink 容错机制的实现原理</h4>
 <ol>
 <li>Flink 程序的状态（<strong>state</strong>）保存在 state backend 中；</li>
-<li>Flink 定时执行检查点（<strong>checkpoint</strong>）时，会对所有算子的状态做快照（<strong>snapshot</strong>），并把这些快照持久化保存到一个稳定的地方（比如分布式文件系统）；</li>
+<li>Flink 定时执行检查点（<strong>checkpoint</strong>）时，会对所有算子的状态做快照（<strong>snapshot</strong>），并把这些快照持久化保存到 checkpoint storage（比如分布式文件系统）；</li>
 <li>当任务出现故障，Flink 会重启任务并从最新的快照处重新执行任务，从而实现容错。</li>
 </ol>
 <h4 id="状态快照的执行过程">状态快照的执行过程</h4>
 <ol>
 <li>Taskmananger 从 Jobmanager 接收到执行 <strong>checkpoint</strong> 的指令后，会让所有 source 算子记录当前的 <strong>offsets</strong>，并在数据流中插入一个编号的 <strong>checkpoint barrier</strong>;</li>
-<li><strong>checkpoint barrier</strong> 会沿着数据流传递到所有的算子，各算子在接收到之后执行 <strong>state snapshot</strong>，执行完之后继续将 barrier 向下游传递。</li>
+<li><strong>checkpoint barrier</strong> 会沿着数据流传递到所有的算子，各算子在接收到之后执行 <strong>state snapshot</strong>，执行完之后继续将 barrier 向下游传递；</li>
 <li>有两个输入流的算子（如CoprocessFunction）会执行屏障对齐 (<strong>barrier aligment</strong>)，使快照包含两个输入流在 <strong>checkpoint barrier</strong> 之前的所有 events 产生的 state；</li>
+<li></li>
 </ol>
 <h4 id="状态快照的恢复过程">状态快照的恢复过程</h4>
 <ol>
@@ -188,7 +189,8 @@
 <h4 id="sourcestreamtask-触发-checkpoint">SourceStreamTask 触发 checkpoint</h4>
 <ol>
 <li>Task#triggerCheckpointBarrier</li>
-<li>SourceOperatorStreamTask#triggerCheckpointAsync</li>
+<li>SourceOperatorStreamTask#triggerCheckpointAsync<br>
+这个接口继承自 <code>CheckpointableTask#triggerCheckpointAsync</code> 用于开启整个任务的 checkpoint，向数据流中注入 checkpoint barrier，后面普通 StreamTask 接收到 checkpoint barrier 后触发调用的是 <code>CheckpointableTask#triggerCheckpointOnBarrier</code> 接口</li>
 <li>SourceOperatorStreamTask#triggerCheckpointNowAsync<br>
 如果 Source 的 Source Reader 不是 ExternallyInducedSourceReader 则直接执行异步 checkpoint</li>
 <li>StreamTask#triggerUnfinishedChannelsCheckpoint<br>
@@ -197,14 +199,12 @@
 CheckpointBarrierHandler 接口有两个实现：
 <ul>
 <li>CheckpointBarrierTracker 对应 checkpoint mode 为 <code>at-least-once</code>，不会阻塞 InputChannel 的输入，直到所有 InputChannel 都收到 barrier 调用 CheckpointBarrierHandler#notifyCheckpoint 触发 checkpoint 执行</li>
-<li>SingleCheckpointBarrierHandler 对应 checkpoint mode 为 <code>exactly-once</code>，接收和记录 barriers 并交由 <strong>BarrierHandlerState</strong> 决定何时触发 checkpoint 以及对 Inputchannel 的操作</li>
-</ul>
-</li>
-<li>SingleCheckpointBarrierHandler#processBarrier <br>
-SingleCheckpointBarrierHandler 支持 <code>aligned</code> 和 <code>unaligned</code> 两种 checkpoint 模式</li>
-<li>SingleCheckpointBarrierHandler#markCheckpointAlignedAndTransformState <br>
-将 barrier 交由 BarrierHandlerState 处理并记录 InputChannel 的 barrier 对齐情况</li>
-<li>BarrierHandlerState#barrierReceived<br>
+<li>SingleCheckpointBarrierHandler 对应 checkpoint mode 为 <code>exactly-once</code>，接收和记录 barriers 并交由 <code>BarrierHandlerState</code> 决定何时触发 checkpoint 以及对 Inputchannel 的操作  <br>
+5.1 SingleCheckpointBarrierHandler#processBarrier <br>
+SingleCheckpointBarrierHandler 支持 <code>aligned</code> 和 <code>unaligned</code> 两种 checkpoint 模式
+5.2 SingleCheckpointBarrierHandler#markCheckpointAlignedAndTransformState <br>
+将 barrier 交由 BarrierHandlerState 处理并记录 InputChannel 的 barrier 对齐情况<br>
+5.3 BarrierHandlerState#barrierReceived<br>
 BarrierHandlerState 接收 barrier 并根据 barrier 转换自身的类型，由不同类型代表算子处理 checkpoint 时的多个状态：
 <ul>
 <li><strong>WaitingForFirstBarrier</strong> <code>aligned</code> 模式下等待第一个 barrier</li>
@@ -212,37 +212,24 @@ BarrierHandlerState 接收 barrier 并根据 barrier 转换自身的类型，由
 <li><strong>AlternatingWaitingForFirstBarrier</strong> <code>aligned</code> 模式下等待第一个 barrier，有超时限制</li>
 <li><strong>AlternatingCollectingBarriers</strong> <code>aligned</code> 模式下等待所有 barrier，有超时限制</li>
 <li><strong>AlternatingWaitingForFirstBarrierUnaligned</strong> <code>unaligned</code> 模式下等待第一个 barrier，有超时限制</li>
-<li><strong>AlternatingCollectingBarriersUnaligned</strong> <code>unaligned</code> 模式下等待所有 barrier，有超时限制</li>
+<li><strong>AlternatingCollectingBarriersUnaligned</strong> <code>unaligned</code> 模式下等待所有 barrier，有超时限制
+5.4 AbstractAlignedBarrierHandlerState#barrierReceived  以 <code>aligned</code> 模式为例<br>
+SourceTask 并不暂停 InputChannel 的输入，所有 barrier 都收到后触发全局 checkpoint<br>
+5.5 AbstractAlignedBarrierHandlerState#triggerGlobalCheckpoint<br>
+执行全局 checkpoint ，完成后恢复所有 InputChannel 的输入，并进入 WaitingForFirstBarrier 的状态 <br>
+5.6 SingleCheckpointBarrierHandler#triggerCheckpoint</li>
 </ul>
 </li>
-<li>AbstractAlignedBarrierHandlerState#barrierReceived  以 <code>aligned</code> 模式为例<br>
-SourceTask 并不暂停 InputChannel 的输入，所有 barrier 都收到后触发全局 checkpoint</li>
-<li>AbstractAlignedBarrierHandlerState#triggerGlobalCheckpoint<br>
-执行全局 checkpoint ，完成后恢复所有 InputChannel 的输入，并进入 WaitingForFirstBarrier 的状态</li>
-<li>SingleCheckpointBarrierHandler#triggerCheckpoint</li>
+</ul>
+</li>
 <li>CheckpointBarrierHandler#notifyCheckpoint<br>
 回调 StreamTask 执行 checkpoint</li>
+<li>CheckpointableTask#triggerCheckpointOnBarrier</li>
 </ol>
-<h4 id="streamtask-执行-checkpoint">StreamTask 执行 checkpoint</h4>
-<ol>
-<li>StreamTask#triggerCheckpointOnBarrier</li>
-<li>StreamTask#performCheckpoint</li>
-<li>SubtaskCheckpointCoordinatorImpl#checkpointState
-对所有 SubTask 执行 checkpoint
-<ul>
-<li>OperatorChain#prepareSnapshotPreBarrier 所有 SubTask 执行 StreamOperator#prepareSnapshotPreBarrier</li>
-<li>OperatorChain#broadcastEvent 向所有 SubTask 的下游广播 CheckpointBarrier</li>
-<li>ChannelStateWriter#finishOutput 如果是 unaligned 的 checkpoint 停止持久化 channel state</li>
-<li>SubtaskCheckpointCoordinatorImpl#takeSnapshotSync 所有 SubTask 执行 OperatorChain#snapshotState，这一步会传入 CheckpointStreamFactory 用于输出 State 持久化后的数据流，根据配置数据流会被写入不同的 State Backend</li>
-<li>SubtaskCheckpointCoordinatorImpl#finishAndReportAsync
-SubTask 执行 checkpoint 结束后通知 JobMaster</li>
-</ul>
-</li>
-</ol>
-<h4 id="streamtask-接收上游的-barrier">StreamTask 接收上游的 barrier</h4>
+<h4 id="checkpoint-barrier-在上下游-streamtask-之间的传递">checkpoint barrier 在上下游 StreamTask 之间的传递</h4>
 <ol>
 <li>OperatorChain#broadcastEvent <br>
-遍历所有 RecordWrters 广播 CheckpointBarrier</li>
+遍历所有 RecordWriters 广播 CheckpointBarrier</li>
 <li>RecordWriterOutput#broadcastEvent</li>
 <li>RecordWriter#broadcastEvent</li>
 <li>ResultPartitionWriter#broadcastEvent <br>
@@ -252,8 +239,28 @@ SubTask 执行 checkpoint 结束后通知 JobMaster</li>
 <li>CheckpointedInputGate#pollNext</li>
 <li>CheckpointedInputGate#handleEvent</li>
 <li>CheckpointBarrierHandler#processBarrier<br>
-到这一步就和前面 SourceStreamTask 触发 checkpoint 一样了</li>
+&hellip; 这里同前面 SourceStreamTask 第 5 步一样</li>
+<li>CheckpointableTask#triggerCheckpointOnBarrier</li>
 </ol>
+<h4 id="streamtask-执行-checkpoint">StreamTask 执行 checkpoint</h4>
+<ol>
+<li>StreamTask#triggerCheckpointOnBarrier</li>
+<li>StreamTask#performCheckpoint</li>
+<li>SubtaskCheckpointCoordinatorImpl#checkpointState
+对所有 TaskOperators 执行 checkpoint
+3.1 OperatorChain#prepareSnapshotPreBarrier 遍历所有 StreamOperator 依次执行 <code>StreamOperator#prepareSnapshotPreBarrier</code><br>
+3.2 OperatorChain#broadcastEvent 向所有 SubTask 的下游广播 CheckpointBarrier<br>
+3.3 ChannelStateWriter#finishOutput 如果是 unaligned 的 checkpoint 停止持久化 channel state<br>
+3.4 SubtaskCheckpointCoordinatorImpl#takeSnapshotSync 执行 OperatorChain#snapshotState，这一步会传入 CheckpointStreamFactory 用于输出 State 持久化后的数据流，根据配置数据流会被写入不同的 State Backend<br>
+3.5 SubtaskCheckpointCoordinatorImpl#finishAndReportAsync <br>
+SubTask 执行 checkpoint 结束后通知 JobMaster</li>
+<li>OperatorChain#snapshotState<br>
+从 3.4 往下执行，遍历 OperatorChain 里的所有 StreamOperator，执行两个持久化：<br>
+a. StreamOperator#snapshotState StreamOperator 的状态持久化；
+b. 如果开启了 unaligned checkpoint 或者 checkpoint 允许超时，则需要对 OperatorChain 的 channel state 持久化：被遍历的 StreamOperator 如果是 OperatorChain 的 main operator 或者 tail operator，对其 <code>InputChannel State</code> 或 <code>ResultSubPartition State</code> 做持久化</li>
+</ol>
+<h4 id="streamoperator-执行-preparesnapshot-和-snapshotstate">StreamOperator 执行 prepareSnapshot 和 snapshotState</h4>
+<p>见<a href="tech/flink_stream_operator_state_manage">Flink Stream Operator 状态控制</a></p>
 <h4 id="jobmaster-确认-checkpoint-执行结果">JobMaster 确认 checkpoint 执行结果</h4>
 <ol>
 <li>AsyncCheckpointRunnable#run</li>

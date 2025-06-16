@@ -116,7 +116,7 @@
 <li><strong>snapshotState</strong> 执行 checkpoint 时被调用，将当前状态存入 State ()</li>
 </ul>
 <h2 id="supportscommittercommittingsinkwriter-和-committer">SupportsCommitter、CommittingSinkWriter 和 Committer</h2>
-<p>在 Sink 接口的基础上继承 SupportsCommitter 表示该 Sink 支持二段提交，保证 <code>exactly-once</code>。</p>
+<p>在 Sink 接口的基础上继承 <code>SupportsCommitter</code> 表示该 Sink 支持二段提交，保证 <code>exactly-once</code>。</p>
 <ul>
 <li>CommittingSinkWriter 负责输出数据，逻辑上视为 preCommits；</li>
 <li>Committer 在 CommittingSinkWriter 输出后确保这段输出完全成功，执行 actually commits</li>

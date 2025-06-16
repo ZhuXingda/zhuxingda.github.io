@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html class="no-js" lang="zh-cn">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>【数据仓库】数仓建模理论 - Zhu Xingda</title>
+	<script>(function(d,e){d[e]=d[e].replace("no-js","js");})(document.documentElement,"className");</script>
+	<meta name="description" content="">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="dns-prefetch" href="//fonts.googleapis.com">
+	<link rel="dns-prefetch" href="//fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700">
+
+	<link rel="stylesheet" href="/css/style.css">
+	
+
+	<link rel="shortcut icon" href="/favicon.ico">
+		
+		
+</head>
+<body class="body">
+	<div class="container container--outer">
+		<header class="header">
+	<div class="container header__container">
+		
+	<div class="logo">
+		<a class="logo__link" href="/" title="上下而求索" rel="home">
+			<div class="logo__item logo__text">
+					<div class="logo__title">上下而求索</div>
+					<div class="logo__tagline">朱兴达的个人博客</div>
+				</div>
+		</a>
+	</div>
+		
+<nav class="menu">
+	<button class="menu__btn" aria-haspopup="true" aria-expanded="false" tabindex="0">
+		<span class="menu__btn-title" tabindex="-1">菜单</span>
+	</button>
+	<ul class="menu__list">
+		<li class="menu__item">
+			<a class="menu__link" href="/">
+				
+				<span class="menu__text">主页</span>
+				
+			</a>
+		</li>
+		<li class="menu__item menu__item--active">
+			<a class="menu__link" href="/tech/">
+				
+				<span class="menu__text">技术</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/note/">
+				
+				<span class="menu__text">笔记本</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="">
+				
+				<span class="menu__text">生活</span>
+				
+			</a>
+		</li>
+		<li class="menu__item">
+			<a class="menu__link" href="/%E5%85%B3%E4%BA%8E%E6%88%91/">
+				
+				<span class="menu__text">关于我</span>
+				
+			</a>
+		</li>
+	</ul>
+</nav>
+
+	</div>
+</header>
+		<div class="wrapper flex">
+			<div class="primary">
+			
+<main class="main" role="main">
+	<article class="post">
+		<header class="post__header">
+			<h1 class="post__title">【数据仓库】数仓建模理论</h1>
+			<div class="post__meta meta">
+<div class="meta__item-datetime meta__item">
+	<svg class="meta__icon icon icon-time" width="16" height="14" viewBox="0 0 30 28"><path d="M15 0a14 14 0 1 1 0 28 1 1 0 0 1 0-28m0 3a3 3 0 1 0 0 22 3 3 0 0 0 0-22m1 4h-2v8.4l6.8 4.4L22 18l-6-3.8z"/></svg><time class="meta__text" datetime="2025-06-03T12:07:16&#43;08:00">2025-06-03</time></div><div class="meta__item-categories meta__item"><svg class="meta__icon icon icon-category" width="16" height="16" viewBox="0 0 16 16"><path d="m7 2 1 2h8v11H0V2z"/></svg><span class="meta__text"><a class="meta__link" href="/categories/%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93/" rel="category">数据仓库</a>
+	</span>
+</div></div>
+		</header>
+		
+		
+		<div class="content post__content clearfix">
+			<p>数仓建模和分层是根据业务的需要去组织、管理、维护数据，在以往工作中对这块了解较少，现在重新梳理一次</p>
+<h4 id="建模理论">建模理论</h4>
+<ul>
+<li><code>范式建模</code>  OLTP 利用关系数据库处理业务数据以支撑业务运行，基于此 Bill Inom 提出<code>范式建模</code>也称为<code>实体关系（ER）模型</code>，遵循第三范式（3NF）或更高范式以保障数据规范和减少冗余</li>
+<li><code>维度建模</code> Ralph Kimball 提出从分析决策的需求出发构建模型，通过构建事实表和维度表来组织数据。事实表存储业务活动的度量值，维度表则提供分析这些度量值所需的上下文信息。维度建模关注更快速地完成需求分析和较好的大规模复杂查询的响应性能</li>
+</ul>
+<h4 id="数仓分层">数仓分层</h4>
+<p>数仓构建过程中需要进行分层处理，以明确数据的作用域提升数据分析的效率。根据业务不同存在不同分层策略，这里记录一些常见的分层策略</p>
+<ul>
+<li><code>数据引入层</code> ODS（Operation Data Store）：存放数仓源头的原始数据，对结构化数据于源系统保持一致，对非结构化数据进行结构化处理后保存，作为数仓后续数据加工的来源</li>
+<li><code>数据公共层</code> CDM（Common Data Model）：包含DWD、DWS、DIM层，由ODS层数据 加工而成。主要完成数据加工与整合，建立一致性的维度，构建可复用的面向分析和 统计的明细事实表，以及汇总公共粒度的指标
+<ul>
+<li><code>明细粒度事实层</code> DWD（Data Warehouse Detail）：以业务过程作为建模驱动，基于每个具体的业务过程特点，构建最细粒度的明细层事实表。可以结合企业的数据使用特点，将明细事实表的某些重要维度属性字段做适当冗余，即宽表化处理。明细粒度事实层的表通常也被称为逻辑事实表。</li>
+<li><code>公共汇总粒度事实层</code> DWS（Data Warehouse Summary）：以分析的主题对象作为建模驱动，基于上层的应用和产品的指标需求，构建公共粒度的汇总指标事实表，以宽表化手段物理化模型。构建命名规范、口径一致的统计指标，为上层提供公共指标，建立汇总宽表。公共汇总粒度事实层的表通常也被称为汇总逻辑表，用于存放派生指标数据。</li>
+<li><code>公共维度层</code> DIM（Dimension）：基于维度建模理念，建立整个企业的一致性维度。维度数据描述业务实体的属性，为事实数据提供上下文</li>
+</ul>
+</li>
+<li><code>数据应用层</code> ADS（Application Data Service）：存放数据产品个性化的统计指标数据，根据 CDM 与 ODS 层加工生成。</li>
+</ul>
+<h4 id="事实表和维度表">事实表和维度表</h4>
+<ul>
+<li><code>事实表</code> 是对分析主题的度量，事实表一般包含大量的数据并随时间不断地增长，通常分为三类：
+<ul>
+<li><code>事务事实表</code> 用来描述业务过程，跟踪空间或时间上某点的度量事件，保存的是最原子的数据，也称为原子事实表</li>
+<li><code>周期快照事实表</code> 以具有规律性的、可预见的时间间隔记录事实</li>
+<li><code>累积快照事实表</code> 用来表述过程开始和结束之间的关键步骤事件，覆盖过程的整个生命周期，通常具有多个日期字段来记录关键时间点。当累积快照事实表随着生命周期不断变化时，记录也会随着过程的变化而被修改</li>
+</ul>
+</li>
+<li><code>维度表</code> 描述业务的背景信息，主要记录业务事实中的各类维度属性，比如用户维度、商品维度、地域维度</li>
+</ul>
+<h4 id="维度建模模型">维度建模模型</h4>
+<h6 id="星型模型">星型模型</h6>
+<p>星型模型由一张事实表和 0 至多张维度表组成，事实表与维表通过主键和外键关联，维表之间互相无关联，星型模型的维表可能存在冗余</p>
+<h6 id="雪花模型">雪花模型</h6>
+<p>雪花模型是对星型模型的扩展，区别是多个维表可以通过同一个维表与事实表关联，减少了数据冗余但降低了查询效率</p>
+<h6 id="星座模型">星座模型</h6>
+<p>星座模型也是对星型模型的扩展，区别是可以存在多个事实表并通过维表相关联，用于数据关系更复杂的场景</p>
+<h2 id="参考">参考</h2>
+<p><a href="https://help.aliyun.com/zh/dataworks/use-cases/data-layer">https://help.aliyun.com/zh/dataworks/use-cases/data-layer</a></p>
+		</div>
+	</article>
+</main>
+
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+<script>
+  const gitalk = new Gitalk({
+    clientID: '5e216fcfdd8cdb462b85',
+    clientSecret: '10659215d325c41513a047c07f576e345e697b3b',
+    repo: 'zhuxingda.github.io',
+    owner: 'ZhuXingda',
+    admin: ['ZhuXingda'],
+    id: location.pathname, 
+    distractionFreeMode: false 
+  });
+  (function() {
+    if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+      document.getElementById('gitalk-container').innerHTML = 'Gitalk comments not available by default when the website is previewed locally.';
+      return;
+    }
+    gitalk.render('gitalk-container');
+  })();
+</script>
+
+<nav class="pager flex">
+	<div class="pager__item pager__item--prev">
+		<a class="pager__link" href="/tech/llm_model_local_deploy/" rel="prev">
+			<span class="pager__subtitle">«&thinsp;上一篇</span>
+			<p class="pager__title">【LLM】VLLM 单卡部署 Qwen3-4B</p>
+		</a>
+	</div>
+</nav>
+
+
+			</div>
+			
+		</div>
+		<footer class="footer">
+	<div class="container footer__container flex">
+		
+		<div class="footer__copyright">
+			&copy; 2025 Zhu Xingda.
+			<span class="footer__copyright-credits">基于 <a href="https://gohugo.io/" rel="nofollow noopener" target="_blank">Hugo</a> 引擎和 <a href="https://github.com/Vimux/Mainroad/" rel="nofollow noopener" target="_blank">Mainroad</a> 主题</span>
+		</div>
+	</div>
+</footer>
+	</div>
+<script async defer src="/js/menu.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML" async></script>
+</body>
+</html>

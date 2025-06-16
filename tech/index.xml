@@ -6,8 +6,22 @@
     <description>Recent content in Teches on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 20 May 2025 14:35:22 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 03 Jun 2025 12:07:16 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tech/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【数据仓库】数仓建模理论</title>
+      <link>https://blog.xingda.space/tech/data_warehouse_model_theory/</link>
+      <pubDate>Tue, 03 Jun 2025 12:07:16 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/data_warehouse_model_theory/</guid>
+      <description>&lt;p&gt;数仓建模和分层是根据业务的需要去组织、管理、维护数据，在以往工作中对这块了解较少，现在重新梳理一次&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>【LLM】VLLM 单卡部署 Qwen3-4B</title>
+      <link>https://blog.xingda.space/tech/llm_model_local_deploy/</link>
+      <pubDate>Fri, 23 May 2025 13:44:34 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/llm_model_local_deploy/</guid>
+      <description>&lt;p&gt;尝试在个人显卡上部署一个 Qwen-4B 模型&lt;/p&gt;</description>
+    </item>
     <item>
       <title>【Paimon】文件结构</title>
       <link>https://blog.xingda.space/tech/paimon_file_structure/</link>
@@ -28,13 +42,6 @@
       <pubDate>Tue, 29 Apr 2025 16:40:40 +0800</pubDate>
       <guid>https://blog.xingda.space/tech/tcpdump_usage_notebook/</guid>
       <description>&lt;p&gt;经常遇到需要在服务器抓包分析问题的情况，这里记录一下常用的抓包工具。&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>【Flink】Flink 任务执行和部署原理</title>
-      <link>https://blog.xingda.space/tech/flink_job_execute_deployment/</link>
-      <pubDate>Thu, 24 Apr 2025 17:22:01 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/flink_job_execute_deployment/</guid>
-      <description>&lt;p&gt;分析 Flink 任务完整的提交过程，主要关注在这个过程中任务的格式变化和调度执行。&lt;/p&gt;</description>
     </item>
     <item>
       <title>ORC 和 Parquet 文件格式</title>
@@ -65,13 +72,6 @@
       <description>&lt;p&gt;Flink Watermark 的产生原理和传递过程&lt;/p&gt;</description>
     </item>
     <item>
-      <title>【Flink】Flink Task 和 OperatorChain 源码</title>
-      <link>https://blog.xingda.space/tech/flink_task_inside_source_code/</link>
-      <pubDate>Sun, 23 Mar 2025 12:26:28 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/flink_task_inside_source_code/</guid>
-      <description>&lt;p&gt;Flink Task 的部署过程&lt;/p&gt;</description>
-    </item>
-    <item>
       <title>【Kubernetes】记录一些在使用 Kubernetes 时遇到的问题</title>
       <link>https://blog.xingda.space/tech/kubernetes_deploy_nodebook/</link>
       <pubDate>Tue, 25 Feb 2025 16:57:16 +0800</pubDate>
@@ -80,10 +80,10 @@
     </item>
     <item>
       <title>【Paimon】Paimon 主键表和 LSM Tree</title>
-      <link>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</link>
+      <link>https://blog.xingda.space/tech/paimon_primary_key_table_and_lsm_tree/</link>
       <pubDate>Wed, 19 Feb 2025 14:37:57 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/paimon_table_with_key_and_lsm_tree/</guid>
-      <description>&lt;p&gt;Paimon 以数据表是否有主键，将表分为 &lt;code&gt;Append Only Table&lt;/code&gt; 和 &lt;code&gt;Primary Key Table&lt;/code&gt;，对数据的操作前者只支持 Insert，后者还支持 Update 和 Delete，本文简单分析 Paimon 主键表的原理和格式&lt;/p&gt;</description>
+      <guid>https://blog.xingda.space/tech/paimon_primary_key_table_and_lsm_tree/</guid>
+      <description>&lt;p&gt;Paimon 以数据表是否有主键，将表分为 &lt;code&gt;Append Only Table&lt;/code&gt; 和 &lt;code&gt;Primary Key Table&lt;/code&gt;，对数据的操作前者只支持 Insert，后者还支持 Update 和 Delete，本文主要分析 Paimon 主键表的结构和实现原理&lt;/p&gt;</description>
     </item>
     <item>
       <title>【Paimon】Paimon 表排序</title>

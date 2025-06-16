@@ -6,35 +6,14 @@
     <description>Recent content in Flink on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 24 Apr 2025 17:22:01 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 25 Mar 2025 19:27:37 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/flink/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>【Flink】Flink 任务执行和部署原理</title>
-      <link>https://blog.xingda.space/tech/flink_job_execute_deployment/</link>
-      <pubDate>Thu, 24 Apr 2025 17:22:01 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/flink_job_execute_deployment/</guid>
-      <description>&lt;p&gt;分析 Flink 任务完整的提交过程，主要关注在这个过程中任务的格式变化和调度执行。&lt;/p&gt;</description>
-    </item>
     <item>
       <title>【Flink】Flink Watermark 产生和传递原理</title>
       <link>https://blog.xingda.space/tech/flink_watermark_source_code/</link>
       <pubDate>Tue, 25 Mar 2025 19:27:37 +0800</pubDate>
       <guid>https://blog.xingda.space/tech/flink_watermark_source_code/</guid>
       <description>&lt;p&gt;Flink Watermark 的产生原理和传递过程&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>【Flink】Flink Task 和 OperatorChain 源码</title>
-      <link>https://blog.xingda.space/tech/flink_task_inside_source_code/</link>
-      <pubDate>Sun, 23 Mar 2025 12:26:28 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/flink_task_inside_source_code/</guid>
-      <description>&lt;p&gt;Flink Task 的部署过程&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>【Paimon】Paimon 表排序</title>
-      <link>https://blog.xingda.space/tech/paimon_sink_clustring/</link>
-      <pubDate>Wed, 19 Feb 2025 11:14:58 +0800</pubDate>
-      <guid>https://blog.xingda.space/tech/paimon_sink_clustring/</guid>
-      <description>&lt;p&gt;Paimon （1.0）对 Bucket Unaware 的 Append Only Table 支持写入时排序以提升查询效率，同时对分 Bucket 的 Append Only Table和 Dynamic Bucket 的 Primary Key Table ，提供了异步的 Sort Compact 支持。&lt;/p&gt;</description>
     </item>
     <item>
       <title>【Flink】Flink Data Sink API</title>

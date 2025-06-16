@@ -6,8 +6,29 @@
     <description>Recent content in Tags on Zhu Xingda</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Thu, 15 May 2025 15:39:42 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 23 May 2025 13:44:34 +0800</lastBuildDate>
     <atom:link href="https://blog.xingda.space/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Qwen3</title>
+      <link>https://blog.xingda.space/tags/qwen3/</link>
+      <pubDate>Fri, 23 May 2025 13:44:34 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/qwen3/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>VLLM</title>
+      <link>https://blog.xingda.space/tags/vllm/</link>
+      <pubDate>Fri, 23 May 2025 13:44:34 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/vllm/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Paimon</title>
+      <link>https://blog.xingda.space/tags/paimon/</link>
+      <pubDate>Tue, 20 May 2025 14:35:22 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/paimon/</guid>
+      <description></description>
+    </item>
     <item>
       <title>Ray</title>
       <link>https://blog.xingda.space/tags/ray/</link>
@@ -27,13 +48,6 @@
       <link>https://blog.xingda.space/tags/network/</link>
       <pubDate>Tue, 29 Apr 2025 16:40:40 +0800</pubDate>
       <guid>https://blog.xingda.space/tags/network/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Flink</title>
-      <link>https://blog.xingda.space/tags/flink/</link>
-      <pubDate>Thu, 24 Apr 2025 17:22:01 +0800</pubDate>
-      <guid>https://blog.xingda.space/tags/flink/</guid>
       <description></description>
     </item>
     <item>
@@ -65,17 +79,17 @@
       <description></description>
     </item>
     <item>
+      <title>Flink</title>
+      <link>https://blog.xingda.space/tags/flink/</link>
+      <pubDate>Tue, 25 Mar 2025 19:27:37 +0800</pubDate>
+      <guid>https://blog.xingda.space/tags/flink/</guid>
+      <description></description>
+    </item>
+    <item>
       <title>Kubernetes</title>
       <link>https://blog.xingda.space/tags/kubernetes/</link>
       <pubDate>Tue, 25 Feb 2025 16:57:16 +0800</pubDate>
       <guid>https://blog.xingda.space/tags/kubernetes/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Paimon</title>
-      <link>https://blog.xingda.space/tags/paimon/</link>
-      <pubDate>Wed, 19 Feb 2025 14:37:57 +0800</pubDate>
-      <guid>https://blog.xingda.space/tags/paimon/</guid>
       <description></description>
     </item>
     <item>

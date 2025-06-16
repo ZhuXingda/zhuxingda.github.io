@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Qwen3 on Zhu Xingda</title>
+    <link>https://blog.xingda.space/tags/qwen3/</link>
+    <description>Recent content in Qwen3 on Zhu Xingda</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Fri, 23 May 2025 13:44:34 +0800</lastBuildDate>
+    <atom:link href="https://blog.xingda.space/tags/qwen3/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>【LLM】VLLM 单卡部署 Qwen3-4B</title>
+      <link>https://blog.xingda.space/tech/llm_model_local_deploy/</link>
+      <pubDate>Fri, 23 May 2025 13:44:34 +0800</pubDate>
+      <guid>https://blog.xingda.space/tech/llm_model_local_deploy/</guid>
+      <description>&lt;p&gt;尝试在个人显卡上部署一个 Qwen-4B 模型&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
