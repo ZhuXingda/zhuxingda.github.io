@@ -2,10 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://blog.xingda.space/tech/</loc>
-    <lastmod>2025-06-06T11:29:11+08:00</lastmod>
+    <loc>https://blog.xingda.space/life/</loc>
+    <lastmod>2025-11-28T17:11:26+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/</loc>
+    <lastmod>2025-11-28T17:11:26+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/tech/</loc>
     <lastmod>2025-06-06T11:29:11+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/tech/data_warehouse_model_theory/</loc>
@@ -86,9 +89,6 @@
     <loc>https://blog.xingda.space/tech/distribute_system_protocal/</loc>
     <lastmod>2025-03-30T22:29:20+08:00</lastmod>
   </url><url>
-    <loc>https://blog.xingda.space/note/</loc>
-    <lastmod>2025-03-27T16:48:23+08:00</lastmod>
-  </url><url>
     <loc>https://blog.xingda.space/tech/flink_watermark_source_code/</loc>
     <lastmod>2025-03-25T19:27:37+08:00</lastmod>
   </url><url>
@@ -108,6 +108,9 @@
     <lastmod>2025-02-19T11:14:58+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/note/interesting_posts/</loc>
+    <lastmod>2025-02-12T14:26:20+08:00</lastmod>
+  </url><url>
+    <loc>https://blog.xingda.space/note/</loc>
     <lastmod>2025-02-12T14:26:20+08:00</lastmod>
   </url><url>
     <loc>https://blog.xingda.space/categories/%E6%94%B6%E8%97%8F/</loc>
