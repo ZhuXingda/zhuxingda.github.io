@@ -26,7 +26,7 @@ defaultContentLanguageInSubdir = false
     weight = 20
   [[menus.main]]
     name = '生活'
-    pageRef = '/Sport'
+    pageRef = '/life'
     weight = 30
 
 [Params]
